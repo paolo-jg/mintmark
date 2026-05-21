@@ -91,6 +91,99 @@ export interface WantListItem {
   createdAt: string
 }
 
+export interface Address {
+  id: string
+  userId: string
+  name: string
+  street1: string
+  street2?: string
+  city: string
+  state: string
+  zip: string
+  country: string
+  isDefault: boolean
+  createdAt: string
+}
+
+export type OrderStatus =
+  | 'awaiting_shipment'
+  | 'label_purchased'
+  | 'shipped'
+  | 'delivered'
+  | 'disputed'
+  | 'complete'
+
+export type TrackingStatus =
+  | 'pre_transit'
+  | 'transit'
+  | 'delivered'
+  | 'returned'
+  | 'failure'
+  | 'unknown'
+
+export interface Order {
+  id: string
+  transactionId: string
+  listingId: string
+  buyerId: string
+  sellerId: string
+  amount: number // cents
+  shipToName: string
+  shipToStreet1: string
+  shipToStreet2?: string
+  shipToCity: string
+  shipToState: string
+  shipToZip: string
+  shipToCountry: string
+  status: OrderStatus
+  autoConfirmAt?: string
+  createdAt: string
+  updatedAt: string
+  // Joined
+  listing?: Partial<Listing>
+  shipment?: Partial<Shipment>
+}
+
+export interface Shipment {
+  id: string
+  orderId: string
+  shippoShipmentId?: string
+  shippoTransactionId?: string
+  carrier: string
+  serviceLevel: string
+  trackingNumber?: string
+  trackingUrl?: string
+  trackingStatus: TrackingStatus
+  labelUrl?: string
+  labelPurchasedAt?: string
+  insured: boolean
+  insuredValue?: number // cents
+  insuranceCost?: number // cents
+  weightOz?: number
+  lengthIn?: number
+  widthIn?: number
+  heightIn?: number
+  rateAmount?: number // cents
+  estimatedDeliveryDate?: string
+  shippedAt?: string
+  deliveredAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ShippoRate {
+  objectId: string
+  provider: string
+  servicelevel: { name: string; token: string }
+  amount: string // string USD e.g. "12.50"
+  currency: string
+  estimatedDays: number
+  durationTerms: string
+  attributes: string[] // e.g. ['BESTVALUE', 'FASTEST']
+  // Insurance
+  includesInsurance: boolean
+}
+
 export interface Transaction {
   id: string
   listingId: string

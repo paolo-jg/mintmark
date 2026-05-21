@@ -182,6 +182,119 @@ alter table price_history enable row level security;
 create policy "Price history viewable by authenticated users"
   on price_history for select using (auth.uid() is not null);
 
+-- ─── ADDRESSES ───────────────────────────────────────────────────────────────
+create table addresses (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references profiles(id) on delete cascade,
+  name text not null,
+  street1 text not null,
+  street2 text,
+  city text not null,
+  state text not null,
+  zip text not null,
+  country text not null default 'US',
+  is_default boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+alter table addresses enable row level security;
+
+create policy "Users can manage their own addresses"
+  on addresses for all using (auth.uid() = user_id);
+
+-- ─── ORDERS ──────────────────────────────────────────────────────────────────
+-- Orders are created when a purchase is completed (fixed price or won auction)
+create table orders (
+  id uuid primary key default uuid_generate_v4(),
+  transaction_id uuid not null references transactions(id) unique,
+  listing_id uuid not null references listings(id),
+  buyer_id uuid not null references profiles(id),
+  seller_id uuid not null references profiles(id),
+  amount integer not null, -- in cents
+  -- Snapshot of buyer shipping address at time of purchase
+  ship_to_name text not null,
+  ship_to_street1 text not null,
+  ship_to_street2 text,
+  ship_to_city text not null,
+  ship_to_state text not null,
+  ship_to_zip text not null,
+  ship_to_country text not null default 'US',
+  status text not null default 'awaiting_shipment'
+    check (status in ('awaiting_shipment', 'label_purchased', 'shipped', 'delivered', 'disputed', 'complete')),
+  -- Auto-confirm delivery after this time if buyer doesn't dispute
+  auto_confirm_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table orders enable row level security;
+
+create policy "Buyers and sellers can view their own orders"
+  on orders for select using (
+    auth.uid() = buyer_id or auth.uid() = seller_id
+  );
+
+create policy "System can insert orders"
+  on orders for insert with check (true);
+
+create policy "System can update orders"
+  on orders for update using (true);
+
+-- ─── SHIPMENTS ───────────────────────────────────────────────────────────────
+create table shipments (
+  id uuid primary key default uuid_generate_v4(),
+  order_id uuid not null references orders(id) on delete cascade unique,
+  -- Shippo IDs
+  shippo_shipment_id text,
+  shippo_transaction_id text, -- the label purchase transaction
+  -- Carrier & tracking
+  carrier text not null,         -- e.g. 'USPS', 'UPS', 'FedEx'
+  service_level text not null,   -- e.g. 'Priority Mail', 'Ground'
+  tracking_number text,
+  tracking_url text,
+  tracking_status text not null default 'pre_transit'
+    check (tracking_status in ('pre_transit', 'transit', 'delivered', 'returned', 'failure', 'unknown')),
+  -- Label
+  label_url text,                -- PDF label URL from Shippo
+  label_purchased_at timestamptz,
+  -- Insurance
+  insured boolean not null default false,
+  insured_value integer,         -- in cents
+  insurance_cost integer,        -- in cents
+  -- Dimensions & weight used for rate quote
+  weight_oz numeric,
+  length_in numeric,
+  width_in numeric,
+  height_in numeric,
+  -- Rate selected
+  rate_amount integer,           -- in cents
+  -- Estimated delivery
+  estimated_delivery_date date,
+  -- Timestamps
+  shipped_at timestamptz,
+  delivered_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table shipments enable row level security;
+
+create policy "Buyers and sellers can view their own shipments"
+  on shipments for select using (
+    exists (
+      select 1 from orders
+      where orders.id = shipments.order_id
+        and (orders.buyer_id = auth.uid() or orders.seller_id = auth.uid())
+    )
+  );
+
+create policy "System can manage shipments"
+  on shipments for all using (true);
+
+-- Enable realtime for order/shipment tracking
+alter publication supabase_realtime add table orders;
+alter publication supabase_realtime add table shipments;
+
 -- ─── REALTIME ────────────────────────────────────────────────────────────────
 -- Enable realtime for auction bidding
 alter publication supabase_realtime add table auctions;
@@ -196,3 +309,9 @@ create index bids_auction_id_idx on bids(auction_id);
 create index bids_bidder_id_idx on bids(bidder_id);
 create index price_history_coin_name_idx on price_history(coin_name, grade);
 create index want_list_user_id_idx on want_list(user_id);
+create index orders_buyer_id_idx on orders(buyer_id);
+create index orders_seller_id_idx on orders(seller_id);
+create index orders_status_idx on orders(status);
+create index shipments_order_id_idx on shipments(order_id);
+create index shipments_tracking_number_idx on shipments(tracking_number);
+create index addresses_user_id_idx on addresses(user_id);
