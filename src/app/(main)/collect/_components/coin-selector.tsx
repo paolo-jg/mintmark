@@ -1,11 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, ChevronRight, Search, ArrowLeft, Loader2, Star, Info } from 'lucide-react'
+import { X, ChevronRight, Search, Loader2, Star, Info, Check, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { COIN_CATALOG, type CoinCategory, type CoinSeries } from '@/lib/coins/catalog'
 import { COIN_DATES } from '@/lib/coins/coin-dates'
@@ -16,15 +14,32 @@ interface Props {
   onAdded: () => void
 }
 
-const GRADES = [
-  'PR70', 'PR69', 'PR68', 'PR67', 'PR66', 'PR65',
-  'MS70', 'MS69', 'MS68', 'MS67', 'MS66', 'MS65', 'MS64', 'MS63', 'MS62', 'MS61', 'MS60',
-  'AU58', 'AU55', 'AU53', 'AU50',
-  'EF45', 'EF40', 'VF35', 'VF30', 'VF25', 'VF20',
-  'F15', 'F12', 'VG10', 'VG8', 'G6', 'G4', 'AG3', 'FR2', 'PO1',
+type WizardStep = 'year' | 'mint' | 'grade' | 'service' | 'confirm'
+
+const GRADE_GROUPS = [
+  { label: 'Proof', grades: ['PR70', 'PR69', 'PR68', 'PR67', 'PR66', 'PR65', 'PR64', 'PR63', 'PR60'] },
+  { label: 'Mint State', grades: ['MS70', 'MS69', 'MS68', 'MS67', 'MS66', 'MS65', 'MS64', 'MS63', 'MS62', 'MS61', 'MS60'] },
+  { label: 'About Uncirculated', grades: ['AU58', 'AU55', 'AU53', 'AU50'] },
+  { label: 'Extremely Fine', grades: ['EF45', 'EF40'] },
+  { label: 'Very Fine', grades: ['VF35', 'VF30', 'VF25', 'VF20'] },
+  { label: 'Fine', grades: ['F15', 'F12'] },
+  { label: 'Very Good', grades: ['VG10', 'VG8'] },
+  { label: 'Good', grades: ['G6', 'G4'] },
+  { label: 'Low Grade', grades: ['AG3', 'FR2', 'PO1'] },
 ]
 
-const GRADING_SERVICES = ['PCGS', 'NGC', 'ANACS', 'ICG', 'Raw (Ungraded)']
+const MINT_NAMES: Record<string, string> = {
+  P: 'Philadelphia', D: 'Denver', S: 'San Francisco',
+  O: 'New Orleans', CC: 'Carson City', W: 'West Point',
+  C: 'Charlotte', D2: 'Dahlonega', M: 'Manila', H: 'Heaton',
+}
+
+const SERVICES = [
+  { id: 'PCGS', label: 'PCGS', sub: 'Professional Coin Grading' },
+  { id: 'NGC', label: 'NGC', sub: 'Numismatic Guaranty' },
+  { id: 'ANACS', label: 'ANACS', sub: 'American Numismatic' },
+  { id: 'ICG', label: 'ICG', sub: 'Independent Coin Grading' },
+]
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -166,7 +181,8 @@ export function CoinSelector({ onClose, onAdded }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<CoinCategory | null>(null)
   const [selectedSeries, setSelectedSeries] = useState<CoinSeries | null>(null)
 
-  // Form state
+  // Wizard state
+  const [wizardStep, setWizardStep] = useState<WizardStep>('year')
   const [selectedYear, setSelectedYear] = useState('')
   const [selectedMintMark, setSelectedMintMark] = useState('')
   const [selectedCoinName, setSelectedCoinName] = useState('')
@@ -202,7 +218,45 @@ export function CoinSelector({ onClose, onAdded }: Props) {
     setSelectedYear('')
     setSelectedMintMark('')
     setSelectedCoinName(series.coinNames[0] ?? series.name)
+    setTargetGrade('')
+    setGradingService('')
+    setMaxPrice('')
+    setNotes('')
+    setWizardStep('year')
     setSearch('')
+  }
+
+  const pickYear = (y: string) => {
+    setSelectedYear(y)
+    setSelectedMintMark('')
+    const mints = y ? (availableYears.find(d => d.year === parseInt(y))?.mintMarks ?? []) : []
+    setWizardStep(mints.length > 1 ? 'mint' : 'grade')
+  }
+
+  const pickMint = (m: string) => {
+    setSelectedMintMark(m)
+    setWizardStep('grade')
+  }
+
+  const pickGrade = (g: string) => {
+    setTargetGrade(g)
+    setWizardStep(g ? 'service' : 'confirm')
+  }
+
+  const pickService = (s: string) => {
+    setGradingService(s)
+    setWizardStep('confirm')
+  }
+
+  const goBack = () => {
+    if (wizardStep === 'confirm') { setWizardStep(gradingService || targetGrade ? 'service' : 'grade'); return }
+    if (wizardStep === 'service') { setWizardStep('grade'); return }
+    if (wizardStep === 'grade') {
+      const mints = selectedYear ? (availableYears.find(d => d.year === parseInt(selectedYear))?.mintMarks ?? []) : []
+      setWizardStep(mints.length > 1 ? 'mint' : 'year')
+      return
+    }
+    if (wizardStep === 'mint') { setWizardStep('year'); return }
   }
 
   const handleCategorySelect = (cat: CoinCategory) => {
@@ -422,127 +476,223 @@ export function CoinSelector({ onClose, onAdded }: Props) {
           </div>
         )}
 
-        {/* ── Selection form ── */}
-        <div className="border-t border-border pt-6 space-y-5">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50">Add to Wish List</p>
+        {/* ── Wizard ── */}
+        <div className="border-t border-border pt-6">
+          {/* Step breadcrumb */}
+          <div className="flex items-center gap-1.5 mb-6">
+            {wizardStep !== 'year' && (
+              <button onClick={goBack} className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors mr-1">
+                <ArrowLeft className="h-3 w-3" /> Back
+              </button>
+            )}
+            {(['year', 'mint', 'grade', 'service', 'confirm'] as WizardStep[]).map((s, i) => {
+              const steps = availableYears.length > 0 ? ['year', 'mint', 'grade', 'service', 'confirm'] : ['grade', 'service', 'confirm']
+              if (!steps.includes(s)) return null
+              const idx = steps.indexOf(wizardStep)
+              const thisIdx = steps.indexOf(s)
+              const done = thisIdx < idx
+              const active = s === wizardStep
+              return (
+                <div key={s} className="flex items-center gap-1.5">
+                  <div className={`h-1.5 w-1.5 rounded-full transition-colors ${active ? 'bg-foreground' : done ? 'bg-foreground/40' : 'bg-border'}`} />
+                </div>
+              )
+            })}
+          </div>
 
-          {/* Coin variant - if series has multiple coinNames */}
-          {selectedSeries.coinNames.length > 1 && (
-            <div className="space-y-1.5">
-              <Label>Coin Type</Label>
-              <Select value={selectedCoinName} onValueChange={v => { if (v) setSelectedCoinName(v) }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {selectedSeries.coinNames.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {/* Year + Mint Mark */}
-          {availableYears.length > 0 && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Year <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
-                <Select value={selectedYear} onValueChange={v => { setSelectedYear(v ?? ''); setSelectedMintMark('') }}>
-                  <SelectTrigger><SelectValue placeholder="Any year" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Any year</SelectItem>
-                    {availableYears.map(d => (
-                      <SelectItem key={d.year} value={String(d.year)}>{d.year}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Mint Mark <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
-                <Select
-                  value={selectedMintMark}
-                  onValueChange={v => setSelectedMintMark(v ?? '')}
-                  disabled={!selectedYear}
+          {/* ── Step: Year ── */}
+          {wizardStep === 'year' && (
+            <div>
+              <p className="text-lg font-semibold mb-1">What year?</p>
+              <p className="text-[13px] text-muted-foreground mb-4">Select a specific date or leave open.</p>
+              <button
+                onClick={() => pickYear('')}
+                className="w-full text-left px-4 py-3 rounded-xl border border-border hover:border-foreground/30 hover:bg-muted/40 transition-all mb-3 flex items-center justify-between group"
+              >
+                <div>
+                  <p className="text-sm font-medium">Any year</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Open to any date in the series</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
+              </button>
+              {availableYears.length > 0 && (
+                <div className="grid grid-cols-5 gap-1.5 max-h-52 overflow-y-auto pr-1">
+                  {availableYears.map(d => (
+                    <button
+                      key={d.year}
+                      onClick={() => pickYear(String(d.year))}
+                      className="px-2 py-2.5 rounded-lg border border-border text-[13px] font-medium hover:border-foreground hover:bg-foreground hover:text-background transition-all text-center"
+                    >
+                      {d.year}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {availableYears.length === 0 && (
+                <button
+                  onClick={() => pickYear('')}
+                  className="w-full text-left px-4 py-3 rounded-xl border border-border hover:bg-muted/40 transition-all"
                 >
-                  <SelectTrigger><SelectValue placeholder="Any mint" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Any mint</SelectItem>
-                    {availableMintMarks.map(m => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <p className="text-sm text-muted-foreground">No date data — skip to grade</p>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ── Step: Mint ── */}
+          {wizardStep === 'mint' && (
+            <div>
+              <p className="text-lg font-semibold mb-1">Which mint?</p>
+              <p className="text-[13px] text-muted-foreground mb-4">{selectedYear} — select a mint mark.</p>
+              <button
+                onClick={() => pickMint('')}
+                className="w-full text-left px-4 py-3 rounded-xl border border-border hover:border-foreground/30 hover:bg-muted/40 transition-all mb-3 flex items-center justify-between group"
+              >
+                <div>
+                  <p className="text-sm font-medium">Any mint</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Open to any mint mark</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
+              </button>
+              <div className="grid grid-cols-2 gap-2">
+                {availableMintMarks.map(m => (
+                  <button
+                    key={m}
+                    onClick={() => pickMint(m)}
+                    className="px-4 py-4 rounded-xl border border-border hover:border-foreground hover:bg-foreground hover:text-background transition-all text-left group"
+                  >
+                    <p className="text-2xl font-bold tracking-tight mb-0.5">{m}</p>
+                    <p className="text-[11px] text-muted-foreground group-hover:text-background/60 transition-colors">{MINT_NAMES[m] ?? 'Mint'}</p>
+                  </button>
+                ))}
               </div>
             </div>
           )}
 
-          {/* Grading service + grade */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Grading Service <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
-              <Select value={gradingService} onValueChange={v => { setGradingService(v ?? ''); if (!v) setTargetGrade('') }}>
-                <SelectTrigger><SelectValue placeholder="Ungraded / any" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Ungraded / any</SelectItem>
-                  {GRADING_SERVICES.filter(s => s !== 'Raw (Ungraded)').map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Target Grade <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
-              <Select value={targetGrade} onValueChange={v => setTargetGrade(v ?? '')} disabled={!gradingService}>
-                <SelectTrigger><SelectValue placeholder="Any grade" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Any grade</SelectItem>
-                  {GRADES.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Max price */}
-          <div className="space-y-1.5">
-            <Label>Max Price <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={maxPrice}
-                onChange={e => setMaxPrice(e.target.value)}
-                placeholder="0.00"
-                className="pl-7"
-              />
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <Label>Notes <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
-            <Input
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="e.g. CAMEO preferred, original skin"
-            />
-          </div>
-
-          {/* Summary tag */}
-          {(selectedCoinName || selectedSeries.name) && (
-            <div className="rounded-lg bg-muted/40 border border-border px-4 py-2.5 flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">Adding</p>
-              <p className="text-sm font-semibold">
-                {[
-                  selectedCoinName || selectedSeries.name,
-                  selectedYear,
-                  selectedMintMark && selectedMintMark !== 'P' ? `-${selectedMintMark}` : null,
-                  targetGrade || null,
-                ].filter(Boolean).join(' ')}
-              </p>
+          {/* ── Step: Grade ── */}
+          {wizardStep === 'grade' && (
+            <div>
+              <p className="text-lg font-semibold mb-1">Target grade?</p>
+              <p className="text-[13px] text-muted-foreground mb-4">Pick the minimum grade you're hunting for.</p>
+              <button
+                onClick={() => pickGrade('')}
+                className="w-full text-left px-4 py-3 rounded-xl border border-border hover:border-foreground/30 hover:bg-muted/40 transition-all mb-4 flex items-center justify-between group"
+              >
+                <div>
+                  <p className="text-sm font-medium">Any grade</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Skip to finish</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
+              </button>
+              <div className="space-y-4 max-h-64 overflow-y-auto pr-1">
+                {GRADE_GROUPS.map(group => (
+                  <div key={group.label}>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1.5">{group.label}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {group.grades.map(g => (
+                        <button
+                          key={g}
+                          onClick={() => pickGrade(g)}
+                          className="px-3 py-1.5 rounded-lg border border-border text-[13px] font-medium hover:border-foreground hover:bg-foreground hover:text-background transition-all"
+                        >
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          <Button onClick={save} disabled={saving} className="w-full" size="lg">
-            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Star className="h-4 w-4 mr-2" />}
-            Add to Wish List
-          </Button>
+          {/* ── Step: Service ── */}
+          {wizardStep === 'service' && (
+            <div>
+              <p className="text-lg font-semibold mb-1">Grading service?</p>
+              <p className="text-[13px] text-muted-foreground mb-4">Who do you want to certify it?</p>
+              <button
+                onClick={() => pickService('')}
+                className="w-full text-left px-4 py-3 rounded-xl border border-border hover:border-foreground/30 hover:bg-muted/40 transition-all mb-3 flex items-center justify-between group"
+              >
+                <div>
+                  <p className="text-sm font-medium">Any / Ungraded</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">No preference on service</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
+              </button>
+              <div className="grid grid-cols-2 gap-2">
+                {SERVICES.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => pickService(s.id)}
+                    className="px-4 py-4 rounded-xl border border-border hover:border-foreground hover:bg-foreground hover:text-background transition-all text-left group"
+                  >
+                    <p className="text-xl font-bold tracking-tight mb-0.5">{s.label}</p>
+                    <p className="text-[11px] text-muted-foreground group-hover:text-background/60 transition-colors leading-snug">{s.sub}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Step: Confirm ── */}
+          {wizardStep === 'confirm' && (
+            <div className="space-y-4">
+              <p className="text-lg font-semibold mb-1">Confirm details</p>
+
+              {/* Summary chips */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  selectedYear ? { label: 'Year', value: selectedYear } : null,
+                  selectedMintMark ? { label: 'Mint', value: selectedMintMark } : null,
+                  targetGrade ? { label: 'Grade', value: targetGrade } : null,
+                  gradingService ? { label: 'Service', value: gradingService } : null,
+                ].filter(Boolean).map(chip => (
+                  <div key={chip!.label} className="flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">{chip!.label}</span>
+                    <span className="text-[13px] font-semibold">{chip!.value}</span>
+                  </div>
+                ))}
+                {!selectedYear && !targetGrade && (
+                  <div className="rounded-full border border-border bg-muted/40 px-3 py-1">
+                    <span className="text-[13px] text-muted-foreground">Open to any</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Max price */}
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-2">Max price <span className="font-normal normal-case tracking-normal">(optional)</span></p>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={maxPrice}
+                    onChange={e => setMaxPrice(e.target.value)}
+                    placeholder="No limit"
+                    className="pl-7"
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-2">Notes <span className="font-normal normal-case tracking-normal">(optional)</span></p>
+                <Input
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  placeholder="e.g. CAMEO preferred, original skin"
+                />
+              </div>
+
+              <Button onClick={save} disabled={saving} className="w-full" size="lg">
+                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Check className="h-4 w-4 mr-2" />}
+                Add to Wish List
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
