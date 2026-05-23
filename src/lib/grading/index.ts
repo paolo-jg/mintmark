@@ -14,7 +14,7 @@ export async function lookupCert(
     case 'PCGS':
       return lookupPCGS(certNumber)
     case 'NGC':
-      return lookupNGC(certNumber)
+      return Promise.resolve(lookupNGC(certNumber))
     case 'ANACS':
     case 'ICG':
     case 'SEGS':
@@ -34,7 +34,7 @@ export async function lookupCert(
 async function lookupPCGS(certNumber: string): Promise<CertLookupResult> {
   try {
     const res = await fetch(
-      `https://api.pcgs.com/publicapi/coindetail/GetCoinDetailsByCertNo?certNo=${certNumber}`,
+      `https://api.pcgs.com/publicapi/coindetail/GetCoinFactsByCertNo/${certNumber}`,
       {
         headers: {
           Authorization: `bearer ${process.env.PCGS_API_KEY}`,
@@ -49,7 +49,7 @@ async function lookupPCGS(certNumber: string): Promise<CertLookupResult> {
 
     const data = await res.json()
 
-    if (!data || data.PCGSNo === 0) {
+    if (!data?.IsValidRequest || data.ServerMessage !== 'Request successful') {
       return { success: false, error: 'PCGS cert not found' }
     }
 
@@ -59,14 +59,14 @@ async function lookupPCGS(certNumber: string): Promise<CertLookupResult> {
         service: 'PCGS',
         certNumber,
         verificationStatus: 'verified',
-        grade: data.GradeString ?? '',
+        grade: data.Grade ?? '',
         coinName: data.Name ?? '',
-        year: data.Year ?? undefined,
+        year: data.Year > 0 ? data.Year : undefined,
         mintMark: data.MintMark ?? undefined,
         denomination: data.Denomination ?? undefined,
-        populationAtGrade: data.PopulationAtGrade ?? undefined,
-        populationAbove: data.PopulationHigher ?? undefined,
-        pcgsImageUrl: data.MobileImageUrl ?? undefined,
+        populationAtGrade: data.Population ?? undefined,
+        populationAbove: data.PopHigher ?? undefined,
+        pcgsImageUrl: data.Images?.length > 0 ? data.Images[0] : undefined,
       },
     }
   } catch {
@@ -74,44 +74,31 @@ async function lookupPCGS(certNumber: string): Promise<CertLookupResult> {
   }
 }
 
-async function lookupNGC(certNumber: string): Promise<CertLookupResult> {
-  try {
-    const res = await fetch(
-      `https://api.ngccoin.com/coin/v1/certlookup/${certNumber}/1/`,
-      {
-        headers: {
-          'x-api-token': process.env.NGC_API_KEY ?? '',
-        },
-        next: { revalidate: 3600 },
-      }
-    )
+// NGC does not expose a public API and their site is behind Cloudflare bot protection.
+// We accept NGC cert numbers on trust and show a buyer-facing "Verify on NGC" link.
+// Sellers still must enter a cert number; listings display as "Unverified (NGC)" with
+// a direct link to ngccoin.com/certlookup so buyers can confirm before purchasing.
+function lookupNGC(certNumber: string): CertLookupResult {
+  return {
+    success: true,
+    data: {
+      service: 'NGC',
+      certNumber,
+      verificationStatus: 'unverified',
+    },
+  }
+}
 
-    if (!res.ok) {
-      return { success: false, error: 'NGC cert not found' }
-    }
-
-    const data = await res.json()
-    const coin = data?.coins?.[0]
-
-    if (!coin) {
-      return { success: false, error: 'NGC cert not found' }
-    }
-
-    return {
-      success: true,
-      data: {
-        service: 'NGC',
-        certNumber,
-        verificationStatus: 'verified',
-        grade: coin.grade ?? '',
-        coinName: coin.coinName ?? '',
-        year: coin.year ?? undefined,
-        mintMark: coin.mintMark ?? undefined,
-        denomination: coin.denomination ?? undefined,
-      },
-    }
-  } catch {
-    return { success: false, error: 'Failed to reach NGC API' }
+/**
+ * Returns a buyer-facing URL to verify a cert on the grading service's own site.
+ * Returns null for PCGS (auto-verified via API) and SEGS (no functional lookup).
+ */
+export function getVerifyUrl(service: GradingService, certNumber: string): string | null {
+  switch (service) {
+    case 'NGC':   return ngcVerifyUrl(certNumber)
+    case 'ANACS': return anacsVerifyUrl(certNumber)
+    case 'ICG':   return icgVerifyUrl(certNumber)
+    default:      return null
   }
 }
 
@@ -127,12 +114,27 @@ export function getVerificationBadgeLabel(status: VerificationStatus): string {
 }
 
 export function isAutoVerified(service: GradingService): boolean {
-  return service === 'PCGS' || service === 'NGC'
+  return service === 'PCGS'
+}
+
+/** Returns a direct link buyers can use to verify an NGC cert on ngccoin.com */
+export function ngcVerifyUrl(certNumber: string): string {
+  return `https://www.ngccoin.com/certlookup/${encodeURIComponent(certNumber)}/All/`
+}
+
+/** Returns a direct link buyers can use to verify an ANACS cert on anacs.com */
+export function anacsVerifyUrl(certNumber: string): string {
+  return `https://anacs.com/verify/?cert=${encodeURIComponent(certNumber)}`
+}
+
+/** Returns a direct link buyers can use to verify an ICG cert on icgcoin.com */
+export function icgVerifyUrl(certNumber: string): string {
+  return `https://www.icgcoin.com/verification/?searchsn=${encodeURIComponent(certNumber)}`
 }
 
 export const GRADING_SERVICES: { value: GradingService; label: string; autoVerified: boolean }[] = [
   { value: 'PCGS', label: 'PCGS', autoVerified: true },
-  { value: 'NGC', label: 'NGC', autoVerified: true },
+  { value: 'NGC', label: 'NGC', autoVerified: false },
   { value: 'ANACS', label: 'ANACS', autoVerified: false },
   { value: 'ICG', label: 'ICG', autoVerified: false },
   { value: 'SEGS', label: 'SEGS', autoVerified: false },

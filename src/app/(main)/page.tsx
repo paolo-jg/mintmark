@@ -15,7 +15,7 @@ export default function HomePage() {
           <span className="text-muted-foreground">rare, verified coins</span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
-          Every coin on Mintmark is certified by a professional grading service —
+          Every coin on Pedigree Coins is certified by a professional grading service —
           PCGS, NGC, and more. Buy and sell with complete confidence.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">

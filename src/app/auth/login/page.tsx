@@ -73,7 +73,7 @@ export default function LoginPage() {
         <div className="flex justify-center mb-6">
           <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
             <Coins className="h-5 w-5" />
-            Mintmark
+            Pedigree Coins
           </Link>
         </div>
         <Card>

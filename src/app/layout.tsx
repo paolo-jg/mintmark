@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -8,8 +8,14 @@ const geist = Geist({
   subsets: ["latin"],
 });
 
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 export const metadata: Metadata = {
-  title: "Mintmark — Professionally Graded Coins",
+  title: "Pedigree Coins — Professionally Graded Coins",
   description:
     "The marketplace for professionally graded rare coins. Buy and sell PCGS, NGC, and ANACS certified coins with confidence.",
 };
@@ -20,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${geist.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className={`${geist.variable} ${dmSans.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col font-[family-name:var(--font-dm-sans)]">
         {children}
         <Toaster />
       </body>

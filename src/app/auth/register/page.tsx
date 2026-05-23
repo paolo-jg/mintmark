@@ -46,13 +46,13 @@ export default function RegisterPage() {
         <div className="flex justify-center mb-6">
           <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
             <Coins className="h-5 w-5" />
-            Mintmark
+            Pedigree Coins
           </Link>
         </div>
         <Card>
           <CardHeader>
             <CardTitle>Create an account</CardTitle>
-            <CardDescription>Join Mintmark to buy and sell graded coins</CardDescription>
+            <CardDescription>Join Pedigree Coins to buy and sell graded coins</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleRegister} className="space-y-4">

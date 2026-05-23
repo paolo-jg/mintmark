@@ -1,0 +1,331 @@
+import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
+import { Gavel } from 'lucide-react'
+import { COIN_CATALOG, type CoinSeries } from '@/lib/coins/catalog'
+import { ExploreFilters } from './_components/explore-filters'
+import { CollapsibleSection } from './_components/collapsible-section'
+
+// ─── Composition mappings ────────────────────────────────────────────────────
+const GOLD_SERIES = new Set([
+  'liberty-head-gold-dollar', 'indian-princess-gold-dollar',
+  'draped-bust-quarter-eagle', 'capped-bust-quarter-eagle',
+  'classic-head-quarter-eagle', 'liberty-head-quarter-eagle', 'indian-head-quarter-eagle',
+  'indian-princess-three-dollar-gold',
+  'flowing-hair-stella', 'coiled-hair-stella',
+  'draped-bust-half-eagle', 'capped-bust-half-eagle',
+  'classic-head-half-eagle', 'liberty-head-half-eagle', 'indian-head-half-eagle',
+  'draped-bust-eagle', 'liberty-head-eagle', 'indian-head-eagle',
+  'liberty-head-double-eagle', 'saint-gaudens-double-eagle',
+  'american-gold-eagle', 'american-gold-buffalo',
+  'first-spouses', 'ultra-high-relief-double-eagle', 'american-liberty-gold', 'liberty-and-britannia',
+  'classic-gold-commemoratives', 'modern-gold-commemoratives',
+  'templeton-reid', 'bechtler', 'california-gold', 'california-fractional-gold',
+  'oregon-gold', 'mormon-gold', 'colorado-gold',
+])
+
+const SILVER_SERIES = new Set([
+  'bust-half-disme', 'flowing-hair-half-dime', 'draped-bust-half-dime', 'capped-bust-half-dime', 'liberty-seated-half-dime',
+  'draped-bust-dime', 'capped-bust-dime', 'liberty-seated-dime', 'barber-dime', 'mercury-dime', 'roosevelt-dime',
+  'twenty-cent-piece',
+  'draped-bust-quarter', 'capped-bust-quarter', 'liberty-seated-quarter',
+  'barber-quarter', 'standing-liberty-quarter', 'washington-quarter',
+  'flowing-hair-half-dollar', 'draped-bust-half-dollar',
+  'capped-bust-half-dollar', 'liberty-seated-half-dollar',
+  'barber-half-dollar', 'walking-liberty-half-dollar', 'franklin-half-dollar',
+  'kennedy-half-dollar',
+  'flowing-hair-dollar', 'draped-bust-dollar',
+  'liberty-seated-dollar', 'trade-dollar',
+  'morgan-dollar', 'peace-dollar', 'morgan-dollar-2021', 'peace-dollar-2021',
+  'american-silver-eagle',
+  'classic-silver-commemoratives', 'modern-silver-clad-commemoratives', 'silver-proof-sets',
+  'atb-silver-quarters', 'massachusetts-silver-coins', 'pre-1776-states-coinage',
+  'three-cent-silver', ])
+
+const COPPER_SERIES = new Set([
+  'liberty-cap-half-cent', 'draped-bust-half-cent', 'classic-head-half-cent', 'braided-hair-half-cent',
+  'flowing-hair-cent', 'liberty-cap-cent', 'draped-bust-cent',
+  'classic-head-cent', 'coronet-matron-head-cent', 'braided-hair-cent',
+  'flying-eagle-cent', 'indian-head-cent', 'lincoln-wheat-cent',
+  'two-cent-piece',
+])
+
+const NICKEL_SERIES = new Set([
+  'three-cent-nickel',
+  'shield-nickel', 'liberty-head-nickel', 'buffalo-nickel',
+  'jefferson-nickel', 'westward-journey-nickel', 'jefferson-nickel-return',
+])
+
+const CLAD_SERIES = new Set([
+  'lincoln-memorial-cent', 'lincoln-bicentennial-cent', 'lincoln-shield-cent',
+  '50-state-quarters', 'dc-us-territories-quarters',
+  'america-the-beautiful-quarters', 'american-women-quarters',
+  'eisenhower-dollar', 'susan-b-anthony-dollar', 'sacagawea-dollar',
+  'presidential-dollar', 'american-innovation-dollar',
+  'modern-silver-clad-commemoratives',
+])
+
+const PLATINUM_SERIES = new Set(['american-platinum-eagle'])
+const PALLADIUM_SERIES = new Set(['american-palladium-eagle'])
+
+function seriesMatchesComposition(slug: string, composition: string): boolean {
+  if (composition === 'all') return true
+  if (composition === 'gold') return GOLD_SERIES.has(slug)
+  if (composition === 'silver') return SILVER_SERIES.has(slug)
+  if (composition === 'copper') return COPPER_SERIES.has(slug)
+  if (composition === 'nickel') return NICKEL_SERIES.has(slug)
+  if (composition === 'clad') return CLAD_SERIES.has(slug)
+  if (composition === 'platinum') return PLATINUM_SERIES.has(slug)
+  if (composition === 'palladium') return PALLADIUM_SERIES.has(slug)
+  return true
+}
+
+// ─── Date range helpers ──────────────────────────────────────────────────────
+function parseSeriesYearRange(dateRange: string): [number, number] {
+  const clean = dateRange.replace('–', '-').replace('c. ', '').trim()
+  const parts = clean.split('-')
+  const start = parseInt(parts[0]) || 0
+  const rawEnd = parts[1]?.trim()
+  const end = !rawEnd || rawEnd === 'present' ? new Date().getFullYear() : parseInt(rawEnd) || start
+  return [start, end]
+}
+
+function seriesOverlapsYears(series: CoinSeries, fromYear: number | null, toYear: number | null): boolean {
+  if (!fromYear && !toYear) return true
+  const [start, end] = parseSeriesYearRange(series.dateRange)
+  if (fromYear && end < fromYear) return false
+  if (toYear && start > toYear) return false
+  return true
+}
+
+// ─── Category helpers ────────────────────────────────────────────────────────
+const GOLD_CAT_SLUGS = ['gold-dollars', 'quarter-eagles', 'three-dollar-gold', 'half-eagles', 'eagles', 'double-eagles']
+
+function getDisplayedCategories(category: string) {
+  if (category === 'all') return COIN_CATALOG
+  if (category === 'gold') return COIN_CATALOG.filter(c => GOLD_CAT_SLUGS.includes(c.slug))
+  return COIN_CATALOG.filter(c => c.slug === category)
+}
+
+export default async function ListingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    category?: string
+    composition?: string
+    fromYear?: string
+    toYear?: string
+    q?: string
+  }>
+}) {
+  const { category = 'all', composition = 'all', fromYear, toYear, q = '' } = await searchParams
+  const supabase = await createClient()
+
+  const { data: rawListings } = await supabase
+    .from('listings')
+    .select('coin_name, price')
+    .eq('status', 'active')
+
+  const countMap = new Map<string, number>()
+  const minPriceMap = new Map<string, number>()
+  for (const row of rawListings ?? []) {
+    if (!row.coin_name) continue
+    const key = row.coin_name.toLowerCase().trim()
+    countMap.set(key, (countMap.get(key) ?? 0) + 1)
+    if (row.price != null) {
+      const prev = minPriceMap.get(key)
+      if (prev === undefined || row.price < prev) minPriceMap.set(key, row.price)
+    }
+  }
+
+  function seriesStats(series: CoinSeries): { count: number; minPrice: number | null } {
+    let count = 0
+    let minPrice: number | null = null
+    for (const name of series.coinNames) {
+      const key = name.toLowerCase().trim()
+      count += countMap.get(key) ?? 0
+      const p = minPriceMap.get(key)
+      if (p !== undefined && (minPrice === null || p < minPrice)) minPrice = p
+    }
+    return { count, minPrice }
+  }
+
+  const totalListings = rawListings?.length ?? 0
+
+  const fromYearNum = fromYear ? parseInt(fromYear) : null
+  const toYearNum = toYear ? parseInt(toYear) : null
+
+  // Apply category filter
+  const displayedCategories = getDisplayedCategories(category)
+
+  // Apply composition, date range, and search filters to series within each category
+  const searchQuery = q.toLowerCase().trim()
+  const filteredCategories = displayedCategories
+    .map(cat => ({
+      ...cat,
+      series: cat.series.filter(
+        s =>
+          seriesMatchesComposition(s.slug, composition) &&
+          seriesOverlapsYears(s, fromYearNum, toYearNum) &&
+          (!searchQuery || s.name.toLowerCase().includes(searchQuery) || s.coinNames.some(n => n.toLowerCase().includes(searchQuery)))
+      ),
+    }))
+    .filter(cat => cat.series.length > 0)
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* Page header */}
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Explore All Listings</h1>
+          <p className="text-muted-foreground mt-1.5">
+            {totalListings > 0
+              ? `${totalListings.toLocaleString()} active listing${totalListings !== 1 ? 's' : ''}`
+              : 'Browse every major US coin series. List a coin to get started.'}
+          </p>
+        </div>
+        <Link
+          href="/auctions"
+          className="flex-none flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-base font-bold text-foreground hover:border-foreground/40 hover:bg-muted transition-colors whitespace-nowrap"
+        >
+          <Gavel className="h-4 w-4" />
+          Live Auctions
+        </Link>
+      </div>
+
+      <ExploreFilters />
+
+      <main>
+          {filteredCategories.length === 0 ? (
+            <div className="text-center py-24 text-muted-foreground border border-dashed rounded-xl">
+              <p className="text-lg font-medium mb-2">No series match your filters</p>
+              <p className="text-sm">Try adjusting the type, metal, or date range.</p>
+            </div>
+          ) : (
+            <div className="space-y-10">
+              {filteredCategories.map(cat => (
+                <CollapsibleSection key={cat.slug} title={cat.name} itemCount={cat.series.length}>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {cat.series.map(series => {
+                      const { count, minPrice } = seriesStats(series)
+                      const hasListings = count > 0
+                      const showImage = series.image && !series.dualSide
+                      return (
+                        <Link
+                          key={series.slug}
+                          href={`/listings/series/${series.slug}`}
+                          className="group block min-w-0 rounded-2xl overflow-hidden border border-border/60 bg-card shadow-sm hover:border-foreground/20 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 ease-out"
+                        >
+                          {/* Image area */}
+                          <div className="aspect-square relative overflow-hidden bg-white dark:bg-zinc-50" style={{ perspective: '700px' }}>
+                            {showImage ? (
+                              <div
+                                className={`relative w-full h-full transition-transform duration-500 ease-in-out ${series.imageReverse ? 'group-hover:[transform:rotateY(180deg)]' : ''}`}
+                                style={{ transformStyle: 'preserve-3d' }}
+                              >
+                                {/* Front — obverse */}
+                                <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden' }}>
+                                  <img
+                                    src={series.image!}
+                                    alt={`${series.name} obverse`}
+                                    className="w-full h-full object-contain p-3 transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                                  />
+                                </div>
+                                {/* Back — reverse */}
+                                {series.imageReverse && (
+                                  <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                                    <img
+                                      src={series.imageReverse}
+                                      alt={`${series.name} reverse`}
+                                      className="w-full h-full object-contain p-3"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div
+                                className="w-full h-full transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                                style={{ background: placeholderGradient(series.slug) }}
+                              />
+                            )}
+                          </div>
+
+                          {/* Card info */}
+                          <div className="px-3.5 pt-3 pb-3.5 space-y-1">
+                            {/* Date · denomination */}
+                            <p className="text-[10px] font-semibold tracking-[0.16em] uppercase text-muted-foreground/60">
+                              {series.dateRange}
+                              {series.denomination && (
+                                <span className="font-mono normal-case tracking-normal"> · {series.denomination}</span>
+                              )}
+                            </p>
+
+                            {/* Series name */}
+                            <p className="text-[13px] font-semibold leading-snug line-clamp-2 text-foreground">
+                              {series.name}
+                            </p>
+
+                            {/* Listing status */}
+                            <div className="pt-1.5">
+                              {hasListings ? (
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                    <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                                      {count} available
+                                    </span>
+                                  </div>
+                                  {minPrice !== null && (
+                                    <span className="text-[11px] text-muted-foreground/60 tabular-nums">
+                                      from {(minPrice / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-border shrink-0" />
+                                  <span className="text-[11px] text-muted-foreground/40">No listings</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </CollapsibleSection>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-16 text-center">
+            <p className="text-sm text-muted-foreground">
+              Don&apos;t see your coin?{' '}
+              <Link href="/listings/new" className="underline underline-offset-4 hover:text-foreground">
+                List it now
+              </Link>
+            </p>
+          </div>
+      </main>
+    </div>
+  )
+}
+
+function placeholderGradient(slug: string): string {
+  const gradients = [
+    'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+    'linear-gradient(135deg, #1e1b2e 0%, #2d1b69 50%, #11998e 100%)',
+    'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2d4a22 100%)',
+    'linear-gradient(135deg, #1a0a0a 0%, #3d1515 50%, #6b2020 100%)',
+    'linear-gradient(135deg, #0d1b2a 0%, #1b2838 50%, #2c3e50 100%)',
+    'linear-gradient(135deg, #2d1f3d 0%, #1a1a2e 50%, #0d0d1a 100%)',
+    'linear-gradient(135deg, #1a2a1a 0%, #0d1f0d 50%, #1f3a1f 100%)',
+    'linear-gradient(135deg, #2a1a0d 0%, #3d2b1a 50%, #1a0d00 100%)',
+    'linear-gradient(135deg, #0d1a2a 0%, #1a2d3d 50%, #2a3d4d 100%)',
+    'linear-gradient(135deg, #1f0d2a 0%, #2d1a3d 50%, #0d001a 100%)',
+  ]
+  let hash = 0
+  for (let i = 0; i < slug.length; i++) {
+    hash = ((hash << 5) - hash + slug.charCodeAt(i)) | 0
+  }
+  return gradients[Math.abs(hash) % gradients.length]
+}
