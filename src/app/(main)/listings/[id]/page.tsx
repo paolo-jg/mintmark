@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
-import { Shield, ExternalLink, ChevronLeft, Copy } from 'lucide-react'
+import { Shield, ExternalLink, ChevronLeft, Copy, Star } from 'lucide-react'
 import Link from 'next/link'
 import { getVerifyUrl } from '@/lib/grading/index'
 import { ListingGallery } from './_components/listing-gallery'
@@ -25,7 +26,7 @@ export default async function ListingPage({
 
   const { data: listing } = await supabase
     .from('listings')
-    .select('*, profiles(username, dealer_verified)')
+    .select('*, profiles(username, dealer_verified, display_name, dealer_logo_url, average_rating, rating_count, subscription_tier)')
     .eq('id', id)
     .single()
 
@@ -184,17 +185,42 @@ export default async function ListingPage({
 
           {/* Seller */}
           <Separator />
-          <div className="flex items-center justify-between text-sm">
+          <Link
+            href={`/sellers/${listing.seller_id}`}
+            className="flex items-center justify-between text-sm hover:bg-muted/40 -mx-2 px-2 py-2 rounded-lg transition-colors"
+          >
             <span className="text-muted-foreground">Sold by</span>
-            <div className="flex items-center gap-1.5">
-              <span className="font-medium">@{listing.profiles?.username ?? 'seller'}</span>
-              {listing.profiles?.dealer_verified && (
-                <span className="text-[10px] font-semibold tracking-widest uppercase text-muted-foreground border border-border rounded px-1.5 py-0.5">
-                  Dealer
-                </span>
-              )}
+            <div className="flex items-center gap-2">
+              {(() => {
+                const p = listing.profiles as typeof listing.profiles & {
+                  display_name?: string | null
+                  average_rating?: number | null
+                  rating_count?: number | null
+                  subscription_tier?: string | null
+                } | null
+                const sellerName = p?.display_name ?? `@${p?.username ?? 'seller'}`
+                const isDealer = p?.subscription_tier?.startsWith('dealer_')
+                const rating = p?.average_rating ?? 0
+                const ratingCount = p?.rating_count ?? 0
+                return (
+                  <>
+                    <span className="font-medium">{sellerName}</span>
+                    {isDealer && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        Dealer
+                      </Badge>
+                    )}
+                    {ratingCount > 0 && (
+                      <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                        <Star className="h-3 w-3 fill-foreground text-foreground" />
+                        {rating.toFixed(1)}
+                      </span>
+                    )}
+                  </>
+                )
+              })()}
             </div>
-          </div>
+          </Link>
 
         </div>
       </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { GRADING_SERVICES, getVerificationBadgeLabel } from '@/lib/grading'
@@ -180,9 +180,22 @@ function crossReference(picked: PickedCoin, grade: Partial<CoinGrade>): string |
   return null
 }
 
+// Tier fee configuration
+const TIER_FEES: Record<string, { sellPct: number; listingFeeCents: number }> = {
+  collector_basic:    { sellPct: 5,   listingFeeCents: 50 },
+  collector_standard: { sellPct: 3.5, listingFeeCents: 40 },
+  collector_premium:  { sellPct: 2.5, listingFeeCents: 30 },
+  dealer_basic:       { sellPct: 2.5, listingFeeCents: 20 },
+  dealer_standard:    { sellPct: 1,   listingFeeCents: 10 },
+  dealer_premium:     { sellPct: 0,   listingFeeCents: 0  },
+}
+
 export default function NewListingPage() {
   const router = useRouter()
   const supabase = createClient()
+
+  // Seller tier for fee preview
+  const [sellerTier, setSellerTier] = useState<string>('collector_basic')
 
   // Step state
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -216,6 +229,19 @@ export default function NewListingPage() {
 
   const [disclaimerAgreed, setDisclaimerAgreed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+
+  // Fetch seller's subscription tier for the fee preview
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_tier')
+        .eq('id', data.user.id)
+        .single()
+      if (profile?.subscription_tier) setSellerTier(profile.subscription_tier)
+    })
+  }, [])
 
   const handleImageSelect = useCallback((files: FileList | null) => {
     if (!files) return
@@ -753,6 +779,31 @@ export default function NewListingPage() {
                         required
                       />
                     </div>
+                    {/* Fee summary */}
+                    {price && parseFloat(price) > 0 && (() => {
+                      const fees = TIER_FEES[sellerTier] ?? TIER_FEES.collector_basic
+                      const priceCents = Math.round(parseFloat(price) * 100)
+                      const sellFeeCents = Math.round(priceCents * fees.sellPct / 100)
+                      const youReceiveCents = priceCents - sellFeeCents - fees.listingFeeCents
+                      const fmt = (cents: number) =>
+                        new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100)
+                      return (
+                        <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-xs space-y-1 mt-1">
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Listing fee</span>
+                            <span className="tabular-nums">{fmt(fees.listingFeeCents)}</span>
+                          </div>
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Sell fee ({fees.sellPct}%)</span>
+                            <span className="tabular-nums">{fmt(sellFeeCents)}</span>
+                          </div>
+                          <div className="border-t border-border pt-1 flex justify-between font-semibold">
+                            <span>You receive</span>
+                            <span className="tabular-nums">{fmt(Math.max(youReceiveCents, 0))}</span>
+                          </div>
+                        </div>
+                      )
+                    })()}
                   </div>
                 ) : (
                   <div className="space-y-4">

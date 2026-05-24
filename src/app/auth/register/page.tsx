@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
+  const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -29,7 +30,12 @@ export default function RegisterPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { username } },
+      options: {
+        data: {
+          username,
+          ...(displayName.trim() ? { display_name: displayName.trim() } : {}),
+        },
+      },
     })
     if (error) {
       toast.error(error.message)
@@ -66,6 +72,20 @@ export default function RegisterPage() {
                   placeholder="coinlover42"
                   required
                   autoComplete="username"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="displayName">
+                  Business Name <span className="text-muted-foreground font-normal">(optional)</span>
+                </Label>
+                <Input
+                  id="displayName"
+                  type="text"
+                  value={displayName}
+                  onChange={e => setDisplayName(e.target.value)}
+                  placeholder="Your business or display name"
+                  autoComplete="organization"
+                  maxLength={80}
                 />
               </div>
               <div className="space-y-1.5">

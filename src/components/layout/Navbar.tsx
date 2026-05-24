@@ -64,6 +64,7 @@ export default function Navbar() {
               { href: '/listings', label: user ? 'Buy' : 'Browse' },
               { href: '/sell', label: 'Sell' },
               { href: '/collect', label: 'Collect' },
+              ...(user ? [{ href: '/dealers', label: 'Dealers' }] : []),
             ].map(({ href, label }) => {
               const active = isActive(href)
               return (
@@ -138,6 +139,7 @@ export default function Navbar() {
             { href: '/listings', label: user ? 'Buy' : 'Browse' },
             { href: '/sell', label: 'Sell' },
             { href: '/collect', label: 'Collect' },
+            ...(user ? [{ href: '/dealers', label: 'Dealers' }] : []),
           ].map(({ href, label }) => {
             const active = isActive(href)
             return (

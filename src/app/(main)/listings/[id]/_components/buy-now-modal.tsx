@@ -84,7 +84,28 @@ export function BuyNowModal({ listing, onClose }: Props) {
           <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 mb-6">
             <p className="text-sm font-semibold">{listing.coin_name ?? 'Coin'}</p>
             {listing.price != null && (
-              <p className="text-xl font-bold mt-0.5">{formatCents(listing.price)}</p>
+              <>
+                <div className="mt-2 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Item price</span>
+                    <span className="tabular-nums">{formatCents(listing.price)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Buyer fee (5%)</span>
+                    <span className="tabular-nums">{formatCents(Math.round(listing.price * 0.05))}</span>
+                  </div>
+                  <div className="border-t border-border pt-1 flex justify-between font-bold">
+                    <span>Total</span>
+                    <span className="tabular-nums">{formatCents(listing.price + Math.round(listing.price * 0.05))}</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">
+                  Buyer fee may vary by membership tier.{' '}
+                  <a href="/#pricing" className="underline underline-offset-2 hover:text-foreground transition-colors">
+                    View plans
+                  </a>
+                </p>
+              </>
             )}
           </div>
 
