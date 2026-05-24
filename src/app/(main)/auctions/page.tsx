@@ -48,7 +48,7 @@ export default async function AuctionsPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Gavel className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-3xl font-bold tracking-tight">Live Auctions</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Live Auctions</h1>
           </div>
           <p className="text-muted-foreground mt-1">
             {auctions.length > 0

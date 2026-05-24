@@ -50,7 +50,7 @@ export default async function BuyNowPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <ShoppingBag className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-3xl font-bold tracking-tight">Buy Now</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Buy Now</h1>
           </div>
           <p className="text-muted-foreground mt-1">
             {listings.length > 0

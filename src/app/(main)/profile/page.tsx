@@ -31,7 +31,7 @@ export default async function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">Profile Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Profile Settings</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage your public profile information</p>
       </div>
 

@@ -130,7 +130,7 @@ export default async function SellPage({
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">My Listings</h1>
+          <h1 className="text-2xl font-bold tracking-tight">My Listings</h1>
         </div>
         <Button render={<Link href="/listings/new" />} disabled={atLimit}>
           <Plus className="h-4 w-4 mr-1.5" />

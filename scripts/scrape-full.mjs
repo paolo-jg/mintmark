@@ -68,6 +68,13 @@ async function getAllSeries() {
     }
   }
 
+  // For flat categories (no sub-series), treat the category itself as the series
+  for (const cat of catalog) {
+    if (cat.series.length === 0) {
+      cat.series.push({ name: cat.name, slug: cat.slug, url: cat.url })
+    }
+  }
+
   const total = catalog.reduce((s, c) => s + c.series.length, 0)
   console.log(`Found ${catalog.length} categories, ${total} series`)
   return catalog
@@ -131,7 +138,7 @@ function parseSeriesPage(html, seriesSlug) {
     const href = clm[1]
     // Must have at least: /coins/ID/category/series/year/
     const parts = href.replace(`${BASE}/coins/`, '').replace(/\/$/, '').split('/')
-    if (parts.length >= 4) {
+    if (parts.length >= 3) {
       coinLinks.add(href)
     }
   }
@@ -231,22 +238,58 @@ function parseCoinPage(html, url) {
 
   // Extract year and mintmark from URL
   // URL format: https://www.usacoinbook.com/coins/ID/category/series/year-MINT/variety/
+  // Flat-category format:  https://www.usacoinbook.com/coins/ID/category/year-MINT/
   const urlParts = url.replace(`${BASE}/coins/`, '').replace(/\/$/, '').split('/')
-  // urlParts: [ID, category, series, year-MINT, variety?]
-  if (urlParts.length >= 4) {
-    const yearMint = urlParts[3] // e.g. "1878-P" or "1878"
+  // urlParts: [ID, category, series, year-MINT, variety?]  (normal)
+  //        or [ID, category, year-MINT]                    (flat category)
+  const yearMintIdx = urlParts.length >= 4 ? 3 : (urlParts.length === 3 ? 2 : -1)
+  if (yearMintIdx >= 0) {
+    const yearMint = urlParts[yearMintIdx]
     const ym = yearMint.match(/^(\d{4})(?:-([A-Z]+))?/)
     if (ym) {
       result.year = parseInt(ym[1])
       result.mintMark = ym[2] || 'P'
     }
-    if (urlParts.length >= 5) {
-      result.variety = urlParts[4].replace(/-/g, ' ')
+    if (urlParts.length > yearMintIdx + 1) {
+      result.variety = urlParts[yearMintIdx + 1].replace(/-/g, ' ')
     }
   }
 
   return result
 }
+
+// ── Allowlist: only scrape series that map to our catalog ──────────────────────
+const ALLOWED_SERIES = new Set([
+  'two-cents', 'twenty-cents', 'gold-4/stella',
+  'half-cents/liberty-cap', 'half-cents/draped-bust', 'half-cents/classic-head', 'half-cents/braided-hair',
+  'large-cents/flowing-hair', 'large-cents/liberty-cap', 'large-cents/draped-bust', 'large-cents/classic-head',
+  'large-cents/coronet-liberty-head', 'large-cents/braided-hair-liberty-head',
+  'small-cents/flying-eagle-cent', 'small-cents/indian-head-cent', 'small-cents/lincoln-wheat-cent',
+  'small-cents/lincoln-memorial-cent', 'small-cents/lincoln-shield-cent',
+  'three-cents/silver-three-cent', 'three-cents/nickel-three-cent',
+  'half-dimes/flowing-hair', 'half-dimes/draped-bust', 'half-dimes/capped-bust', 'half-dimes/seated-liberty',
+  'nickels/shield', 'nickels/liberty', 'nickels/buffalo', 'nickels/jefferson',
+  'dimes/draped-bust', 'dimes/capped-bust', 'dimes/seated-liberty', 'dimes/barber', 'dimes/mercury', 'dimes/roosevelt',
+  'quarters/draped-bust', 'quarters/capped-bust', 'quarters/seated-liberty', 'quarters/barber',
+  'quarters/standing-liberty', 'quarters/washington', 'quarters/50-states-and-territories',
+  'quarters/america-the-beautiful', 'quarters/american-women',
+  'half-dollars/flowing-hair', 'half-dollars/draped-bust', 'half-dollars/capped-bust', 'half-dollars/seated-liberty',
+  'half-dollars/barber', 'half-dollars/walking-liberty', 'half-dollars/franklin', 'half-dollars/kennedy',
+  'dollars/flowing-hair', 'dollars/draped-bust', 'dollars/gobrecht', 'dollars/seated-liberty', 'dollars/trade',
+  'dollars/morgan', 'dollars/peace', 'dollars/eisenhower', 'dollars/susan-b-anthony',
+  'dollars/native-american-sacagawea', 'dollars/presidential', 'dollars/american-innovation',
+  'gold-dollars/liberty-head', 'gold-dollars/small-indian-head', 'gold-dollars/large-indian-head',
+  'gold-2-50-quarter-eagle/turban-head', 'gold-2-50-quarter-eagle/capped-bust', 'gold-2-50-quarter-eagle/classic-head',
+  'gold-2-50-quarter-eagle/coronet-head', 'gold-2-50-quarter-eagle/indian-head',
+  'gold-3/indian-princess-head',
+  'gold-5-half-eagle/turban-head', 'gold-5-half-eagle/capped-bust', 'gold-5-half-eagle/classic-head',
+  'gold-5-half-eagle/coronet-head', 'gold-5-half-eagle/indian-head',
+  'gold-10-eagle/turban-head', 'gold-10-eagle/coronet-head', 'gold-10-eagle/indian-head',
+  'gold-20-double-eagle/coronet-head', 'gold-20-double-eagle/saint-gaudens',
+  'bullion-coins/american-silver-eagle', 'bullion-coins/american-gold-eagle',
+  'bullion-coins/american-platinum-eagle', 'bullion-coins/american-palladium-eagle',
+  'bullion-coins/gold-american-buffalo',
+])
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
@@ -272,6 +315,12 @@ async function main() {
     for (const series of category.series) {
       seriesDone++
       const checkKey = series.slug
+
+      // Skip non-US series
+      if (!ALLOWED_SERIES.has(checkKey)) {
+        console.log(`[${seriesDone}/${totalSeries}] SKIP ${series.name} (not in allowlist)`)
+        continue
+      }
 
       // Use checkpoint if available
       if (checkpoint[checkKey]) {

@@ -52,7 +52,7 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
     <div className="max-w-2xl mx-auto px-4 py-12">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Order #{order.id.slice(0, 8).toUpperCase()}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Order #{order.id.slice(0, 8).toUpperCase()}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{formatCents(order.amount)}</p>
         </div>
         <Badge>{ORDER_STATUS_LABELS[order.status as OrderStatus]}</Badge>

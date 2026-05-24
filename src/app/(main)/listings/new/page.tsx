@@ -482,7 +482,7 @@ export default function NewListingPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold mb-1">List a Coin</h1>
+      <h1 className="text-2xl font-bold tracking-tight mb-1">List a Coin</h1>
       <p className="text-muted-foreground text-sm mb-8">
         Select the coin you are listing, add grading details, and set your price.
       </p>

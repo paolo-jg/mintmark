@@ -93,7 +93,7 @@ export default async function SellerPage({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold truncate">{name}</h1>
+              <h1 className="text-2xl font-bold tracking-tight truncate">{name}</h1>
               <Badge variant="secondary" className="text-xs">
                 {tierLabel}
               </Badge>

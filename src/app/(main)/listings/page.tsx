@@ -214,7 +214,7 @@ export default async function ListingsPage({
         <div>
           {isDirectory ? (
             <>
-              <h1 className="text-3xl font-bold tracking-tight">Explore all listings</h1>
+              <h1 className="text-2xl font-bold tracking-tight">Explore all listings</h1>
               <p className="text-muted-foreground mt-1.5">
                 {totalListings > 0
                   ? `Browse ${totalListings.toLocaleString()} active listing${totalListings !== 1 ? 's' : ''}: buy now or bid at auction`
@@ -230,7 +230,7 @@ export default async function ListingsPage({
                 <ChevronLeft className="h-3.5 w-3.5" />
                 All categories
               </Link>
-              <h1 className="text-3xl font-bold tracking-tight">{drillTitle}</h1>
+              <h1 className="text-2xl font-bold tracking-tight">{drillTitle}</h1>
               <p className="text-muted-foreground mt-1.5">
                 {filteredCategories.reduce((sum, c) => sum + c.series.length, 0)} series
               </p>

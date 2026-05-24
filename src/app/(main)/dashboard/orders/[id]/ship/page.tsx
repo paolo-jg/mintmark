@@ -159,7 +159,7 @@ export default function ShipOrderPage({ params }: { params: Promise<{ id: string
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold mb-1">Ship Order</h1>
+      <h1 className="text-2xl font-bold tracking-tight mb-1">Ship Order</h1>
       <p className="text-muted-foreground text-sm mb-8">
         Enter parcel dimensions to get live carrier rates, then purchase a label.
       </p>
