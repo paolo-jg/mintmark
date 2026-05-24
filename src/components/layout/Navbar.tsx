@@ -60,7 +60,7 @@ export default function Navbar() {
           {/* Desktop nav — true center */}
           <nav className="hidden md:flex items-center gap-2">
             {[
-              { href: '/', label: user ? 'Dashboard' : 'Home' },
+              { href: '/', label: 'Home' },
               { href: '/listings', label: user ? 'Buy' : 'Browse' },
               { href: '/sell', label: 'Sell' },
               { href: '/collect', label: 'Collect' },
@@ -135,7 +135,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden border-t border-border bg-background px-3 py-3 space-y-1">
           {[
-            { href: '/', label: user ? 'Dashboard' : 'Home' },
+            { href: '/', label: 'Home' },
             { href: '/listings', label: user ? 'Buy' : 'Browse' },
             { href: '/sell', label: 'Sell' },
             { href: '/collect', label: 'Collect' },
