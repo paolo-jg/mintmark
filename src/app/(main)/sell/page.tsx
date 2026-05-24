@@ -131,7 +131,6 @@ export default async function SellPage({
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">My Listings</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage your coins for sale</p>
         </div>
         <Button render={<Link href="/listings/new" />} disabled={atLimit}>
           <Plus className="h-4 w-4 mr-1.5" />

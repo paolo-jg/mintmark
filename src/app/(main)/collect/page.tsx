@@ -23,10 +23,7 @@ export default async function CollectPage() {
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="mb-10">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">My Collection</h1>
-        <p className="text-muted-foreground">
-          Track the graded coins you own and the ones you&apos;re hunting for.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">My Collection</h1>
       </div>
 
       <CollectClient initialItems={(items ?? []) as CollectionItem[]} isLoggedIn={!!user} />
