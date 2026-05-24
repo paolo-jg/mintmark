@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 
-export async function GET() {
+// Service role client bypasses RLS — auth is enforced at the route level instead
+function getServiceClient() {
+  return createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
+
+async function getUser() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  return user
+}
+
+export async function GET() {
+  const user = await getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data, error } = await supabase
+  const db = getServiceClient()
+  const { data, error } = await db
     .from('collection_items')
     .select('*')
     .eq('user_id', user.id)
@@ -17,12 +32,12 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { error, data } = await supabase
+  const db = getServiceClient()
+  const { error, data } = await db
     .from('collection_items')
     .insert({ ...body, user_id: user.id })
     .select()
@@ -32,13 +47,33 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ data })
 }
 
+export async function PATCH(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { id, ...updates } = await req.json()
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+
+  const db = getServiceClient()
+  const { data, error } = await db
+    .from('collection_items')
+    .update(updates)
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  return NextResponse.json({ data })
+}
+
 export async function DELETE(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await req.json()
-  const { error } = await supabase
+  const db = getServiceClient()
+  const { error } = await db
     .from('collection_items')
     .delete()
     .eq('id', id)

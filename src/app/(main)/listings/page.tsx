@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Gavel, ChevronLeft } from 'lucide-react'
+import { Gavel, ChevronLeft, ShoppingBag } from 'lucide-react'
 import { COIN_CATALOG, type CoinSeries } from '@/lib/coins/catalog'
 import { ExploreFilters } from './_components/explore-filters'
 import { DirectoryClient } from './_components/directory-client'
@@ -214,7 +214,7 @@ export default async function ListingsPage({
         <div>
           {isDirectory ? (
             <>
-              <h1 className="text-3xl font-bold tracking-tight">Explore</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Explore all listings</h1>
               <p className="text-muted-foreground mt-1.5">
                 {totalListings > 0
                   ? `Browse ${totalListings.toLocaleString()} active listing${totalListings !== 1 ? 's' : ''}: buy now or bid at auction`
@@ -237,13 +237,22 @@ export default async function ListingsPage({
             </>
           )}
         </div>
-        <Link
-          href="/auctions"
-          className="flex-none flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-base font-bold text-foreground hover:border-foreground/40 hover:bg-muted transition-colors whitespace-nowrap"
-        >
-          <Gavel className="h-4 w-4" />
-          Live Auctions
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/buy-now"
+            className="flex-none flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-base font-bold text-foreground hover:border-foreground/40 hover:bg-muted transition-colors whitespace-nowrap"
+          >
+            <ShoppingBag className="h-4 w-4" />
+            Buy Now
+          </Link>
+          <Link
+            href="/auctions"
+            className="flex-none flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-base font-bold text-foreground hover:border-foreground/40 hover:bg-muted transition-colors whitespace-nowrap"
+          >
+            <Gavel className="h-4 w-4" />
+            Live Auctions
+          </Link>
+        </div>
       </div>
 
       <ExploreFilters />

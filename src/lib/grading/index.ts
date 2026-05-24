@@ -26,6 +26,8 @@ export async function lookupCert(
           verificationStatus: 'unverified' as VerificationStatus,
         },
       }
+    case 'Ungraded':
+      return { success: false, error: 'Not applicable for ungraded coins' }
     default:
       return { success: false, error: 'Unknown grading service' }
   }
@@ -98,6 +100,7 @@ export function getVerifyUrl(service: GradingService, certNumber: string): strin
     case 'NGC':   return ngcVerifyUrl(certNumber)
     case 'ANACS': return anacsVerifyUrl(certNumber)
     case 'ICG':   return icgVerifyUrl(certNumber)
+    case 'Ungraded': return null
     default:      return null
   }
 }
@@ -138,4 +141,5 @@ export const GRADING_SERVICES: { value: GradingService; label: string; autoVerif
   { value: 'ANACS', label: 'ANACS', autoVerified: false },
   { value: 'ICG', label: 'ICG', autoVerified: false },
   { value: 'SEGS', label: 'SEGS', autoVerified: false },
+  { value: 'Ungraded', label: 'Ungraded', autoVerified: false },
 ]

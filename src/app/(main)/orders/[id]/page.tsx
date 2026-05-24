@@ -99,7 +99,7 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Carrier</span>
-                <span>{shipment.carrier} — {shipment.service_level}</span>
+                <span>{shipment.carrier} · {shipment.service_level}</span>
               </div>
               {shipment.tracking_number && (
                 <div className="flex justify-between">

@@ -27,7 +27,7 @@ const GRADES = [
   'AG3', 'FR2', 'PO1',
 ]
 
-const GRADING_SERVICES = ['PCGS', 'NGC', 'ANACS', 'ICG', 'Raw (Ungraded)']
+const GRADING_SERVICES = ['PCGS', 'NGC', 'ANACS', 'ICG', 'Ungraded']
 
 type Step = 'category' | 'series' | 'details'
 
@@ -122,7 +122,7 @@ export function AddWishlistModal({ onClose, onAdded }: Props) {
         body: JSON.stringify({
           type: 'wishlist',
           coin_name: coinName,
-          grading_service: gradingService !== 'Raw (Ungraded)' ? gradingService : null,
+          grading_service: gradingService !== 'Ungraded' ? gradingService : null,
           grade: targetGrade || null,
           max_price: maxPrice ? Math.round(parseFloat(maxPrice) * 100) : null,
           notes: notes.trim() || null,

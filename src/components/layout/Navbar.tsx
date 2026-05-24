@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Coins, Menu, X, Plus } from 'lucide-react'
+import { Coins, Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
@@ -48,21 +48,22 @@ export default function Navbar() {
   return (
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-18">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg tracking-tight">
-            <Coins className="h-5 w-5" />
-            Pedigree Coins
-          </Link>
+        <div className="flex items-center h-18">
+          {/* Logo — far left, flex-1 so nav stays centered */}
+          <div className="flex-1">
+            <Link href="/" className="flex items-center gap-2 font-bold text-lg tracking-tight w-fit">
+              <Coins className="h-5 w-5" />
+              Pedigree Coins
+            </Link>
+          </div>
 
-          {/* Desktop nav */}
+          {/* Desktop nav — true center */}
           <nav className="hidden md:flex items-center gap-2">
             {[
-              { href: '/', label: 'Home' },
-              { href: '/listings', label: 'Browse' },
-              { href: '/listings/new', label: 'Sell' },
+              { href: '/', label: user ? 'Dashboard' : 'Home' },
+              { href: '/listings', label: user ? 'Buy' : 'Browse' },
+              { href: '/sell', label: 'Sell' },
               { href: '/collect', label: 'Collect' },
-              ...(user ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
             ].map(({ href, label }) => {
               const active = isActive(href)
               return (
@@ -81,18 +82,14 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Desktop actions */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* Desktop actions — far right, flex-1 so nav stays centered */}
+          <div className="flex-1 hidden md:flex items-center justify-end gap-3">
             {user ? (
               <>
-                <Button size="sm" render={<Link href="/listings/new" />}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  List a Coin
-                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={
-                      <button className="rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+                      <button className="flex items-center justify-center rounded-full outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
                     }
                   >
                     <Avatar className="h-8 w-8">
@@ -103,12 +100,6 @@ export default function Navbar() {
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem onClick={() => router.push('/profile')}>
                       Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/dashboard')}>
-                      Dashboard
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/dashboard/want-list')}>
-                      Want List
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="text-destructive">
@@ -143,11 +134,10 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden border-t border-border bg-background px-3 py-3 space-y-1">
           {[
-            { href: '/', label: 'Home' },
-            { href: '/listings', label: 'Browse' },
-            { href: '/listings/new', label: 'Sell' },
+            { href: '/', label: user ? 'Dashboard' : 'Home' },
+            { href: '/listings', label: user ? 'Buy' : 'Browse' },
+            { href: '/sell', label: 'Sell' },
             { href: '/collect', label: 'Collect' },
-            ...(user ? [{ href: '/dashboard', label: 'Dashboard' }] : []),
           ].map(({ href, label }) => {
             const active = isActive(href)
             return (

@@ -168,7 +168,7 @@ export default function ShipOrderPage({ params }: { params: Promise<{ id: string
         <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 text-sm flex gap-2">
           <Shield className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
           <span>
-            This order exceeds {formatCents(INSURANCE_THRESHOLD_CENTS)} — insurance is required and will be
+            This order exceeds {formatCents(INSURANCE_THRESHOLD_CENTS)}. Insurance is required and will be
             included automatically in your rate quotes.
             Insured value: <strong>{formatCents(insuredValueCents)}</strong>.
           </span>
@@ -240,7 +240,7 @@ export default function ShipOrderPage({ params }: { params: Promise<{ id: string
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-sm">
-                      {rate.provider} — {rate.servicelevel.name}
+                      {rate.provider} · {rate.servicelevel.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Est. {rate.estimatedDays} {rate.estimatedDays === 1 ? 'day' : 'days'}
@@ -273,7 +273,7 @@ export default function ShipOrderPage({ params }: { params: Promise<{ id: string
         >
           {purchasingLabel
             ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Purchasing Label…</>
-            : `Purchase Label — $${rates.find(r => r.objectId === selectedRateId)?.amount}`
+            : `Purchase Label · $${rates.find(r => r.objectId === selectedRateId)?.amount}`
           }
         </Button>
       )}

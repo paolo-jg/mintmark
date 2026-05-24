@@ -1,20 +1,22 @@
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { Gavel } from 'lucide-react'
-import { AuctionsClient } from './_components/auctions-client'
-import type { AuctionRow } from './_components/auctions-client'
+import { ShoppingBag } from 'lucide-react'
+import { BuyNowClient } from './_components/buy-now-client'
+import type { BuyNowListing } from './_components/buy-now-client'
 
-export default async function AuctionsPage() {
+export default async function BuyNowPage() {
   const supabase = await createClient()
 
   const { data: raw } = await supabase
-    .from('auctions')
-    .select('*, listing:listings(id, title, coin_name, grading_service, grade, year, mint_mark, denomination, verification_status, images, series_slug)')
-    .gt('end_time', new Date().toISOString())
+    .from('listings')
+    .select('id, title, coin_name, grading_service, grade, year, mint_mark, denomination, verification_status, images, price, series_slug, created_at')
+    .eq('status', 'active')
+    .eq('listing_type', 'fixed')
+    .order('created_at', { ascending: false })
     .limit(96)
 
-  const auctions: AuctionRow[] = (raw ?? []).filter(a => a.listing)
+  const listings: BuyNowListing[] = (raw ?? []) as BuyNowListing[]
 
   const serviceDb = createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -47,13 +49,13 @@ export default async function AuctionsPage() {
       <div className="flex items-start justify-between gap-4 mb-8">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Gavel className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-3xl font-bold tracking-tight">Live Auctions</h1>
+            <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+            <h1 className="text-3xl font-bold tracking-tight">Buy Now</h1>
           </div>
           <p className="text-muted-foreground mt-1">
-            {auctions.length > 0
-              ? `${auctions.length} active auction${auctions.length !== 1 ? 's' : ''}. Bid before time runs out.`
-              : 'No live auctions right now. Check back soon.'}
+            {listings.length > 0
+              ? `${listings.length} listing${listings.length !== 1 ? 's' : ''} available at fixed price`
+              : 'No fixed-price listings right now. Check back soon.'}
           </p>
         </div>
         <Link
@@ -64,7 +66,7 @@ export default async function AuctionsPage() {
         </Link>
       </div>
 
-      <AuctionsClient auctions={auctions} wishlistCounts={wishlistMap} />
+      <BuyNowClient listings={listings} wishlistCounts={wishlistMap} />
 
     </div>
   )

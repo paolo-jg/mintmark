@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Clock, Search, Flame } from 'lucide-react'
+import { Clock, Search, Flame, Heart } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -26,6 +26,7 @@ export interface AuctionRow {
     denomination: string | null
     verification_status: string
     images: string[] | null
+    series_slug: string | null
   }
 }
 
@@ -44,12 +45,13 @@ function timeLeft(endTime: string): { label: string; urgent: boolean } {
 }
 
 // ── Card ─────────────────────────────────────────────────────────────────────
-function AuctionCard({ auction, hot = false }: { auction: AuctionRow; hot?: boolean }) {
+function AuctionCard({ auction, hot = false, wishlistCounts }: { auction: AuctionRow; hot?: boolean; wishlistCounts: Record<string, number> }) {
   const { listing } = auction
   const currentPrice = auction.current_bid ?? auction.start_price
   const { label, urgent } = timeLeft(auction.end_time)
   const isVerified = listing.verification_status === 'verified'
   const hasBids = auction.bid_count > 0
+  const wishCount = wishlistCounts[auction.listing.series_slug ?? ''] ?? 0
 
   return (
     <Link href={`/listings/${listing.id}`} className="group block">
@@ -75,6 +77,13 @@ function AuctionCard({ auction, hot = false }: { auction: AuctionRow; hot?: bool
           {label}
         </div>
 
+        {/* Wishlist badge */}
+        {wishCount >= 3 && (
+          <div className="absolute top-2 right-2 flex items-center gap-1 bg-rose-500/90 text-white rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
+            <Heart className="h-2.5 w-2.5" fill="currentColor" />
+            {wishCount} want this
+          </div>
+        )}
 
         {/* Hot badge */}
         {hot && (
@@ -113,7 +122,7 @@ function AuctionCard({ auction, hot = false }: { auction: AuctionRow; hot?: bool
 }
 
 // ── Main client component ─────────────────────────────────────────────────────
-export function AuctionsClient({ auctions }: { auctions: AuctionRow[] }) {
+export function AuctionsClient({ auctions, wishlistCounts }: { auctions: AuctionRow[]; wishlistCounts: Record<string, number> }) {
   const [tab, setTab] = useState<Tab>('ending-soon')
   const [query, setQuery] = useState('')
 
@@ -198,6 +207,7 @@ export function AuctionsClient({ auctions }: { auctions: AuctionRow[] }) {
               key={auction.id}
               auction={auction}
               hot={auction.bid_count >= 8}
+              wishlistCounts={wishlistCounts}
             />
           ))}
         </div>

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 import { Loader2, X, FlaskConical } from 'lucide-react'
 
 export function DevBanner() {
@@ -17,7 +16,6 @@ function DevBannerInner() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const router = useRouter()
   const supabase = createClient()
 
   const signIn = async () => {
@@ -28,7 +26,7 @@ function DevBannerInner() {
       setError(error.message)
       setLoading(false)
     } else {
-      router.refresh()
+      window.location.reload()
     }
   }
 

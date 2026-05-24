@@ -1,4 +1,4 @@
-export type GradingService = 'PCGS' | 'NGC' | 'ANACS' | 'ICG' | 'SEGS'
+export type GradingService = 'PCGS' | 'NGC' | 'ANACS' | 'ICG' | 'SEGS' | 'Ungraded'
 
 export type VerificationStatus = 'verified' | 'unverified' | 'pending'
 
