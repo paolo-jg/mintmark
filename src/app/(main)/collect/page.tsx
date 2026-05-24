@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import { CollectClient, type CollectionItem } from './_components/collect-client'
 import { DevBanner } from '@/components/dev/dev-banner'
 
@@ -7,13 +6,9 @@ export const metadata = {
   title: 'My Collection — Pedigree Coins',
 }
 
-const IS_DEV = process.env.NODE_ENV === 'development'
-
 export default async function CollectPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user && !IS_DEV) redirect('/auth/login')
 
   const items = user
     ? (await supabase
@@ -34,7 +29,7 @@ export default async function CollectPage() {
         </p>
       </div>
 
-      <CollectClient initialItems={(items ?? []) as CollectionItem[]} />
+      <CollectClient initialItems={(items ?? []) as CollectionItem[]} isLoggedIn={!!user} />
       <DevBanner />
     </main>
   )

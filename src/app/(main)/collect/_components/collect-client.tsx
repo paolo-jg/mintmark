@@ -1,13 +1,47 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Plus, Trash2, Star, Coins, ScanLine, ChevronDown, Check, ArrowRight, Search, X, Pencil } from 'lucide-react'
+import { Plus, Trash2, Star, Coins, ScanLine, ChevronDown, Check, ArrowRight, Search, X, Pencil, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import Link from 'next/link'
 import { CoinSelector } from './coin-selector'
 import { CoinScanModal } from './coin-scan-modal'
 import { CoinDetailModal } from './coin-detail-modal'
 import { WishlistEditModal } from './wishlist-edit-modal'
+
+function SignupPromptModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-background shadow-xl p-8 text-center">
+        <div className="flex items-center justify-center mb-5">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+            <Coins className="h-7 w-7 text-muted-foreground" />
+          </div>
+        </div>
+        <h2 className="text-xl font-bold mb-2">Save your collection</h2>
+        <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+          Create a free account to save coins, track your wish list, and get notified when matches are listed.
+        </p>
+        <div className="flex flex-col gap-2">
+          <Button className="w-full" render={<Link href="/auth/register" />}>
+            Create free account
+          </Button>
+          <Button variant="outline" className="w-full" render={<Link href="/auth/login" />}>
+            <LogIn className="h-4 w-4 mr-1.5" />
+            Sign in
+          </Button>
+          <button
+            onClick={onClose}
+            className="mt-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Maybe later
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export type OwnedStatus = 'owned' | 'for_sale' | 'sold'
 type StatusFilter = 'all' | OwnedStatus
@@ -394,12 +428,13 @@ function SectionHeader({ icon, label }: { icon?: React.ReactNode; label: string 
   )
 }
 
-export function CollectClient({ initialItems }: { initialItems: CollectionItem[] }) {
+export function CollectClient({ initialItems, isLoggedIn }: { initialItems: CollectionItem[]; isLoggedIn: boolean }) {
   const [tab, setTab] = useState<Tab>('owned')
   const [items, setItems] = useState<CollectionItem[]>(initialItems)
   const [showOwned, setShowOwned] = useState(false)
   const [showScan, setShowScan] = useState(false)
   const [showWishlist, setShowWishlist] = useState(false)
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false)
   const [selectedItem, setSelectedItem] = useState<CollectionItem | null>(null)
   const [editingItem, setEditingItem] = useState<CollectionItem | null>(null)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -407,6 +442,10 @@ export function CollectClient({ initialItems }: { initialItems: CollectionItem[]
   const [ownedSearch, setOwnedSearch] = useState('')
   const [wishlistSearch, setWishlistSearch] = useState('')
   const [soldSearch, setSoldSearch] = useState('')
+
+  const openAddOwned = () => isLoggedIn ? setShowOwned(true) : setShowSignupPrompt(true)
+  const openAddScan  = () => isLoggedIn ? setShowScan(true)  : setShowSignupPrompt(true)
+  const openAddWish  = () => isLoggedIn ? setShowWishlist(true) : setShowSignupPrompt(true)
 
   const allOwned = items.filter(i => i.type === 'owned')
   const owned = allOwned.filter(i => i.status !== 'sold')
@@ -440,7 +479,7 @@ export function CollectClient({ initialItems }: { initialItems: CollectionItem[]
   const tabs: { id: Tab; label: string; count: number }[] = [
     { id: 'owned',    label: 'Owned',     count: owned.length },
     { id: 'wishlist', label: 'Wish List', count: wishlist.length },
-    { id: 'sold',     label: 'Sold',      count: soldCoins.length },
+    ...(isLoggedIn ? [{ id: 'sold' as Tab, label: 'Sold', count: soldCoins.length }] : []),
   ]
 
   const ownedCard = (item: CollectionItem) => (
@@ -471,16 +510,16 @@ export function CollectClient({ initialItems }: { initialItems: CollectionItem[]
         <div className="pb-2 flex items-center gap-2">
           {tab === 'owned' && (
             <>
-              <Button size="sm" variant="outline" onClick={() => setShowScan(true)}>
+              <Button size="sm" variant="outline" onClick={openAddScan}>
                 <ScanLine className="h-4 w-4 mr-1.5" />Scan
               </Button>
-              <Button size="sm" onClick={() => setShowOwned(true)}>
+              <Button size="sm" onClick={openAddOwned}>
                 <Plus className="h-4 w-4 mr-1" />Add Owned
               </Button>
             </>
           )}
           {tab === 'wishlist' && (
-            <Button size="sm" onClick={() => setShowWishlist(true)}>
+            <Button size="sm" onClick={openAddWish}>
               <Plus className="h-4 w-4 mr-1" />Add to Wish List
             </Button>
           )}
@@ -495,10 +534,10 @@ export function CollectClient({ initialItems }: { initialItems: CollectionItem[]
             <p className="text-base font-medium mb-1.5">No coins in your collection yet</p>
             <p className="text-sm mb-5">Browse the catalog manually or scan a photo to identify your coin with AI.</p>
             <div className="flex items-center justify-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowScan(true)}>
+              <Button variant="outline" size="sm" onClick={openAddScan}>
                 <ScanLine className="h-4 w-4 mr-1.5" />Scan with AI
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowOwned(true)}>
+              <Button variant="outline" size="sm" onClick={openAddOwned}>
                 <Plus className="h-4 w-4 mr-1" />Add manually
               </Button>
             </div>
@@ -580,7 +619,7 @@ export function CollectClient({ initialItems }: { initialItems: CollectionItem[]
             <Star className="h-10 w-10 mx-auto mb-4 text-muted-foreground/30" />
             <p className="text-base font-medium mb-1.5">Your wish list is empty</p>
             <p className="text-sm mb-5">Track coins you&apos;re hunting for.</p>
-            <Button variant="outline" size="sm" onClick={() => setShowWishlist(true)}>
+            <Button variant="outline" size="sm" onClick={openAddWish}>
               <Plus className="h-4 w-4 mr-1" />Add your first coin
             </Button>
           </div>
@@ -675,6 +714,7 @@ export function CollectClient({ initialItems }: { initialItems: CollectionItem[]
       )}
 
       {/* Modals */}
+      {showSignupPrompt && <SignupPromptModal onClose={() => setShowSignupPrompt(false)} />}
       {selectedItem && <CoinDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
       {editingItem && <WishlistEditModal item={editingItem} onClose={() => setEditingItem(null)} onSaved={updated => { handleUpdate(updated); setEditingItem(null) }} />}
       {showScan && <CoinScanModal onClose={() => setShowScan(false)} onAdded={() => { setShowScan(false); refresh() }} />}

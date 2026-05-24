@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -16,8 +16,6 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') ?? '/dashboard'
   const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -27,7 +25,7 @@ function LoginForm() {
     if (error) {
       toast.error(error.message)
     } else {
-      router.push(redirectTo)
+      router.push('/')
       router.refresh()
     }
     setLoading(false)
