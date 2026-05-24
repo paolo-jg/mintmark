@@ -248,11 +248,7 @@ export default async function SellPage({
           <p className="text-sm font-medium text-muted-foreground mb-1">
             {tab === 'all' ? 'No listings yet' : `No ${tab} listings`}
           </p>
-          {tab === 'all' && (
-            <p className="text-xs text-muted-foreground mb-4">
-              Create your first listing to start selling.
-            </p>
-          )}
+
           {tab === 'all' && !atLimit && (
             <Button size="sm" render={<Link href="/listings/new" />}>
               <Plus className="h-4 w-4 mr-1.5" />
