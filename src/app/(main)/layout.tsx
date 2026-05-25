@@ -1,8 +1,6 @@
 import Navbar from '@/components/layout/Navbar'
 import { SWRProvider } from '@/components/providers/swr-provider'
 
-export const runtime = 'edge'
-
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <SWRProvider>
