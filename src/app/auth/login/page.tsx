@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ function LoginForm() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -26,8 +27,9 @@ function LoginForm() {
       toast.error(error.message)
     } else {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+      const redirectTo = searchParams.get('redirectTo') ?? '/'
       // Hard redirect to app domain — router.push stays on the same domain
-      window.location.href = appUrl ? `${appUrl}/sell` : '/sell'
+      window.location.href = appUrl ? `${appUrl}${redirectTo}` : redirectTo
     }
     setLoading(false)
   }

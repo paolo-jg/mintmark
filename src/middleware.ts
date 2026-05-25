@@ -90,11 +90,7 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    const isMarketingPath = MARKETING_ONLY_PATHS.includes(pathname)
-    if (isMarketingPath && pathname !== '/auth/login' && pathname !== '/auth/register') {
-      return NextResponse.redirect(new URL(pathname, MARKETING_URL))
-    }
-
+    // Signed-in users stay on the app domain for all paths — no bounce to marketing
     return updateSession(request)
   }
 
