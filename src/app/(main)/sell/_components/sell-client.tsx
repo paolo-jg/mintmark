@@ -1,15 +1,14 @@
 'use client'
 
 import useSWR from 'swr'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
-import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, Landmark, X, ArrowRight, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { redirect } from 'next/navigation'
 
 // ── Tier config ───────────────────────────────────────────────────────────────
 type Tier =
@@ -66,6 +65,8 @@ interface SellData {
   tier: Tier
   carryOver: number
   createdThisMonth: number
+  stripeAccountId: string | null
+  stripeOnboardingComplete: boolean
 }
 
 async function fetchSellData(): Promise<SellData | null> {
@@ -89,7 +90,7 @@ async function fetchSellData(): Promise<SellData | null> {
       .eq('seller_id', user.id)
       .order('created_at', { ascending: false }),
     supabase.from('orders').select('amount, status').eq('seller_id', user.id),
-    supabase.from('profiles').select('subscription_tier').eq('id', user.id).single(),
+    supabase.from('profiles').select('subscription_tier, stripe_account_id, stripe_onboarding_complete').eq('id', user.id).single(),
     supabase
       .from('listings')
       .select('id', { count: 'exact', head: true })
@@ -109,12 +110,47 @@ async function fetchSellData(): Promise<SellData | null> {
     tier: ((profile?.subscription_tier ?? 'collector_basic') as Tier),
     carryOver: carryOver ?? 0,
     createdThisMonth: createdThisMonth ?? 0,
+    stripeAccountId: profile?.stripe_account_id ?? null,
+    stripeOnboardingComplete: profile?.stripe_onboarding_complete ?? false,
   }
 }
 
 export function SellClient() {
-  const { data, isLoading } = useSWR('sell-dashboard', fetchSellData, { keepPreviousData: true })
+  const { data, isLoading, mutate } = useSWR('sell-dashboard', fetchSellData, { keepPreviousData: true })
   const [tab, setTab] = useState<TabId>('all')
+  const [connectLoading, setConnectLoading] = useState(false)
+  const [dismissedOnboarded, setDismissedOnboarded] = useState(false)
+
+  // Check for ?onboarded=1 or ?onboarding=incomplete from Stripe return
+  const [stripeReturn, setStripeReturn] = useState<'success' | 'incomplete' | null>(null)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('onboarded') === '1') setStripeReturn('success')
+    else if (params.get('onboarding') === 'incomplete') setStripeReturn('incomplete')
+    // Clean up the URL
+    if (params.has('onboarded') || params.has('onboarding')) {
+      const clean = window.location.pathname
+      window.history.replaceState({}, '', clean)
+    }
+  }, [])
+
+  async function handleConnectStripe() {
+    setConnectLoading(true)
+    try {
+      const res = await fetch('/api/stripe/connect/create', { method: 'POST' })
+      const json = await res.json()
+      if (json.url) {
+        window.location.href = json.url
+      } else {
+        console.error('No onboarding URL returned', json)
+        setConnectLoading(false)
+      }
+    } catch (e) {
+      console.error('Stripe connect error', e)
+      setConnectLoading(false)
+    }
+  }
 
   if (isLoading && !data) {
     return (
@@ -134,7 +170,8 @@ export function SellClient() {
     return null
   }
 
-  const { allListings, orders, tier, carryOver, createdThisMonth } = data
+  const { allListings, orders, tier, carryOver, createdThisMonth, stripeAccountId, stripeOnboardingComplete } = data
+  const needsStripeConnect = !stripeOnboardingComplete
   const tierConfig = TIER_CONFIG[tier]
 
   // Stats
@@ -176,6 +213,73 @@ export function SellClient() {
           Create Listing
         </Button>
       </div>
+
+      {/* Stripe onboarding success toast */}
+      {stripeReturn === 'success' && !dismissedOnboarded && (
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-4 py-3 mb-6">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
+            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+              Your payout account is connected. You're ready to sell!
+            </p>
+          </div>
+          <button onClick={() => setDismissedOnboarded(true)} className="text-emerald-600 hover:text-emerald-800 transition-colors flex-shrink-0">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Stripe onboarding incomplete notice */}
+      {stripeReturn === 'incomplete' && (
+        <div className="flex items-start justify-between gap-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-4 py-3 mb-6">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Payout setup incomplete</p>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                Your account wasn't fully verified. Complete setup to receive payouts.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleConnectStripe}
+            disabled={connectLoading}
+            className="flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200 hover:text-amber-900 transition-colors flex-shrink-0 mt-0.5"
+          >
+            {connectLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRight className="h-3.5 w-3.5" />}
+            Resume setup
+          </button>
+        </div>
+      )}
+
+      {/* Connect bank account banner */}
+      {needsStripeConnect && stripeReturn === null && (
+        <div className="rounded-xl border border-border bg-card px-5 py-4 mb-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+              <Landmark className="h-4.5 w-4.5 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold">Connect your payout account</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Add your bank account to receive payments from sales.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleConnectStripe}
+            disabled={connectLoading}
+            className="flex items-center gap-1.5 flex-shrink-0 rounded-lg bg-foreground text-background text-sm font-semibold px-4 py-2 hover:bg-foreground/90 transition-colors disabled:opacity-60"
+          >
+            {connectLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <ArrowRight className="h-3.5 w-3.5" />
+            )}
+            Set up payouts
+          </button>
+        </div>
+      )}
 
       {/* Monthly listing quota */}
       <div className="rounded-xl border border-border bg-card px-5 py-4 mb-6">
