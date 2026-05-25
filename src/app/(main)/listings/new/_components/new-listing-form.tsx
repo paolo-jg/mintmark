@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import type { GradingService, CoinGrade, ListingType } from '@/types'
 import { CoinSelector, type PickedCoin } from '@/app/(main)/collect/_components/coin-selector'
 import { COIN_CATALOG } from '@/lib/coins/catalog'
+import { StripeConnectGate } from '@/components/stripe/stripe-connect-gate'
 
 function formatGrade(grade: string): string {
   return grade.replace(/^([A-Za-z]+)(\d+)$/, '$1-$2')
@@ -480,6 +481,8 @@ export default function NewListingPage() {
   const dragIndexRef = useRef<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
+  const [stripeOnboardingComplete, setStripeOnboardingComplete] = useState<boolean | null>(null)
+
   const [acceptOffers, setAcceptOffers] = useState(false)
   const [minOfferAmount, setMinOfferAmount] = useState('')
   const [autoAcceptPct, setAutoAcceptPct] = useState('')
@@ -499,11 +502,12 @@ export default function NewListingPage() {
       const userId = data.user.id
       const { data: profile } = await supabase
         .from('profiles')
-        .select('subscription_tier')
+        .select('subscription_tier, stripe_onboarding_complete')
         .eq('id', userId)
         .single()
       const tier = profile?.subscription_tier ?? 'collector_basic'
       if (profile?.subscription_tier) setSellerTier(tier)
+      setStripeOnboardingComplete(profile?.stripe_onboarding_complete ?? false)
 
       const limit = LISTING_LIMITS[tier] ?? null
       const now = new Date()
@@ -942,6 +946,10 @@ export default function NewListingPage() {
   }
 
   return (
+    <>
+    {stripeOnboardingComplete === false && (
+      <StripeConnectGate onBack={() => router.push('/sell')} />
+    )}
     <div className="max-w-2xl mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold tracking-tight mb-1">List a Coin</h1>
       <p className="text-muted-foreground text-sm mb-8">
@@ -1845,5 +1853,6 @@ export default function NewListingPage() {
         />
       )}
     </div>
+    </>
   )
 }

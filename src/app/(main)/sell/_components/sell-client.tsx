@@ -4,11 +4,13 @@ import useSWR from 'swr'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
 import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, Landmark, X, ArrowRight, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { StripeConnectGate } from '@/components/stripe/stripe-connect-gate'
 
 // ── Tier config ───────────────────────────────────────────────────────────────
 type Tier =
@@ -117,10 +119,12 @@ export async function fetchSellData(): Promise<SellData | null> {
 }
 
 export function SellClient() {
+  const router = useRouter()
   const { data, isLoading, mutate } = useSWR('sell-dashboard', fetchSellData, { keepPreviousData: true })
   const [tab, setTab] = useState<TabId>('all')
   const [connectLoading, setConnectLoading] = useState(false)
   const [dismissedOnboarded, setDismissedOnboarded] = useState(false)
+  const [showStripeGate, setShowStripeGate] = useState(false)
 
   // Check for ?onboarded=1 or ?onboarding=incomplete from Stripe return
   const [stripeReturn, setStripeReturn] = useState<'success' | 'incomplete' | null>(null)
@@ -208,10 +212,23 @@ export function SellClient() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">My Listings</h1>
         </div>
-        <Button render={<Link href="/listings/new" />} disabled={atLimit}>
+        <Button
+          disabled={atLimit}
+          onClick={() => {
+            if (needsStripeConnect) {
+              setShowStripeGate(true)
+            } else {
+              router.push('/listings/new')
+            }
+          }}
+        >
           <Plus className="h-4 w-4 mr-1.5" />
           Create Listing
         </Button>
+
+        {showStripeGate && (
+          <StripeConnectGate onBack={() => setShowStripeGate(false)} />
+        )}
       </div>
 
       {/* Stripe onboarding success toast */}
