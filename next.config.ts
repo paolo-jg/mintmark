@@ -9,13 +9,18 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
       {
-        // PCGS coin images
+        // PCGS coin images (www + any CDN subdomain)
         protocol: 'https',
-        hostname: 'www.pcgs.com',
+        hostname: '**.pcgs.com',
       },
       {
         protocol: 'https',
         hostname: 'storage.googleapis.com',
+      },
+      {
+        // Coin catalog reference images
+        protocol: 'https',
+        hostname: 'i.usacoinbook.com',
       },
     ],
     formats: ['image/avif', 'image/webp'],

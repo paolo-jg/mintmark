@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { formatCents } from '@/lib/utils'
 import { BuyNowModal } from './buy-now-modal'
-import { Pencil, Trash2, AlertTriangle, X, Loader2 } from 'lucide-react'
+import { BidModal } from './bid-modal'
+import { Pencil, Trash2, AlertTriangle, X, Loader2, Clock, Gavel } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -16,6 +17,15 @@ const CAPPED_TIERS = new Set([
   'collector_standard',
   'collector_premium',
 ])
+
+export interface AuctionData {
+  id: string
+  current_bid: number
+  start_price: number
+  end_time: string
+  bid_count: number
+  reserve_price: number | null
+}
 
 interface Props {
   listing: {
@@ -31,6 +41,7 @@ interface Props {
   }
   isOwner: boolean
   sellerTier?: string
+  auction?: AuctionData | null
 }
 
 // ── Delete confirmation modal ─────────────────────────────────────────────────
@@ -135,9 +146,167 @@ function DeleteModal({
   )
 }
 
+// ── Countdown hook ────────────────────────────────────────────────────────────
+
+function useCountdown(endTime: string) {
+  const [msLeft, setMsLeft] = useState(() => new Date(endTime).getTime() - Date.now())
+
+  useEffect(() => {
+    // Snap immediately when endTime changes
+    setMsLeft(new Date(endTime).getTime() - Date.now())
+
+    const id = setInterval(() => {
+      setMsLeft(new Date(endTime).getTime() - Date.now())
+    }, 1000)
+    return () => clearInterval(id)
+  }, [endTime])
+
+  return msLeft
+}
+
+function formatCountdown(ms: number): { label: string; urgent: boolean } {
+  if (ms <= 0) return { label: 'Ended', urgent: true }
+  const totalSec = Math.floor(ms / 1000)
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  if (h >= 24) {
+    const d = Math.floor(h / 24)
+    return { label: `${d}d ${h % 24}h left`, urgent: false }
+  }
+  if (h >= 1) return { label: `${h}h ${m}m left`, urgent: h < 1 }
+  if (m >= 1) return { label: `${m}m ${s}s left`, urgent: true }
+  return { label: `${s}s left`, urgent: true }
+}
+
+// ── Live auction section ───────────────────────────────────────────────────────
+
+function AuctionSection({
+  listing,
+  initialAuction,
+}: {
+  listing: Props['listing']
+  initialAuction: AuctionData
+}) {
+  const supabase = createClient()
+  const [currentBid,  setCurrentBid]  = useState(initialAuction.current_bid)
+  const [endTime,     setEndTime]      = useState(initialAuction.end_time)
+  const [bidCount,    setBidCount]     = useState(initialAuction.bid_count)
+  const [showBidModal, setShowBidModal] = useState(false)
+
+  const msLeft = useCountdown(endTime)
+  const { label, urgent } = formatCountdown(msLeft)
+  const ended = msLeft <= 0
+
+  const onBidPlaced = useCallback(
+    (newBid: number, newEndTime: string, newBidCount: number) => {
+      setCurrentBid(newBid)
+      setEndTime(newEndTime)
+      setBidCount(newBidCount)
+    },
+    []
+  )
+
+  // Realtime subscription — live updates when anyone places a bid
+  useEffect(() => {
+    const channel = supabase
+      .channel(`auction-detail:${initialAuction.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event:  'UPDATE',
+          schema: 'public',
+          table:  'auctions',
+          filter: `id=eq.${initialAuction.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as {
+            current_bid: number
+            end_time: string
+            bid_count: number
+          }
+          setCurrentBid(updated.current_bid)
+          setEndTime(updated.end_time)
+          setBidCount(updated.bid_count)
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [initialAuction.id, supabase])
+
+  const reserveNotMet =
+    initialAuction.reserve_price != null &&
+    currentBid < initialAuction.reserve_price
+
+  return (
+    <>
+      {/* Live bid display */}
+      <div className="rounded-xl border border-border bg-muted/20 px-4 py-3.5 space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground mb-0.5">
+              Current Bid
+            </p>
+            <p className="text-2xl font-bold tabular-nums">{formatCents(currentBid)}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground mb-0.5">
+              Time Left
+            </p>
+            <div className={`flex items-center gap-1 justify-end text-base font-semibold tabular-nums ${
+              urgent ? 'text-red-500' : 'text-foreground'
+            }`}>
+              <Clock className="h-3.5 w-3.5 shrink-0" />
+              {label}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Gavel className="h-3 w-3" />
+            {bidCount === 0 ? 'No bids yet' : `${bidCount} bid${bidCount !== 1 ? 's' : ''}`}
+          </span>
+          {reserveNotMet && (
+            <span className="text-amber-600 font-medium">Reserve not met</span>
+          )}
+        </div>
+      </div>
+
+      {/* Bid button */}
+      <div className="space-y-2.5">
+        <Button
+          size="lg"
+          className="w-full h-12 text-base"
+          disabled={ended}
+          onClick={() => setShowBidModal(true)}
+        >
+          {ended ? 'Auction Ended' : 'Place Bid'}
+        </Button>
+      </div>
+
+      {showBidModal && (
+        <BidModal
+          auctionId={initialAuction.id}
+          currentBid={currentBid}
+          endTime={endTime}
+          onClose={() => setShowBidModal(false)}
+          onBidPlaced={onBidPlaced}
+        />
+      )}
+    </>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function ListingActions({ listing, isOwner, sellerTier = 'collector_basic' }: Props) {
+export function ListingActions({
+  listing,
+  isOwner,
+  sellerTier = 'collector_basic',
+  auction,
+}: Props) {
   const [showBuyModal, setShowBuyModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
@@ -181,22 +350,30 @@ export function ListingActions({ listing, isOwner, sellerTier = 'collector_basic
     return null
   }
 
+  // ── Auction listing ───────────────────────────────────────────────────────
+  if (listing.listing_type === 'auction') {
+    if (auction) {
+      return <AuctionSection listing={listing} initialAuction={auction} />
+    }
+    // Fallback: auction data not available
+    return (
+      <Button size="lg" className="w-full h-12 text-base" disabled>
+        Place Bid
+      </Button>
+    )
+  }
+
+  // ── Fixed-price / offer listing ───────────────────────────────────────────
   return (
     <>
       <div className="space-y-2.5">
-        {listing.listing_type === 'auction' ? (
-          <Button size="lg" className="w-full h-12 text-base" disabled>
-            Place Bid
-          </Button>
-        ) : (
-          <Button
-            size="lg"
-            className="w-full h-12 text-base"
-            onClick={() => setShowBuyModal(true)}
-          >
-            Buy Now{listing.price ? ` · ${formatCents(listing.price)}` : ''}
-          </Button>
-        )}
+        <Button
+          size="lg"
+          className="w-full h-12 text-base"
+          onClick={() => setShowBuyModal(true)}
+        >
+          Buy Now{listing.price ? ` · ${formatCents(listing.price)}` : ''}
+        </Button>
         {listing.accept_offers && (
           <Button variant="outline" size="lg" className="w-full h-12 text-base" disabled>
             Make Offer

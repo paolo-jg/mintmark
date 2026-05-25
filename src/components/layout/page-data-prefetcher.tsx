@@ -7,6 +7,7 @@ import { fetchSellData } from '@/app/(main)/sell/_components/sell-client'
 import { fetchCollectionItems } from '@/app/(main)/collect/_components/collect-client'
 import { fetchBuyNowData } from '@/app/(main)/buy-now/_components/buy-now-client'
 import { fetchAuctionsData } from '@/app/(main)/auctions/_components/auctions-client'
+import { fetchDealersData } from '@/app/(main)/dealers/_components/dealers-client'
 
 /**
  * Fires off background SWR fetches for every page as soon as the app loads.
@@ -15,11 +16,12 @@ import { fetchAuctionsData } from '@/app/(main)/auctions/_components/auctions-cl
  */
 export function PageDataPrefetcher() {
   useEffect(() => {
-    preload('home-dashboard', fetchHomeData)
-    preload('sell-dashboard', fetchSellData)
-    preload('collect-items', fetchCollectionItems)
+    preload('home-dashboard',  fetchHomeData)
+    preload('sell-dashboard',  fetchSellData)
+    preload('collect-items',   fetchCollectionItems)
     preload('buy-now-listings', fetchBuyNowData)
-    preload('auctions-live', fetchAuctionsData)
+    preload('auctions-live',   fetchAuctionsData)
+    preload('dealers-list',    fetchDealersData)
   }, [])
 
   return null

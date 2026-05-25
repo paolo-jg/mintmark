@@ -7,7 +7,7 @@ import { Shield, ExternalLink, ChevronLeft, Copy, Star } from 'lucide-react'
 import Link from 'next/link'
 import { getVerifyUrl } from '@/lib/grading/index'
 import { ListingGallery } from './_components/listing-gallery'
-import { ListingActions } from './_components/listing-actions'
+import { ListingActions, type AuctionData } from './_components/listing-actions'
 
 function formatGrade(grade: string | null): string {
   if (!grade) return ''
@@ -24,11 +24,18 @@ export default async function ListingPage({
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: listing } = await supabase
-    .from('listings')
-    .select('*, profiles(username, dealer_verified, display_name, dealer_logo_url, average_rating, rating_count, subscription_tier)')
-    .eq('id', id)
-    .single()
+  const [{ data: listing }, { data: auctionRow }] = await Promise.all([
+    supabase
+      .from('listings')
+      .select('*, profiles(username, dealer_verified, display_name, dealer_logo_url, average_rating, rating_count, subscription_tier)')
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('auctions')
+      .select('id, current_bid, start_price, end_time, bid_count, reserve_price')
+      .eq('listing_id', id)
+      .maybeSingle(),
+  ])
 
   if (!listing) notFound()
 
@@ -71,22 +78,25 @@ export default async function ListingPage({
             <h1 className="text-2xl font-bold leading-snug tracking-tight">{listing.title}</h1>
           </div>
 
-          {/* Price */}
-          <div>
-            {listing.listing_type === 'auction' ? (
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Current Bid</p>
-                <p className="text-3xl font-bold">{formatCents(listing.start_price ?? listing.price)}</p>
-              </div>
-            ) : (
-              <p className="text-3xl font-bold">{formatCents(listing.price)}</p>
-            )}
-          </div>
+          {/* Price — fixed-price listings only; auctions render live inside ListingActions */}
+          {listing.listing_type !== 'auction' && (
+            <p className="text-3xl font-bold">{formatCents(listing.price)}</p>
+          )}
 
           {/* Actions */}
           {(() => {
             const sellerProfile = listing.profiles as { subscription_tier?: string | null } | null
             const sellerTier = sellerProfile?.subscription_tier ?? 'collector_basic'
+            const auction: AuctionData | null = auctionRow
+              ? {
+                  id:            auctionRow.id,
+                  current_bid:   auctionRow.current_bid,
+                  start_price:   auctionRow.start_price,
+                  end_time:      auctionRow.end_time,
+                  bid_count:     auctionRow.bid_count,
+                  reserve_price: auctionRow.reserve_price ?? null,
+                }
+              : null
             return (
               <ListingActions
                 listing={{
@@ -102,6 +112,7 @@ export default async function ListingPage({
                 }}
                 isOwner={isOwner}
                 sellerTier={sellerTier}
+                auction={auction}
               />
             )
           })()}

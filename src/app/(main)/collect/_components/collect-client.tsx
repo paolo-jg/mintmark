@@ -6,7 +6,6 @@ import { Plus, Trash2, Star, Coins, ScanLine, ArrowRight, ArrowUpRight, Search, 
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import Link from 'next/link'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { COIN_CATALOG } from '@/lib/coins/catalog'
 import { CoinSelector } from './coin-selector'
@@ -321,7 +320,7 @@ function OwnedCard({ item, onDelete, onUpdate, onClick }: {
     >
       <div className="aspect-square bg-muted/40 flex items-center justify-center overflow-hidden relative">
         {item.pcgs_image_url ? (
-          <Image src={item.pcgs_image_url} alt={item.coin_name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain mix-blend-multiply" />
+          <img src={item.pcgs_image_url} alt={item.coin_name} className="w-full h-full object-contain mix-blend-multiply" />
         ) : (
           <Coins className="h-12 w-12 text-muted-foreground/20" />
         )}
@@ -441,7 +440,7 @@ function WishlistCard({ item, onDelete, onMoveToOwned, onUpdate, onEdit, onClick
     >
       <div className="aspect-square bg-muted/40 flex items-center justify-center overflow-hidden relative">
         {item.pcgs_image_url ? (
-          <Image src={item.pcgs_image_url} alt={item.coin_name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain mix-blend-multiply" />
+          <img src={item.pcgs_image_url} alt={item.coin_name} className="w-full h-full object-contain mix-blend-multiply" />
         ) : (
           <Star className="h-10 w-10 text-muted-foreground/20" />
         )}
@@ -552,8 +551,10 @@ export async function fetchCollectionItems(): Promise<{ items: CollectionItem[];
   return { items: (data ?? []) as CollectionItem[], isLoggedIn: true }
 }
 
-export function CollectClient({ initialItems: _initialItems, isLoggedIn: _isLoggedIn }: { initialItems: CollectionItem[]; isLoggedIn: boolean }) {
-  const { data, mutate } = useSWR('collect-items', fetchCollectionItems, { keepPreviousData: true })
+export function CollectClient() {
+  const { data, mutate } = useSWR('collect-items', fetchCollectionItems, {
+    keepPreviousData: true,
+  })
   const isLoggedIn = data?.isLoggedIn ?? false
 
   const [tab, setTab] = useState<Tab>('owned')
@@ -655,6 +656,35 @@ export function CollectClient({ initialItems: _initialItems, isLoggedIn: _isLogg
       listingCount={wishlistCounts[item.series_slug ?? resolveSeriesSlug(item.coin_name) ?? '']}
     />
   )
+
+  // Show skeleton while SWR is loading — prevents blank-screen flash
+  if (!data) {
+    return (
+      <div>
+        {/* Static tabs shell */}
+        <div className="flex items-center justify-between mb-6 border-b border-border">
+          <div className="flex gap-1">
+            {['Owned', 'Wish List', 'Sold'].map(label => (
+              <div key={label} className="px-4 py-2.5 text-sm font-medium text-muted-foreground">{label}</div>
+            ))}
+          </div>
+        </div>
+        {/* Skeleton grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-border overflow-hidden animate-pulse">
+              <div className="aspect-square bg-muted/60" />
+              <div className="p-4 space-y-2">
+                <div className="h-2.5 bg-muted rounded w-2/3" />
+                <div className="h-3.5 bg-muted rounded w-full" />
+                <div className="h-3.5 bg-muted rounded w-4/5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
