@@ -1,12 +1,14 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
-import { createServerClient } from '@supabase/ssr'
 
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_URL ?? 'http://localhost:3000'
 const APP_URL       = process.env.NEXT_PUBLIC_APP_URL       ?? 'http://localhost:3000'
 
+// Paths only served on the marketing domain (www)
 const MARKETING_ONLY_PATHS = ['/', '/pricing', '/auth/login', '/auth/register', '/auth/callback']
+// Paths that require auth and belong on the app domain (my.)
 const APP_ONLY_PATHS = ['/sell', '/collect', '/listings', '/buy-now', '/auctions', '/profile', '/dealers', '/orders', '/dashboard']
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function isAppDomain(req: NextRequest) {
   const host = req.headers.get('host') ?? ''
@@ -23,26 +25,24 @@ function isLocalDev(req: NextRequest) {
   return host.startsWith('localhost') || host.startsWith('127.0.0.1')
 }
 
-async function getUser(req: NextRequest) {
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => req.cookies.getAll(),
-        setAll: () => {},
-      },
-    }
+/**
+ * Lightweight session check — no Supabase SDK, no network calls.
+ * Just looks for the Supabase auth token cookie in the request.
+ * The browser client handles actual token refresh; the proxy only
+ * needs to know "does a session exist" for routing decisions.
+ */
+function hasSession(req: NextRequest): boolean {
+  return req.cookies.getAll().some(c =>
+    c.name.includes('-auth-token') && c.value.length > 0
   )
-  // getSession() reads from cookie — no network round-trip, much faster than getUser()
-  const { data } = await supabase.auth.getSession()
-  return data.session?.user ?? null
 }
 
-export async function proxy(request: NextRequest) {
+// ── Proxy ─────────────────────────────────────────────────────────────────────
+
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Skip static assets and API routes
+  // Static assets and API routes — pass through immediately
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -51,38 +51,41 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Local dev: skip subdomain logic, just run session refresh + route protection
+  // Local dev — no subdomain logic, just pass through
   if (isLocalDev(request)) {
-    return updateSession(request)
+    return NextResponse.next()
   }
 
-  const onAppDomain      = isAppDomain(request)
+  const onAppDomain       = isAppDomain(request)
   const onMarketingDomain = isMarketingDomain(request)
-  const user             = await getUser(request)
+  const loggedIn          = hasSession(request)
 
-  // ── On pedigreecoins.com ──────────────────────────────────────────────────
+  // ── On www.pedigreecoins.com ──────────────────────────────────────────────
   if (onMarketingDomain) {
-    if (user) {
+    // Signed-in users don't belong on non-auth marketing pages → send to app
+    if (loggedIn) {
       const isAuthRoute = MARKETING_ONLY_PATHS.includes(pathname)
       if (!isAuthRoute) {
         return NextResponse.redirect(new URL(pathname, APP_URL))
       }
     }
 
+    // App-only paths on marketing domain → redirect to app (or login if not signed in)
     const isAppPath = APP_ONLY_PATHS.some(p => pathname.startsWith(p))
     if (isAppPath) {
-      if (!user) {
+      if (!loggedIn) {
         return NextResponse.redirect(new URL(`/auth/login?redirectTo=${pathname}`, MARKETING_URL))
       }
       return NextResponse.redirect(new URL(pathname, APP_URL))
     }
 
-    return updateSession(request)
+    return NextResponse.next()
   }
 
   // ── On my.pedigreecoins.com ───────────────────────────────────────────────
   if (onAppDomain) {
-    if (!user) {
+    // Unsigned users trying to access protected pages → send to login
+    if (!loggedIn) {
       const isPublicPath = pathname.startsWith('/auth')
       if (!isPublicPath) {
         return NextResponse.redirect(
@@ -90,12 +93,10 @@ export async function proxy(request: NextRequest) {
         )
       }
     }
-
-    // Signed-in users stay on the app domain for all paths — no bounce to marketing
-    return updateSession(request)
+    return NextResponse.next()
   }
 
-  return updateSession(request)
+  return NextResponse.next()
 }
 
 export const config = {
