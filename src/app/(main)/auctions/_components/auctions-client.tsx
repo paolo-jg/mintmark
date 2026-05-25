@@ -1,9 +1,43 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import useSWR from 'swr'
 import Link from 'next/link'
-import { Clock, Search, Flame, Heart } from 'lucide-react'
+import { Clock, Search, Flame, Heart, Gavel } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+
+async function fetchAuctionsData() {
+  const supabase = createClient()
+  const [{ data: raw }, { data: wishlistRaw }] = await Promise.all([
+    supabase
+      .from('auctions')
+      .select('*, listing:listings(id, title, coin_name, grading_service, grade, year, mint_mark, denomination, verification_status, images, series_slug)')
+      .gt('end_time', new Date().toISOString())
+      .limit(96),
+    supabase
+      .from('collection_items')
+      .select('series_slug, user_id')
+      .eq('type', 'wishlist')
+      .not('series_slug', 'is', null),
+  ])
+
+  const wishlistMap: Record<string, number> = {}
+  if (wishlistRaw) {
+    const seen = new Map<string, Set<string>>()
+    for (const row of wishlistRaw) {
+      if (!row.series_slug) continue
+      if (!seen.has(row.series_slug)) seen.set(row.series_slug, new Set())
+      seen.get(row.series_slug)!.add(row.user_id)
+    }
+    for (const [slug, users] of seen) wishlistMap[slug] = users.size
+  }
+
+  return {
+    auctions: ((raw ?? []).filter(a => a.listing)) as AuctionRow[],
+    wishlistMap,
+  }
+}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 export interface AuctionRow {
@@ -122,9 +156,17 @@ function AuctionCard({ auction, hot = false, wishlistCounts }: { auction: Auctio
 }
 
 // ── Main client component ─────────────────────────────────────────────────────
-export function AuctionsClient({ auctions, wishlistCounts }: { auctions: AuctionRow[]; wishlistCounts: Record<string, number> }) {
+export function AuctionsClient() {
   const [tab, setTab] = useState<Tab>('ending-soon')
   const [query, setQuery] = useState('')
+
+  const { data, isLoading } = useSWR('auctions-live', fetchAuctionsData, {
+    keepPreviousData: true,
+    refreshInterval: 30_000, // refresh every 30s so bids stay live
+  })
+
+  const auctions = data?.auctions ?? []
+  const wishlistCounts = data?.wishlistMap ?? {}
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'ending-soon', label: 'Ending Soon' },
@@ -161,7 +203,36 @@ export function AuctionsClient({ auctions, wishlistCounts }: { auctions: Auction
   }, [auctions, tab, query])
 
   return (
-    <div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Gavel className="h-5 w-5 text-muted-foreground" />
+            <h1 className="text-2xl font-bold tracking-tight">Live Auctions</h1>
+          </div>
+          <p className="text-muted-foreground mt-1">
+            {isLoading ? 'Loading auctions…' : auctions.length > 0
+              ? `${auctions.length} active auction${auctions.length !== 1 ? 's' : ''}. Bid before time runs out.`
+              : 'No live auctions right now. Check back soon.'}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-none">
+          <div className="flex rounded-lg border border-border overflow-hidden text-sm font-medium">
+            <Link href="/buy-now" className="px-4 py-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+              Buy Now
+            </Link>
+            <span className="px-4 py-2 bg-foreground text-background">Auctions</span>
+          </div>
+          <Link
+            href="/listings"
+            className="flex-none flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:border-foreground/40 hover:bg-muted transition-colors whitespace-nowrap"
+          >
+            Browse All
+          </Link>
+        </div>
+      </div>
+
       {/* Search + filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
