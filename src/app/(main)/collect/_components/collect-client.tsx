@@ -1,14 +1,48 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Plus, Trash2, Star, Coins, ScanLine, ChevronDown, Check, ArrowRight, Search, X, Pencil, LogIn } from 'lucide-react'
+import { Plus, Trash2, Star, Coins, ScanLine, ArrowRight, ArrowUpRight, Search, X, Pencil, LogIn, Tag, ChevronDown, CheckCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import { COIN_CATALOG } from '@/lib/coins/catalog'
 import { CoinSelector } from './coin-selector'
 import { CoinScanModal } from './coin-scan-modal'
 import { CoinDetailModal } from './coin-detail-modal'
 import { WishlistEditModal } from './wishlist-edit-modal'
+
+// Strip a trailing year (and optional mint mark) from a coin name so we can do
+// broader searches: "Morgan Dollar 1893-S" → "Morgan Dollar"
+function stripYearFromCoinName(coinName: string): string {
+  return coinName.replace(/\s+\d{4}(-[A-Z]+)?\s*$/, '').trim()
+}
+
+// Try to find a catalog series slug that matches the coin name.
+// Falls back to null if no match, so callers can use a plain text search instead.
+function resolveSeriesSlug(coinName: string): string | null {
+  const base = stripYearFromCoinName(coinName).toLowerCase()
+  for (const cat of COIN_CATALOG) {
+    for (const series of cat.series) {
+      for (const cn of series.coinNames) {
+        const cnLower = cn.toLowerCase()
+        if (base === cnLower || base.startsWith(cnLower) || cnLower.startsWith(base)) {
+          return series.slug
+        }
+      }
+    }
+  }
+  return null
+}
+
+// Build the "Find on Market" URL for a wishlist item.
+// Prefers the series page (shows all dates) over a keyword search.
+function getMarketUrl(item: { series_slug: string | null; coin_name: string }): string {
+  const slug = item.series_slug ?? resolveSeriesSlug(item.coin_name)
+  if (slug) return `/listings/series/${slug}`
+  const searchTerm = stripYearFromCoinName(item.coin_name)
+  return `/listings?q=${encodeURIComponent(searchTerm)}`
+}
 
 function SignupPromptModal({ onClose }: { onClose: () => void }) {
   return (
@@ -100,49 +134,83 @@ function formatPrice(cents: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(cents / 100)
 }
 
-const STATUS_OPTIONS: { value: OwnedStatus; label: string; color: string; dot: string }[] = [
-  { value: 'owned',    label: 'In Collection', color: 'text-foreground',       dot: 'bg-foreground/30'    },
-  { value: 'for_sale', label: 'For Sale',      color: 'text-amber-600',        dot: 'bg-amber-400'        },
-  { value: 'sold',     label: 'Sold',          color: 'text-muted-foreground', dot: 'bg-muted-foreground' },
-]
+const STATUS_DISPLAY: Record<OwnedStatus, { label: string; color: string; dot: string }> = {
+  owned:    { label: 'In Collection', color: 'text-foreground',       dot: 'bg-foreground/30' },
+  for_sale: { label: 'For Sale',      color: 'text-amber-600',        dot: 'bg-amber-400'     },
+  sold:     { label: 'Sold',          color: 'text-muted-foreground', dot: 'bg-muted-foreground' },
+}
 
-function StatusBadge({ item, onChange }: { item: CollectionItem; onChange: (s: OwnedStatus) => void }) {
+// Per-status leading indicator — icon for owned, coloured dot for the rest
+function StatusIcon({ status }: { status: OwnedStatus }) {
+  if (status === 'owned') return <Coins className="h-3.5 w-3.5 text-foreground/50 flex-shrink-0" />
+  const { dot } = STATUS_DISPLAY[status]
+  return <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${dot}`} />
+}
+
+// Dropdown for manually changing a coin's status.
+// Status is mostly system-controlled; the only manual actions are:
+//   • Move to Wish List  (for owned / for_sale)
+//   • Mark as sold       (for external sales, owned / for_sale)
+function StatusDropdown({ item, onMarkAsSold, onMoveToWishlist }: {
+  item: CollectionItem
+  onMarkAsSold: () => void
+  onMoveToWishlist: () => void
+}) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const current = STATUS_OPTIONS.find(o => o.value === item.status) ?? STATUS_OPTIONS[0]
+  const { label, color } = STATUS_DISPLAY[item.status] ?? STATUS_DISPLAY.owned
+  const canChange = item.status !== 'sold'
 
   useEffect(() => {
     if (!open) return
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    function handle(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
   }, [open])
+
+  if (!canChange) {
+    return (
+      <div className="flex items-center gap-1.5 px-3 py-1.5">
+        <StatusIcon status={item.status} />
+        <span className={`text-[12px] font-medium ${color}`}>{label}</span>
+      </div>
+    )
+  }
 
   return (
     <div ref={ref} className="relative">
       <button
-        onClick={e => { e.stopPropagation(); setOpen(o => !o) }}
-        className="flex items-center gap-1.5 text-[11px] font-medium hover:opacity-70 transition-opacity"
+        onClick={e => { e.stopPropagation(); setOpen(v => !v) }}
+        className={`w-full flex items-center justify-between gap-2 rounded-lg border px-3 py-1.5 transition-colors ${
+          open ? 'border-foreground/40 bg-muted' : 'border-border hover:bg-muted'
+        }`}
       >
-        <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${current.dot}`} />
-        <span className={current.color}>{current.label}</span>
-        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+        <div className="flex items-center gap-1.5">
+          <StatusIcon status={item.status} />
+          <span className={`text-[12px] font-medium ${color}`}>{label}</span>
+        </div>
+        <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
+
       {open && (
-        <div className="absolute bottom-full left-0 mb-1.5 z-20 bg-background border border-border rounded-xl shadow-lg py-1 min-w-[140px]">
-          {STATUS_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              onClick={e => { e.stopPropagation(); onChange(opt.value); setOpen(false) }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] hover:bg-muted/60 transition-colors text-left"
-            >
-              <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${opt.dot}`} />
-              <span className={opt.color}>{opt.label}</span>
-              {opt.value === item.status && <Check className="h-3 w-3 ml-auto text-muted-foreground" />}
-            </button>
-          ))}
+        <div className="absolute bottom-full left-0 right-0 mb-1.5 z-20 rounded-xl border border-border bg-popover shadow-xl overflow-hidden">
+          <button
+            onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setOpen(false); onMoveToWishlist() }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] hover:bg-muted transition-colors text-left"
+          >
+            <Star className="h-3.5 w-3.5 text-muted-foreground" />
+            Move to Wish List
+          </button>
+          <div className="h-px bg-border mx-3" />
+          <button
+            onMouseDown={e => { e.preventDefault(); e.stopPropagation(); setOpen(false); onMarkAsSold() }}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
+          >
+            <CheckCheck className="h-3.5 w-3.5" />
+            Mark as sold
+          </button>
         </div>
       )}
     </div>
@@ -190,19 +258,38 @@ function OwnedCard({ item, onDelete, onUpdate, onClick }: {
     }
   }
 
-  const handleStatusChange = async (status: OwnedStatus) => {
-    onUpdate({ ...item, status })
+  const handleMarkAsSold = async () => {
+    onUpdate({ ...item, status: 'sold' })
     try {
       const res = await fetch('/api/collection', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: item.id, status }),
+        body: JSON.stringify({ id: item.id, status: 'sold' }),
       })
       const json = await res.json()
       if (json.error) throw new Error(json.error)
+      // If the coin was for_sale the PATCH endpoint also expires the linked listing
     } catch (e) {
       onUpdate(item)
       toast.error(e instanceof Error ? e.message : 'Failed to update status')
+    }
+  }
+
+  const handleMoveToWishlist = async () => {
+    onUpdate({ ...item, type: 'wishlist', status: 'owned' })
+    try {
+      const res = await fetch('/api/collection', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        // Pass status: 'owned' so the API expires any linked for_sale listing
+        body: JSON.stringify({ id: item.id, type: 'wishlist', status: 'owned' }),
+      })
+      const json = await res.json()
+      if (json.error) throw new Error(json.error)
+      toast.success('Moved to wish list')
+    } catch (e) {
+      onUpdate(item)
+      toast.error(e instanceof Error ? e.message : 'Failed to move')
     }
   }
 
@@ -238,7 +325,7 @@ function OwnedCard({ item, onDelete, onUpdate, onClick }: {
         )}
       </div>
 
-      <StarButton starred={item.starred} onToggle={handleStarToggle} />
+      {item.status !== 'sold' && <StarButton starred={item.starred} onToggle={handleStarToggle} />}
 
       <button
         onClick={e => { e.stopPropagation(); handleDelete() }}
@@ -264,21 +351,31 @@ function OwnedCard({ item, onDelete, onUpdate, onClick }: {
         {item.notes && (
           <p className="text-[12px] text-muted-foreground/70 mt-1.5 italic">{item.notes}</p>
         )}
-        <div className="mt-3 pt-2.5 border-t border-border/50" onClick={e => e.stopPropagation()}>
-          <StatusBadge item={item} onChange={handleStatusChange} />
+        <div className="mt-3 pt-2.5 border-t border-border/50 space-y-2" onClick={e => e.stopPropagation()}>
+          <StatusDropdown item={item} onMarkAsSold={handleMarkAsSold} onMoveToWishlist={handleMoveToWishlist} />
+          {item.status === 'owned' && (
+            <Link
+              href={`/listings/new?from=${item.id}`}
+              className="w-full flex items-center justify-center gap-1.5 text-[12px] font-semibold border border-border rounded-lg py-1.5 hover:bg-muted transition-colors"
+            >
+              <Tag className="h-3 w-3" />
+              List for Sale
+            </Link>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-function WishlistCard({ item, onDelete, onMoveToOwned, onUpdate, onEdit, onClick }: {
+function WishlistCard({ item, onDelete, onMoveToOwned, onUpdate, onEdit, onClick, listingCount }: {
   item: CollectionItem
   onDelete: () => void
   onMoveToOwned: () => void
   onUpdate: (updated: CollectionItem) => void
   onEdit: () => void
   onClick: () => void
+  listingCount?: number
 }) {
   const [deleting, setDeleting] = useState(false)
   const [moving, setMoving] = useState(false)
@@ -383,7 +480,19 @@ function WishlistCard({ item, onDelete, onMoveToOwned, onUpdate, onEdit, onClick
         {item.notes && (
           <p className="text-[12px] text-muted-foreground/70 mt-1.5 italic">{item.notes}</p>
         )}
-        <div className="mt-3 pt-2.5 border-t border-border/50" onClick={e => e.stopPropagation()}>
+        <div className="mt-3 pt-2.5 border-t border-border/50 space-y-2" onClick={e => e.stopPropagation()}>
+          <Link
+            href={getMarketUrl(item)}
+            className="w-full flex items-center justify-center gap-1.5 text-[12px] font-medium border border-border rounded-lg py-1.5 hover:bg-muted transition-colors"
+          >
+            <ArrowUpRight className="h-3.5 w-3.5" />
+            Find on Market
+            {listingCount !== undefined && listingCount > 0 && (
+              <span className="rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 text-[10px] font-semibold">
+                {listingCount}
+              </span>
+            )}
+          </Link>
           <button
             onClick={handleMove}
             disabled={moving}
@@ -442,6 +551,7 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
   const [ownedSearch, setOwnedSearch] = useState('')
   const [wishlistSearch, setWishlistSearch] = useState('')
   const [soldSearch, setSoldSearch] = useState('')
+  const [wishlistCounts, setWishlistCounts] = useState<Record<string, number>>({})
 
   const openAddOwned = () => isLoggedIn ? setShowOwned(true) : setShowSignupPrompt(true)
   const openAddScan  = () => isLoggedIn ? setShowScan(true)  : setShowSignupPrompt(true)
@@ -473,6 +583,32 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
     if (json.data) setItems(json.data)
   }
 
+  // Fetch active listing counts for all wishlisted series so the cards can show badges.
+  // Items without a stored series_slug are resolved via the catalog so they still get counts.
+  useEffect(() => {
+    const slugs = [...new Set(
+      wishlist
+        .map(i => i.series_slug ?? resolveSeriesSlug(i.coin_name))
+        .filter((s): s is string => Boolean(s))
+    )]
+    if (slugs.length === 0) return
+    const db = createClient()
+    Promise.all(
+      slugs.map(slug =>
+        db
+          .from('listings')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'active')
+          .eq('series_slug', slug)
+          .then(({ count }) => ({ slug, count: count ?? 0 }))
+      )
+    ).then(results => {
+      const counts: Record<string, number> = {}
+      for (const { slug, count } of results) counts[slug] = count
+      setWishlistCounts(counts)
+    })
+  }, [wishlist.length]) // re-run when wishlist items change
+
   const handleDelete = (id: string) => setItems(prev => prev.filter(i => i.id !== id))
   const handleUpdate = (updated: CollectionItem) => setItems(prev => prev.map(i => i.id === updated.id ? updated : i))
 
@@ -487,7 +623,16 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
   )
 
   const wishlistCard = (item: CollectionItem) => (
-    <WishlistCard key={item.id} item={item} onDelete={() => handleDelete(item.id)} onMoveToOwned={() => refresh()} onUpdate={handleUpdate} onEdit={() => setEditingItem(item)} onClick={() => setSelectedItem(item)} />
+    <WishlistCard
+      key={item.id}
+      item={item}
+      onDelete={() => handleDelete(item.id)}
+      onMoveToOwned={() => refresh()}
+      onUpdate={handleUpdate}
+      onEdit={() => setEditingItem(item)}
+      onClick={() => setSelectedItem(item)}
+      listingCount={wishlistCounts[item.series_slug ?? resolveSeriesSlug(item.coin_name) ?? '']}
+    />
   )
 
   return (
@@ -510,16 +655,16 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
         <div className="pb-2 flex items-center gap-2">
           {tab === 'owned' && (
             <>
-              <Button size="sm" variant="outline" onClick={openAddScan}>
+              <Button variant="outline" size="lg" className="h-11 px-4" onClick={openAddScan}>
                 <ScanLine className="h-4 w-4 mr-1.5" />Scan
               </Button>
-              <Button size="sm" onClick={openAddOwned}>
+              <Button size="lg" className="h-11 px-4" onClick={openAddOwned}>
                 <Plus className="h-4 w-4 mr-1" />Add Owned
               </Button>
             </>
           )}
           {tab === 'wishlist' && (
-            <Button size="sm" onClick={openAddWish}>
+            <Button size="lg" className="h-11 px-4" onClick={openAddWish}>
               <Plus className="h-4 w-4 mr-1" />Add to Wish List
             </Button>
           )}
@@ -537,7 +682,7 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
               <Button variant="outline" size="sm" onClick={openAddScan}>
                 <ScanLine className="h-4 w-4 mr-1.5" />Scan with AI
               </Button>
-              <Button variant="outline" size="sm" onClick={openAddOwned}>
+              <Button variant="outline" size="lg" className="h-11 px-4" onClick={openAddOwned}>
                 <Plus className="h-4 w-4 mr-1" />Add manually
               </Button>
             </div>
@@ -567,7 +712,7 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
                 <button
                   key={f.value}
                   onClick={() => setStatusFilter(f.value)}
-                  className={`px-3 py-1 rounded-full text-[12px] font-medium transition-colors border ${
+                  className={`px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors border ${
                     statusFilter === f.value
                       ? 'bg-foreground text-background border-foreground'
                       : 'bg-background text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground'
@@ -575,10 +720,10 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
                 >
                   {f.label}
                   {f.value !== 'all' && (
-                    <span className="ml-1 opacity-60">{owned.filter(i => i.status === f.value).length}</span>
+                    <span className={`ml-1 ${statusFilter === f.value ? 'opacity-80' : 'opacity-50'}`}>{owned.filter(i => i.status === f.value).length}</span>
                   )}
                   {f.value === 'all' && owned.length > 0 && (
-                    <span className="ml-1 opacity-60">{owned.length}</span>
+                    <span className={`ml-1 ${statusFilter === f.value ? 'opacity-80' : 'opacity-50'}`}>{owned.length}</span>
                   )}
                 </button>
               ))}
@@ -619,7 +764,7 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
             <Star className="h-10 w-10 mx-auto mb-4 text-muted-foreground/30" />
             <p className="text-base font-medium mb-1.5">Your wish list is empty</p>
             <p className="text-sm mb-5">Track coins you&apos;re hunting for.</p>
-            <Button variant="outline" size="sm" onClick={openAddWish}>
+            <Button variant="outline" size="lg" className="h-11 px-4" onClick={openAddWish}>
               <Plus className="h-4 w-4 mr-1" />Add your first coin
             </Button>
           </div>
@@ -648,7 +793,7 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
                 <button
                   key={f.value}
                   onClick={() => setWishlistFilter(f.value)}
-                  className={`px-3 py-1 rounded-full text-[12px] font-medium transition-colors border ${
+                  className={`px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors border ${
                     wishlistFilter === f.value
                       ? 'bg-foreground text-background border-foreground'
                       : 'bg-background text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground'
@@ -656,7 +801,7 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
                 >
                   {f.label}
                   {f.value === 'highlighted' && (
-                    <span className="ml-1 opacity-60">{wishlist.filter(i => i.starred).length}</span>
+                    <span className={`ml-1 ${wishlistFilter === f.value ? 'opacity-80' : 'opacity-50'}`}>{wishlist.filter(i => i.starred).length}</span>
                   )}
                 </button>
               ))}

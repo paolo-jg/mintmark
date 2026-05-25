@@ -84,47 +84,65 @@ export default async function ListingPage({
           </div>
 
           {/* Actions */}
-          <ListingActions
-            listing={{
-              id: listing.id,
-              price: listing.price,
-              coin_name: listing.coin_name,
-              seller_id: listing.seller_id,
-              status: listing.status,
-              listing_type: listing.listing_type,
-            }}
-            isOwner={isOwner}
-          />
+          {(() => {
+            const sellerProfile = listing.profiles as { subscription_tier?: string | null } | null
+            const sellerTier = sellerProfile?.subscription_tier ?? 'collector_basic'
+            return (
+              <ListingActions
+                listing={{
+                  id: listing.id,
+                  price: listing.price,
+                  coin_name: listing.coin_name,
+                  seller_id: listing.seller_id,
+                  status: listing.status,
+                  listing_type: listing.listing_type,
+                  pass_convenience_fee: listing.pass_convenience_fee ?? false,
+                  accept_offers: listing.accept_offers ?? false,
+                  collection_item_id: listing.collection_item_id ?? null,
+                }}
+                isOwner={isOwner}
+                sellerTier={sellerTier}
+              />
+            )
+          })()}
 
           <Separator />
 
           {/* Coin details */}
-          <div className="space-y-3 text-sm">
-            {listing.year && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Year</span>
-                <span className="font-medium">{listing.year}{listing.mint_mark ? `-${listing.mint_mark}` : ''}</span>
+          {(() => {
+            const profile = listing.coin_profile as {
+              specs?: {
+                designer?: string | null
+                composition?: string | null
+                diameter?: string | null
+                weight?: string | null
+              } | null
+            } | null
+
+            const specs = profile?.specs
+
+            const rows: { label: string; value: string }[] = []
+            if (listing.year) rows.push({ label: 'Year', value: `${listing.year}${listing.mint_mark ? `-${listing.mint_mark}` : ''}` })
+            if (listing.denomination) rows.push({ label: 'Denomination', value: listing.denomination })
+            if (specs?.composition) rows.push({ label: 'Composition', value: specs.composition })
+            if (specs?.diameter) rows.push({ label: 'Diameter', value: specs.diameter })
+            if (specs?.weight) rows.push({ label: 'Weight', value: specs.weight })
+            if (specs?.designer) rows.push({ label: 'Designer', value: specs.designer })
+            if (listing.population_at_grade != null) rows.push({ label: 'Pop at grade', value: listing.population_at_grade.toLocaleString() })
+            if (listing.population_above != null) rows.push({ label: 'Pop above', value: listing.population_above.toLocaleString() })
+
+            if (rows.length === 0) return null
+            return (
+              <div className="space-y-2.5 text-sm">
+                {rows.map(({ label, value }) => (
+                  <div key={label} className="flex justify-between gap-4">
+                    <span className="text-muted-foreground shrink-0">{label}</span>
+                    <span className="font-medium text-right">{value}</span>
+                  </div>
+                ))}
               </div>
-            )}
-            {listing.denomination && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Denomination</span>
-                <span className="font-medium">{listing.denomination}</span>
-              </div>
-            )}
-            {listing.population_at_grade != null && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Population at grade</span>
-                <span className="font-medium tabular-nums">{listing.population_at_grade.toLocaleString()}</span>
-              </div>
-            )}
-            {listing.population_above != null && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Population above</span>
-                <span className="font-medium tabular-nums">{listing.population_above.toLocaleString()}</span>
-              </div>
-            )}
-          </div>
+            )
+          })()}
 
           {/* Cert section */}
           {listing.cert_number ? (

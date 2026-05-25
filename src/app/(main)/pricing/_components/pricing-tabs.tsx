@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Check } from 'lucide-react'
 import Link from 'next/link'
+import { FeatureText } from '@/components/ui/card-fee-tooltip'
 
 type Group = 'collectors' | 'dealers'
 
@@ -13,7 +14,7 @@ const COLLECTOR_TIERS = [
     monthlyPrice: null as number | null,
     annualPrice: null as number | null,
     description: 'Get listed and start buying and selling graded coins.',
-    features: ['5% buy & sell fees', '$0.50 per listing', 'Up to 10 active listings/month', 'Unlimited purchases'],
+    features: ['7% buyer fee', '7% seller fee + card processing fees', '$0.50 per listing', 'Up to 10 active listings/month', 'Unlimited purchases'],
     highlighted: false,
     annualSavings: null as string | null,
   },
@@ -23,7 +24,7 @@ const COLLECTOR_TIERS = [
     monthlyPrice: 9.99,
     annualPrice: 99.99,
     description: 'Lower fees and more listings for active collectors.',
-    features: ['3.5% buy & sell fees', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'],
+    features: ['5% buyer fee', '5% seller fee + card processing fees', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'],
     highlighted: true,
     annualSavings: 'Save $19.89/yr',
   },
@@ -33,7 +34,7 @@ const COLLECTOR_TIERS = [
     monthlyPrice: 49,
     annualPrice: 499,
     description: 'Maximum listings and the lowest fees for serious collectors.',
-    features: ['2.5% buy & sell fees', '$0.30 per listing', 'Up to 200 active listings/month', 'Unlimited purchases'],
+    features: ['3% buyer fee', '3% seller fee + card processing fees', '$0.30 per listing', 'Up to 200 active listings/month', 'Unlimited purchases'],
     highlighted: false,
     annualSavings: 'Save $89/yr',
   },
@@ -46,7 +47,7 @@ const DEALER_TIERS = [
     monthlyPrice: 299,
     annualPrice: 2999,
     description: 'Unlimited listings and a dedicated dealer profile.',
-    features: ['2.5% buy & sell fees', '$0.20 per listing', 'Unlimited listings', 'Dealer profile page', 'Custom logo & description'],
+    features: ['2.5% buyer fee', '2.5% seller fee + card processing fees', '$0.20 per listing', 'Unlimited listings', 'Dealer profile page', 'Custom logo & description'],
     highlighted: false,
     annualSavings: 'Save $589/yr',
   },
@@ -56,7 +57,7 @@ const DEALER_TIERS = [
     monthlyPrice: 599,
     annualPrice: 5999,
     description: 'Priority ranking and significantly reduced fees.',
-    features: ['1% sell fee / 2% buy fee', '$0.10 per listing', 'Unlimited listings', 'Priority dealer ranking', 'Custom logo & description'],
+    features: ['2% buyer fee', '1% seller fee + card processing fees', '$0.10 per listing', 'Unlimited listings', 'Priority dealer ranking', 'Custom logo & description'],
     highlighted: true,
     annualSavings: 'Save $1,189/yr',
   },
@@ -66,7 +67,7 @@ const DEALER_TIERS = [
     monthlyPrice: 999,
     annualPrice: 9999,
     description: 'Zero sell fees and top placement across the platform.',
-    features: ['0% sell fee / 1% buy fee', '$0 per listing', 'Unlimited listings', 'Top dealer ranking', 'Custom logo & description'],
+    features: ['1% buyer fee', '0% seller fee + card processing fees', '$0 per listing', 'Unlimited listings', 'Top dealer ranking', 'Custom logo & description'],
     highlighted: false,
     annualSavings: 'Save $1,989/yr',
   },
@@ -106,7 +107,7 @@ function TierCard({ tier, billing }: {
   const isFree = tier.monthlyPrice === null
 
   return (
-    <div className={`relative flex flex-col rounded-2xl border p-8 transition-shadow ${
+    <div className={`relative flex flex-col rounded-2xl border p-6 transition-shadow ${
       tier.highlighted ? 'border-foreground/30 shadow-lg' : 'border-border bg-background'
     }`}>
       {tier.highlighted && (
@@ -159,7 +160,7 @@ function TierCard({ tier, billing }: {
             <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-foreground/8">
               <Check className="h-3 w-3 text-foreground/70" />
             </div>
-            <span className="text-sm text-muted-foreground">{f}</span>
+            <span className="text-sm text-muted-foreground"><FeatureText text={f} /></span>
           </div>
         ))}
       </div>

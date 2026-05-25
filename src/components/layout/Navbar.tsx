@@ -71,10 +71,10 @@ export default function Navbar() {
                 <Link
                   key={href}
                   href={href}
-                  className={`px-4 py-2 rounded-lg text-[17px] font-semibold tracking-wide transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-[15px] font-semibold tracking-wide transition-colors ${
                     active
-                      ? 'text-foreground'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'bg-foreground text-background'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                 >
                   {label}
@@ -149,8 +149,8 @@ export default function Navbar() {
                 onClick={() => setMobileOpen(false)}
                 className={`block px-3 py-2.5 rounded-lg text-base font-semibold tracking-wide transition-colors ${
                   active
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-foreground text-background'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                 }`}
               >
                 {label}

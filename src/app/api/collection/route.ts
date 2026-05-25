@@ -64,6 +64,24 @@ export async function PATCH(req: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+
+  // If the status is being changed away from 'for_sale', expire any linked active listing
+  if (updates.status && updates.status !== 'for_sale') {
+    const { data: linked } = await db
+      .from('listings')
+      .select('id')
+      .eq('collection_item_id', id)
+      .eq('status', 'active')
+      .maybeSingle()
+
+    if (linked) {
+      await db
+        .from('listings')
+        .update({ status: 'expired' })
+        .eq('id', linked.id)
+    }
+  }
+
   return NextResponse.json({ data })
 }
 

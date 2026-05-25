@@ -250,7 +250,7 @@ export default async function SellPage({
           </p>
 
           {tab === 'all' && !atLimit && (
-            <Button size="sm" render={<Link href="/listings/new" />}>
+            <Button size="lg" className="h-11 px-4" render={<Link href="/listings/new" />}>
               <Plus className="h-4 w-4 mr-1.5" />
               Create Listing
             </Button>
@@ -279,14 +279,20 @@ export default async function SellPage({
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{listing.title}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {listing.grading_service} · {listing.grade}
-                  {listing.year && ` · ${listing.year}${listing.mint_mark ? `-${listing.mint_mark}` : ''}`}
+                  {(() => {
+                    const parts: string[] = []
+                    if (listing.grading_service) parts.push(listing.grading_service)
+                    if (listing.grade) parts.push(listing.grade.replace(/^([A-Za-z]+)(\d+)$/, '$1-$2'))
+                    if (!listing.grading_service && !listing.grade) parts.push('Ungraded')
+                    if (listing.year) parts.push(`${listing.year}${listing.mint_mark ? `-${listing.mint_mark}` : ''}`)
+                    return parts.join(' · ')
+                  })()}
                 </p>
               </div>
 
               {/* Type */}
               <p className="text-xs text-muted-foreground hidden sm:block flex-shrink-0">
-                {listing.listing_type === 'fixed' ? 'Fixed Price' : 'Auction'}
+                {listing.listing_type === 'fixed' ? 'Buy It Now' : 'Auction'}
               </p>
 
               {/* Price */}

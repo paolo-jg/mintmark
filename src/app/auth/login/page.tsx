@@ -25,8 +25,9 @@ function LoginForm() {
     if (error) {
       toast.error(error.message)
     } else {
-      router.push('/')
-      router.refresh()
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+      // Hard redirect to app domain — router.push stays on the same domain
+      window.location.href = appUrl ? `${appUrl}/sell` : '/sell'
     }
     setLoading(false)
   }

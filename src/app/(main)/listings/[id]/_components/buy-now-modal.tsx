@@ -9,11 +9,16 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { formatCents } from '@/lib/utils'
 
+function calcConvenienceFee(priceUsd: number): number {
+  return (priceUsd * 0.029 + 0.30) / (1 - 0.029) + 0.30
+}
+
 interface Props {
   listing: {
     id: string
     price: number | null
     coin_name: string | null
+    pass_convenience_fee: boolean
   }
   onClose: () => void
 }
@@ -83,30 +88,45 @@ export function BuyNowModal({ listing, onClose }: Props) {
           {/* Coin summary */}
           <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 mb-6">
             <p className="text-sm font-semibold">{listing.coin_name ?? 'Coin'}</p>
-            {listing.price != null && (
-              <>
-                <div className="mt-2 space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Item price</span>
-                    <span className="tabular-nums">{formatCents(listing.price)}</span>
+            {listing.price != null && (() => {
+              const priceUsd = listing.price / 100
+              const buyerFeeCents = Math.round(listing.price * 0.05)
+              const convFeeCents = listing.pass_convenience_fee
+                ? Math.round(calcConvenienceFee(priceUsd) * 100)
+                : 0
+              const totalCents = listing.price + buyerFeeCents + convFeeCents
+              return (
+                <>
+                  <div className="mt-2 space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Item price</span>
+                      <span className="tabular-nums">{formatCents(listing.price)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Buyer fee (5%)</span>
+                      <span className="tabular-nums">{formatCents(buyerFeeCents)}</span>
+                    </div>
+                    {listing.pass_convenience_fee && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Convenience fee</span>
+                        <span className="tabular-nums">{formatCents(convFeeCents)}</span>
+                      </div>
+                    )}
+                    <div className="border-t border-border pt-1 flex justify-between font-bold">
+                      <span>Total</span>
+                      <span className="tabular-nums">{formatCents(totalCents)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Buyer fee (5%)</span>
-                    <span className="tabular-nums">{formatCents(Math.round(listing.price * 0.05))}</span>
-                  </div>
-                  <div className="border-t border-border pt-1 flex justify-between font-bold">
-                    <span>Total</span>
-                    <span className="tabular-nums">{formatCents(listing.price + Math.round(listing.price * 0.05))}</span>
-                  </div>
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-2">
-                  Buyer fee may vary by membership tier.{' '}
-                  <a href="/#pricing" className="underline underline-offset-2 hover:text-foreground transition-colors">
-                    View plans
-                  </a>
-                </p>
-              </>
-            )}
+                  <p className="text-[10px] text-muted-foreground mt-2">
+                    Buyer fee varies by membership tier.{' '}
+                    <a href="/pricing" className="underline underline-offset-2 hover:text-foreground transition-colors">
+                      View plans
+                    </a>
+                    {listing.pass_convenience_fee && ' Convenience fee covers card processing costs.'}
+                  </p>
+                </>
+              )
+            })()}
           </div>
 
           <form id="buy-now-form" onSubmit={handleSubmit} className="space-y-4">

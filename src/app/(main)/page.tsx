@@ -32,15 +32,19 @@ export default async function HomePage() {
 
   // ── Logged-in: show dashboard ──────────────────────────────────────────────
   if (user) {
-    const [{ data: allSellingOrders }, { data: allBuyingOrders }, { data: activeListingsData }] = await Promise.all([
+    const [{ data: allSellingOrders }, { data: allBuyingOrders }, { data: activeListingsData }, { data: profile }] = await Promise.all([
       supabase.from('orders').select('amount, status, created_at').eq('seller_id', user.id),
       supabase.from('orders').select('amount, status, created_at').eq('buyer_id', user.id),
-      supabase.from('listings').select('id').eq('seller_id', user.id).eq('status', 'active'),
+      supabase.from('listings').select('id, price').eq('seller_id', user.id).eq('status', 'active'),
+      supabase.from('profiles').select('subscription_tier').eq('id', user.id).single(),
     ])
 
     const totalRevenue = (allSellingOrders ?? []).filter(o => o.status !== 'disputed').reduce((s, o) => s + (o.amount ?? 0), 0)
     const totalSpent = (allBuyingOrders ?? []).filter(o => o.status !== 'disputed').reduce((s, o) => s + (o.amount ?? 0), 0)
     const activeListingsCount = activeListingsData?.length ?? 0
+
+    const isDealer = profile?.subscription_tier?.startsWith('dealer_') ?? false
+    const inventoryValueCents = (activeListingsData ?? []).reduce((s, l) => s + ((l as { price?: number | null }).price ?? 0), 0)
 
     // Monthly sales vs purchases for last 6 months
     const now = new Date()
@@ -61,6 +65,16 @@ export default async function HomePage() {
       })
     }
     const maxMonthAmount = Math.max(...months.flatMap(m => [m.sales, m.purchases]), 1)
+
+    // Cashflow projection — dealer only
+    // Baseline: trailing 3-month average revenue, capped by current inventory value
+    const trailing3Avg = months.slice(-3).reduce((s, m) => s + m.sales, 0) / 3
+    const projectedMonthly = inventoryValueCents > 0 ? Math.min(trailing3Avg, inventoryValueCents) : trailing3Avg
+    const projectedMonths = [1, 2, 3].map(i => {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
+      return { label: d.toLocaleString('en-US', { month: 'short' }), projected: projectedMonthly }
+    })
+    const maxCashflow = Math.max(...months.map(m => m.sales), projectedMonthly, 1)
 
     const pendingShipments = (allSellingOrders ?? []).filter(o => o.status === 'awaiting_shipment')
 
@@ -204,6 +218,83 @@ export default async function HomePage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Dealer-only: Projected Cashflow */}
+        {isDealer && (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <CardTitle className="text-base">Projected Cashflow</CardTitle>
+                  <CardDescription className="mt-0.5">
+                    6-month actuals · 3-month projection based on trailing average
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-4 shrink-0 pt-0.5">
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/70" />
+                    Actual
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-500/25 border border-emerald-500/50 border-dashed" />
+                    Projected
+                  </span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-end gap-2 h-40">
+                {/* Historical bars */}
+                {months.map(m => (
+                  <div key={m.label} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+                    <div
+                      className="w-full rounded-t-sm bg-emerald-500/70 transition-all"
+                      style={{ height: `${Math.max((m.sales / maxCashflow) * 144, m.sales > 0 ? 4 : 0)}px` }}
+                    />
+                    <p className="text-[11px] text-muted-foreground truncate">{m.label}</p>
+                  </div>
+                ))}
+
+                {/* Divider */}
+                <div className="self-stretch flex items-start pt-0 pb-5 mx-1">
+                  <div className="w-px h-full border-l border-dashed border-muted-foreground/30" />
+                </div>
+
+                {/* Projected bars */}
+                {projectedMonths.map(m => (
+                  <div key={m.label} className="flex-1 flex flex-col items-center gap-1.5 min-w-0">
+                    <div
+                      className="w-full rounded-t-sm bg-emerald-500/25 border border-dashed border-emerald-500/50 border-b-0 transition-all"
+                      style={{ height: `${Math.max((m.projected / maxCashflow) * 144, m.projected > 0 ? 4 : 0)}px` }}
+                    />
+                    <p className="text-[11px] text-muted-foreground truncate">{m.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-border grid grid-cols-3 gap-4 text-xs">
+                <div>
+                  <p className="text-muted-foreground">Monthly projection</p>
+                  <p className="font-semibold text-sm mt-0.5 tabular-nums">{formatCents(Math.round(projectedMonthly))}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Active inventory</p>
+                  <p className="font-semibold text-sm mt-0.5 tabular-nums">{formatCents(inventoryValueCents)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">3-month projected</p>
+                  <p className="font-semibold text-sm mt-0.5 tabular-nums">{formatCents(Math.round(projectedMonthly * 3))}</p>
+                </div>
+              </div>
+
+              {trailing3Avg === 0 && (
+                <p className="text-sm text-muted-foreground text-center mt-3">
+                  No sales in the last 3 months — projections will populate once you have completed sales.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
       </div>
     )

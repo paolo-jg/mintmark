@@ -23,10 +23,10 @@ export function ListingGallery({ images, title }: Props) {
   const next = () => setActive(i => (i + 1) % images.length)
 
   return (
-    <div className="flex gap-3 h-full">
+    <div className="flex gap-3 max-h-[560px]">
       {/* Thumbnail strip — left */}
       {images.length > 1 && (
-        <div className="flex flex-col gap-2 w-[72px] shrink-0">
+        <div className="flex flex-col gap-2 w-[72px] shrink-0 overflow-y-auto">
           {images.map((src, i) => (
             <button
               key={i}
@@ -48,7 +48,7 @@ export function ListingGallery({ images, title }: Props) {
       )}
 
       {/* Main image */}
-      <div className="relative flex-1 aspect-square rounded-2xl overflow-hidden bg-muted group">
+      <div className="relative flex-1 rounded-2xl overflow-hidden bg-muted group min-h-0">
         <img
           src={images[active]}
           alt={title}

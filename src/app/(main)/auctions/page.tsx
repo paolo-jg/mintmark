@@ -56,12 +56,21 @@ export default async function AuctionsPage() {
               : 'No live auctions right now. Check back soon.'}
           </p>
         </div>
-        <Link
-          href="/listings/new"
-          className="flex-none flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:border-foreground/40 hover:bg-muted transition-colors whitespace-nowrap"
-        >
-          List a Coin
-        </Link>
+        <div className="flex items-center gap-2 flex-none">
+          {/* Page toggle */}
+          <div className="flex rounded-lg border border-border overflow-hidden text-sm font-medium">
+            <Link href="/buy-now" className="px-4 py-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+              Buy Now
+            </Link>
+            <span className="px-4 py-2 bg-foreground text-background">Auctions</span>
+          </div>
+          <Link
+            href="/listings"
+            className="flex-none flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-semibold text-foreground hover:border-foreground/40 hover:bg-muted transition-colors whitespace-nowrap"
+          >
+            Browse All
+          </Link>
+        </div>
       </div>
 
       <AuctionsClient auctions={auctions} wishlistCounts={wishlistMap} />

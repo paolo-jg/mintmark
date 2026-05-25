@@ -31,12 +31,35 @@ export default async function SeriesPage({
 
   const supabase = await createClient()
 
-  // Fetch all listings for this series (for filter option discovery + pre-filter data)
-  const { data: allListings } = await supabase
+  // Fetch all listings for this series.
+  // Primary: series_slug (set on all new listings).
+  // Fallback: coin_name prefix match — handles listings where series_slug is null
+  //   AND listings whose coin_name includes the year/mint (e.g. "Draped Bust Half Cent 1803")
+  //   which wouldn't match an exact .in() against coinNames.
+  const { data: bySlug } = await supabase
     .from('listings')
     .select('*')
     .eq('status', 'active')
-    .in('coin_name', series.coinNames)
+    .eq('series_slug', slug)
+
+  // Build OR filter: coin_name ILIKE 'Morgan Dollar%' OR coin_name ILIKE 'Morgan Silver Dollar%' ...
+  const nameFilter = series.coinNames
+    .map(n => `coin_name.ilike.${n}%`)
+    .join(',')
+
+  const { data: byName } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('status', 'active')
+    .is('series_slug', null)
+    .or(nameFilter)
+
+  const seen = new Set<string>()
+  const allListings = [...(bySlug ?? []), ...(byName ?? [])].filter(l => {
+    if (seen.has(l.id)) return false
+    seen.add(l.id)
+    return true
+  })
 
   // Derive available filter options from the full listing set
   const availableYears = [...new Set(

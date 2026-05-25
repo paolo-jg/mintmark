@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react'
 import Link from 'next/link'
+import { FeatureText } from '@/components/ui/card-fee-tooltip'
 
 const COLLECTOR_TIERS = [
   {
@@ -7,7 +8,7 @@ const COLLECTOR_TIERS = [
     monthlyPrice: null as number | null,
     annualPrice: null as number | null,
     description: 'For casual collectors just getting started.',
-    features: ['5% buy & sell fees', '$0.50 per listing', 'Up to 10 active listings/month', 'Unlimited purchases'],
+    features: ['7% buyer fee', '7% seller fee + card processing fees', '$0.50 per listing', 'Up to 10 active listings/month', 'Unlimited purchases'],
     highlighted: false,
     annualSavings: null as string | null,
   },
@@ -16,7 +17,7 @@ const COLLECTOR_TIERS = [
     monthlyPrice: 9.99,
     annualPrice: 99.99,
     description: 'For collectors who list more regularly.',
-    features: ['3.5% buy & sell fees', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'],
+    features: ['5% buyer fee', '5% seller fee + card processing fees', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'],
     highlighted: true,
     annualSavings: 'Save $19.89/yr',
   },
@@ -25,7 +26,7 @@ const COLLECTOR_TIERS = [
     monthlyPrice: 49,
     annualPrice: 499,
     description: 'For serious collectors with large inventories.',
-    features: ['2.5% buy & sell fees', '$0.30 per listing', 'Up to 200 active listings/month', 'Unlimited purchases'],
+    features: ['3% buyer fee', '3% seller fee + card processing fees', '$0.30 per listing', 'Up to 200 active listings/month', 'Unlimited purchases'],
     highlighted: false,
     annualSavings: 'Save $89/yr',
   },
@@ -37,7 +38,7 @@ const DEALER_TIERS = [
     monthlyPrice: 299,
     annualPrice: 2999,
     description: 'For dealers ready to scale without limits.',
-    features: ['2.5% buy & sell fees', '$0.20 per listing', 'Unlimited listings', 'Unlimited purchases'],
+    features: ['2.5% buyer fee', '2.5% seller fee + card processing fees', '$0.20 per listing', 'Unlimited listings', 'Unlimited purchases'],
     annualSavings: 'Save $589/yr',
   },
   {
@@ -45,7 +46,7 @@ const DEALER_TIERS = [
     monthlyPrice: 599,
     annualPrice: 5999,
     description: 'For established dealers moving serious volume.',
-    features: ['1% sell fee / 2% buy fee', '$0.10 per listing', 'Unlimited listings', 'Unlimited purchases'],
+    features: ['2% buyer fee', '1% seller fee + card processing fees', '$0.10 per listing', 'Unlimited listings', 'Unlimited purchases'],
     annualSavings: 'Save $1,189/yr',
   },
   {
@@ -53,7 +54,7 @@ const DEALER_TIERS = [
     monthlyPrice: 999,
     annualPrice: 9999,
     description: 'Maximum savings for the highest-volume dealers.',
-    features: ['0% sell fee / 1% buy fee', '$0 per listing', 'Unlimited listings', 'Unlimited purchases'],
+    features: ['1% buyer fee', '0% seller fee + card processing fees', '$0 per listing', 'Unlimited listings', 'Unlimited purchases'],
     annualSavings: 'Save $1,989/yr',
   },
 ]
@@ -107,7 +108,7 @@ function TierCard({ tier, isDealer = false }: {
         {tier.features.map((f) => (
           <li key={f} className="flex items-start gap-2 text-sm">
             <Check className="h-4 w-4 text-foreground/60 mt-0.5 shrink-0" />
-            <span>{f}</span>
+            <span><FeatureText text={f} /></span>
           </li>
         ))}
       </ul>
