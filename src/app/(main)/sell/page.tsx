@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
 import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle } from 'lucide-react'
+import Image from 'next/image'
 
 // ── Tier config ───────────────────────────────────────────────────────────────
 type Tier =
@@ -265,9 +266,9 @@ export default async function SellPage({
               className="flex items-center gap-4 px-4 py-3.5 bg-card hover:bg-muted/40 transition-colors"
             >
               {/* Thumbnail */}
-              <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0">
+              <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0 relative">
                 {listing.images?.[0] ? (
-                  <img src={listing.images[0]} alt={listing.title} className="h-full w-full object-cover" />
+                  <Image src={listing.images[0]} alt={listing.title} fill sizes="48px" className="object-cover" />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center">
                     <Package className="h-5 w-5 text-muted-foreground/30" />

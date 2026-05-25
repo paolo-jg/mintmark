@@ -34,8 +34,9 @@ async function getUser(req: NextRequest) {
       },
     }
   )
-  const { data } = await supabase.auth.getUser()
-  return data.user
+  // getSession() reads from cookie — no network round-trip, much faster than getUser()
+  const { data } = await supabase.auth.getSession()
+  return data.session?.user ?? null
 }
 
 export async function middleware(request: NextRequest) {

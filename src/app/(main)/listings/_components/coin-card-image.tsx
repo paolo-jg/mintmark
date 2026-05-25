@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import Image from 'next/image'
 
 interface Props {
   image: string
@@ -65,8 +66,8 @@ export function CoinCardImage({ image, imageReverse, name }: Props) {
   // No reverse — just show obverse, no interaction needed
   if (!imageReverse) {
     return (
-      <div className="aspect-square overflow-hidden bg-white dark:bg-zinc-50">
-        <img src={image} alt={`${name} obverse`} className="w-full h-full object-contain p-3" />
+      <div className="aspect-square overflow-hidden bg-white dark:bg-zinc-50 relative">
+        <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" />
       </div>
     )
   }
@@ -92,14 +93,14 @@ export function CoinCardImage({ image, imageReverse, name }: Props) {
       >
         {/* Obverse */}
         <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden' }}>
-          <img src={image} alt={`${name} obverse`} className="w-full h-full object-contain p-3" />
+          <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" />
         </div>
         {/* Reverse */}
         <div
           className="absolute inset-0"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
-          <img src={imageReverse} alt={`${name} reverse`} className="w-full h-full object-contain p-3" />
+          <Image src={imageReverse} alt={`${name} reverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" />
         </div>
       </div>
 
@@ -111,7 +112,7 @@ export function CoinCardImage({ image, imageReverse, name }: Props) {
           transition: phase === 'fading' ? 'opacity 0.4s ease-in-out' : 'none',
         }}
       >
-        <img src={image} alt={`${name} obverse`} className="w-full h-full object-contain p-3" />
+        <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" />
       </div>
     </div>
   )

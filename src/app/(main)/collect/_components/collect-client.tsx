@@ -5,6 +5,7 @@ import { Plus, Trash2, Star, Coins, ScanLine, ArrowRight, ArrowUpRight, Search, 
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { COIN_CATALOG } from '@/lib/coins/catalog'
 import { CoinSelector } from './coin-selector'
@@ -317,9 +318,9 @@ function OwnedCard({ item, onDelete, onUpdate, onClick }: {
       className={`group relative rounded-2xl border border-border bg-background overflow-hidden hover:shadow-md transition-shadow cursor-pointer ${isSold ? 'opacity-60' : ''}`}
       onClick={onClick}
     >
-      <div className="aspect-square bg-muted/40 flex items-center justify-center overflow-hidden">
+      <div className="aspect-square bg-muted/40 flex items-center justify-center overflow-hidden relative">
         {item.pcgs_image_url ? (
-          <img src={item.pcgs_image_url} alt={item.coin_name} className="w-full h-full object-contain mix-blend-multiply" />
+          <Image src={item.pcgs_image_url} alt={item.coin_name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain mix-blend-multiply" />
         ) : (
           <Coins className="h-12 w-12 text-muted-foreground/20" />
         )}
@@ -437,9 +438,9 @@ function WishlistCard({ item, onDelete, onMoveToOwned, onUpdate, onEdit, onClick
       className="group relative rounded-2xl border border-border bg-background overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
       onClick={onClick}
     >
-      <div className="aspect-square bg-muted/40 flex items-center justify-center overflow-hidden">
+      <div className="aspect-square bg-muted/40 flex items-center justify-center overflow-hidden relative">
         {item.pcgs_image_url ? (
-          <img src={item.pcgs_image_url} alt={item.coin_name} className="w-full h-full object-contain mix-blend-multiply" />
+          <Image src={item.pcgs_image_url} alt={item.coin_name} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain mix-blend-multiply" />
         ) : (
           <Star className="h-10 w-10 text-muted-foreground/20" />
         )}
