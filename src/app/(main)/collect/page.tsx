@@ -1,31 +1,18 @@
-import { createClient } from '@/lib/supabase/server'
-import { CollectClient, type CollectionItem } from './_components/collect-client'
+import { CollectClient } from './_components/collect-client'
 import { DevBanner } from '@/components/dev/dev-banner'
 
 export const metadata = {
   title: 'My Collection — Pedigree Coins',
 }
 
-export default async function CollectPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const items = user
-    ? (await supabase
-        .from('collection_items')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-      ).data
-    : []
-
+export default function CollectPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">My Collection</h1>
       </div>
 
-      <CollectClient initialItems={(items ?? []) as CollectionItem[]} isLoggedIn={!!user} />
+      <CollectClient initialItems={[]} isLoggedIn={true} />
       <DevBanner />
     </main>
   )

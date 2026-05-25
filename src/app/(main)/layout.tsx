@@ -1,8 +1,7 @@
 import Navbar from '@/components/layout/Navbar'
 import { SWRProvider } from '@/components/providers/swr-provider'
 
-// Prevent static prerendering — pages require auth state from Supabase at runtime
-export const dynamic = 'force-dynamic'
+export const runtime = 'edge'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (

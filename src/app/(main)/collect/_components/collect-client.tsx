@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import useSWR from 'swr'
 import { Plus, Trash2, Star, Coins, ScanLine, ArrowRight, ArrowUpRight, Search, X, Pencil, LogIn, Tag, ChevronDown, CheckCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -538,9 +539,24 @@ function SectionHeader({ icon, label }: { icon?: React.ReactNode; label: string 
   )
 }
 
-export function CollectClient({ initialItems, isLoggedIn }: { initialItems: CollectionItem[]; isLoggedIn: boolean }) {
+async function fetchCollectionItems(): Promise<{ items: CollectionItem[]; isLoggedIn: boolean }> {
+  const db = createClient()
+  const { data: { user } } = await db.auth.getUser()
+  if (!user) return { items: [], isLoggedIn: false }
+  const { data } = await db
+    .from('collection_items')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+  return { items: (data ?? []) as CollectionItem[], isLoggedIn: true }
+}
+
+export function CollectClient({ initialItems: _initialItems, isLoggedIn: _isLoggedIn }: { initialItems: CollectionItem[]; isLoggedIn: boolean }) {
+  const { data, mutate } = useSWR('collect-items', fetchCollectionItems, { keepPreviousData: true })
+  const isLoggedIn = data?.isLoggedIn ?? false
+
   const [tab, setTab] = useState<Tab>('owned')
-  const [items, setItems] = useState<CollectionItem[]>(initialItems)
+  const [items, setItems] = useState<CollectionItem[]>([])
   const [showOwned, setShowOwned] = useState(false)
   const [showScan, setShowScan] = useState(false)
   const [showWishlist, setShowWishlist] = useState(false)
@@ -553,6 +569,11 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
   const [wishlistSearch, setWishlistSearch] = useState('')
   const [soldSearch, setSoldSearch] = useState('')
   const [wishlistCounts, setWishlistCounts] = useState<Record<string, number>>({})
+
+  // Sync SWR data into local items state
+  useEffect(() => {
+    if (data?.items) setItems(data.items)
+  }, [data?.items])
 
   const openAddOwned = () => isLoggedIn ? setShowOwned(true) : setShowSignupPrompt(true)
   const openAddScan  = () => isLoggedIn ? setShowScan(true)  : setShowSignupPrompt(true)
@@ -579,9 +600,7 @@ export function CollectClient({ initialItems, isLoggedIn }: { initialItems: Coll
     .filter(i => matchesSearch(i, wishlistSearch))
 
   const refresh = async () => {
-    const res = await fetch('/api/collection')
-    const json = await res.json()
-    if (json.data) setItems(json.data)
+    await mutate()
   }
 
   // Fetch active listing counts for all wishlisted series so the cards can show badges.
