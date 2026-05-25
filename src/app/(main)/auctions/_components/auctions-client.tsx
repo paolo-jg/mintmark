@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import useSWR from 'swr'
 import Link from 'next/link'
 import { Clock, Search, Flame, Heart, Gavel } from 'lucide-react'
@@ -70,18 +70,28 @@ type Tab = 'ending-soon' | 'most-active' | 'just-listed'
 function timeLeft(endTime: string): { label: string; urgent: boolean } {
   const diff = new Date(endTime).getTime() - Date.now()
   if (diff <= 0) return { label: 'Ended', urgent: true }
-  const h = Math.floor(diff / 36e5)
-  const m = Math.floor((diff % 36e5) / 6e4)
-  if (h < 1) return { label: `${m}m left`, urgent: true }
-  if (h < 24) return { label: `${h}h ${m}m left`, urgent: true }
-  const d = Math.floor(h / 24)
-  return { label: `${d}d left`, urgent: false }
+  const totalSec = Math.floor(diff / 1000)
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  if (h >= 24) { const d = Math.floor(h / 24); return { label: `${d}d left`, urgent: false } }
+  if (h >= 1)  return { label: `${h}h ${m}m left`, urgent: false }
+  if (m >= 1)  return { label: `${m}m ${s}s left`, urgent: true }
+  return { label: `${s}s left`, urgent: true }
 }
 
 // ── Card ─────────────────────────────────────────────────────────────────────
 function AuctionCard({ auction, hot = false, wishlistCounts }: { auction: AuctionRow; hot?: boolean; wishlistCounts: Record<string, number> }) {
   const { listing } = auction
   const currentPrice = auction.current_bid ?? auction.start_price
+  const [, setTick] = useState(0)
+
+  // Tick every second so timeLeft() re-evaluates with a fresh Date.now()
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [])
+
   const { label, urgent } = timeLeft(auction.end_time)
   const isVerified = listing.verification_status === 'verified'
   const hasBids = auction.bid_count > 0
