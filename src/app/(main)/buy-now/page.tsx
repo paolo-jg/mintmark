@@ -1,46 +1,51 @@
-import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { unstable_cache } from 'next/cache'
 import Link from 'next/link'
 import { ShoppingBag } from 'lucide-react'
 import { BuyNowClient } from './_components/buy-now-client'
 import type { BuyNowListing } from './_components/buy-now-client'
 
+const getBuyNowData = unstable_cache(
+  async () => {
+    const serviceDb = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const [{ data: raw }, { data: wishlistCounts }] = await Promise.all([
+      serviceDb
+        .from('listings')
+        .select('id, title, coin_name, grading_service, grade, year, mint_mark, denomination, verification_status, images, price, series_slug, created_at')
+        .eq('status', 'active')
+        .eq('listing_type', 'fixed')
+        .order('created_at', { ascending: false })
+        .limit(96),
+      serviceDb
+        .from('collection_items')
+        .select('series_slug, user_id')
+        .eq('type', 'wishlist')
+        .not('series_slug', 'is', null),
+    ])
+
+    const wishlistMap: Record<string, number> = {}
+    if (wishlistCounts) {
+      const seen = new Map<string, Set<string>>()
+      for (const row of wishlistCounts) {
+        if (!row.series_slug) continue
+        if (!seen.has(row.series_slug)) seen.set(row.series_slug, new Set())
+        seen.get(row.series_slug)!.add(row.user_id)
+      }
+      for (const [slug, users] of seen) wishlistMap[slug] = users.size
+    }
+
+    return { listings: (raw ?? []) as BuyNowListing[], wishlistMap }
+  },
+  ['buy-now-listings'],
+  { revalidate: 60, tags: ['listings'] }
+)
+
 export default async function BuyNowPage() {
-  const supabase = await createClient()
-
-  const { data: raw } = await supabase
-    .from('listings')
-    .select('id, title, coin_name, grading_service, grade, year, mint_mark, denomination, verification_status, images, price, series_slug, created_at')
-    .eq('status', 'active')
-    .eq('listing_type', 'fixed')
-    .order('created_at', { ascending: false })
-    .limit(96)
-
-  const listings: BuyNowListing[] = (raw ?? []) as BuyNowListing[]
-
-  const serviceDb = createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-
-  const { data: wishlistCounts } = await serviceDb
-    .from('collection_items')
-    .select('series_slug, user_id')
-    .eq('type', 'wishlist')
-    .not('series_slug', 'is', null)
-
-  const wishlistMap: Record<string, number> = {}
-  if (wishlistCounts) {
-    const seen = new Map<string, Set<string>>()
-    for (const row of wishlistCounts) {
-      if (!row.series_slug) continue
-      if (!seen.has(row.series_slug)) seen.set(row.series_slug, new Set())
-      seen.get(row.series_slug)!.add(row.user_id)
-    }
-    for (const [slug, users] of seen) {
-      wishlistMap[slug] = users.size
-    }
-  }
+  const { listings, wishlistMap } = await getBuyNowData()
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
