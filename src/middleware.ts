@@ -38,7 +38,7 @@ async function getUser(req: NextRequest) {
   return data.user
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Skip static assets and API routes
