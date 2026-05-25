@@ -71,7 +71,8 @@ interface SellData {
 
 async function fetchSellData(): Promise<SellData | null> {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user
   if (!user) return null
 
   const now = new Date()

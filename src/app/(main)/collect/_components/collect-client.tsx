@@ -541,7 +541,8 @@ function SectionHeader({ icon, label }: { icon?: React.ReactNode; label: string 
 
 async function fetchCollectionItems(): Promise<{ items: CollectionItem[]; isLoggedIn: boolean }> {
   const db = createClient()
-  const { data: { user } } = await db.auth.getUser()
+  const { data: { session } } = await db.auth.getSession()
+  const user = session?.user
   if (!user) return { items: [], isLoggedIn: false }
   const { data } = await db
     .from('collection_items')
