@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,7 +23,6 @@ interface Props {
 }
 
 export function BuyNowModal({ listing, onClose }: Props) {
-  const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
 
   const [shipToName, setShipToName] = useState('')
@@ -43,7 +41,7 @@ export function BuyNowModal({ listing, onClose }: Props) {
 
     setSubmitting(true)
     try {
-      const res = await fetch('/api/orders', {
+      const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,8 +60,8 @@ export function BuyNowModal({ listing, onClose }: Props) {
         setSubmitting(false)
         return
       }
-      toast.success('Purchase confirmed! Check your collection.')
-      router.push('/collect')
+      // Redirect to Stripe-hosted checkout page
+      window.location.href = json.url
     } catch {
       toast.error('Something went wrong. Please try again.')
       setSubmitting(false)
@@ -210,9 +208,9 @@ export function BuyNowModal({ listing, onClose }: Props) {
             disabled={submitting}
           >
             {submitting ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
+              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Redirecting to payment…</>
             ) : (
-              'Confirm Purchase'
+              'Continue to Payment'
             )}
           </Button>
         </div>
