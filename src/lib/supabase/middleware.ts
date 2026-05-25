@@ -8,8 +8,11 @@ function getCookieDomain(): string | undefined {
   if (!marketingUrl) return undefined
   try {
     const host = new URL(marketingUrl).hostname
-    // e.g. "pedigreecoins.com" → ".pedigreecoins.com"
-    return host.startsWith('.') ? host : `.${host}`
+    // Skip localhost / IP addresses
+    if (host === 'localhost' || host.startsWith('127.') || host.startsWith('192.')) return undefined
+    // Strip www. prefix so the cookie covers ALL subdomains (www. + my. + bare domain)
+    const base = host.replace(/^www\./, '')
+    return `.${base}`
   } catch {
     return undefined
   }
@@ -44,20 +47,9 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // Protect routes that require authentication
-  const protectedPaths = ['/dashboard', '/sell', '/listings/new', '/profile']
-  const isProtected = protectedPaths.some(path =>
-    request.nextUrl.pathname.startsWith(path)
-  )
-
-  if (isProtected && !user) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    url.searchParams.set('redirectTo', request.nextUrl.pathname)
-    return NextResponse.redirect(url)
-  }
+  // getSession reads from cookie — no network round-trip (fast)
+  // Route protection is handled by the proxy at the subdomain level, not here
+  await supabase.auth.getSession()
 
   return supabaseResponse
 }

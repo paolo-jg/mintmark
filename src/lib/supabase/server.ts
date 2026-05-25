@@ -6,7 +6,9 @@ function getCookieDomain(): string | undefined {
   if (!marketingUrl) return undefined
   try {
     const host = new URL(marketingUrl).hostname
-    return host.startsWith('.') ? host : `.${host}`
+    if (host === 'localhost' || host.startsWith('127.') || host.startsWith('192.')) return undefined
+    const base = host.replace(/^www\./, '')
+    return `.${base}`
   } catch {
     return undefined
   }

@@ -165,8 +165,7 @@ export function SellClient() {
   }
 
   if (!data) {
-    // Not logged in — redirect handled server-side, but just in case
-    if (typeof window !== 'undefined') window.location.href = '/auth/login'
+    // No data — proxy handles the auth redirect; just render nothing
     return null
   }
 
