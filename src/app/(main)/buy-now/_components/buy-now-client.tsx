@@ -27,7 +27,7 @@ export interface BuyNowListing {
 
 type Tab = 'newest' | 'price-asc' | 'price-desc'
 
-async function fetchBuyNowData() {
+export async function fetchBuyNowData() {
   const supabase = createClient()
   const [{ data: listings }, { data: wishlistRaw }] = await Promise.all([
     supabase

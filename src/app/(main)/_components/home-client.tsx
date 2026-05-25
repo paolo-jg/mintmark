@@ -37,7 +37,7 @@ interface HomeData {
   subscriptionTier: string | null
 }
 
-async function fetchHomeData(): Promise<HomeData> {
+export async function fetchHomeData(): Promise<HomeData> {
   const supabase = createClient()
   const { data: { session } } = await supabase.auth.getSession()
   const user = session?.user

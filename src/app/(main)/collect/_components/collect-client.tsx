@@ -539,7 +539,7 @@ function SectionHeader({ icon, label }: { icon?: React.ReactNode; label: string 
   )
 }
 
-async function fetchCollectionItems(): Promise<{ items: CollectionItem[]; isLoggedIn: boolean }> {
+export async function fetchCollectionItems(): Promise<{ items: CollectionItem[]; isLoggedIn: boolean }> {
   const db = createClient()
   const { data: { session } } = await db.auth.getSession()
   const user = session?.user

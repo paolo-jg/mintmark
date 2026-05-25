@@ -7,7 +7,7 @@ import { Clock, Search, Flame, Heart, Gavel } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 
-async function fetchAuctionsData() {
+export async function fetchAuctionsData() {
   const supabase = createClient()
   const [{ data: raw }, { data: wishlistRaw }] = await Promise.all([
     supabase

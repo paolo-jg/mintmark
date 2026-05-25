@@ -69,7 +69,7 @@ interface SellData {
   stripeOnboardingComplete: boolean
 }
 
-async function fetchSellData(): Promise<SellData | null> {
+export async function fetchSellData(): Promise<SellData | null> {
   const supabase = createClient()
   const { data: { session } } = await supabase.auth.getSession()
   const user = session?.user
