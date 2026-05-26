@@ -14,7 +14,6 @@ import { toast } from 'sonner'
 // Tiers that have a monthly listing cap
 const CAPPED_TIERS = new Set([
   'collector_basic',
-  'collector_standard',
   'collector_premium',
 ])
 

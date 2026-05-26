@@ -185,8 +185,7 @@ function crossReference(picked: PickedCoin, grade: Partial<CoinGrade>): string |
 // Tier fee configuration
 const TIER_FEES: Record<string, { sellPct: number; listingFeeCents: number }> = {
   collector_basic:    { sellPct: 7,   listingFeeCents: 50 },
-  collector_standard: { sellPct: 5,   listingFeeCents: 40 },
-  collector_premium:  { sellPct: 3,   listingFeeCents: 30 },
+  collector_premium:  { sellPct: 1.9, listingFeeCents: 40 },
   dealer_basic:       { sellPct: 2.5, listingFeeCents: 20 },
   dealer_standard:    { sellPct: 1,   listingFeeCents: 10 },
   dealer_premium:     { sellPct: 0,   listingFeeCents: 0  },
@@ -431,8 +430,7 @@ export default function NewListingPage() {
   // Tier config — mirrors sell/page.tsx
   const LISTING_LIMITS: Record<string, number | null> = {
     collector_basic:    10,
-    collector_standard: 50,
-    collector_premium:  200,
+    collector_premium:  50,
     dealer_basic:       null,
     dealer_standard:    null,
     dealer_premium:     null,

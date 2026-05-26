@@ -9,7 +9,7 @@ type Group = 'collectors' | 'dealers'
 
 const COLLECTOR_TIERS = [
   {
-    name: 'Basic',
+    name: 'Free',
     fullName: 'Collector Basic',
     monthlyPrice: null as number | null,
     annualPrice: null as number | null,
@@ -19,24 +19,14 @@ const COLLECTOR_TIERS = [
     annualSavings: null as string | null,
   },
   {
-    name: 'Standard',
-    fullName: 'Collector Standard',
-    monthlyPrice: 9.99,
-    annualPrice: 99.99,
-    description: 'Lower fees and more listings for active collectors.',
-    features: ['5% buyer fee', '5% seller fee + card processing fees', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'],
-    highlighted: true,
-    annualSavings: 'Save $19.89/yr',
-  },
-  {
     name: 'Premium',
     fullName: 'Collector Premium',
-    monthlyPrice: 49,
-    annualPrice: 499,
-    description: 'Maximum listings and the lowest fees for serious collectors.',
-    features: ['1% buyer fee', '5% seller fee + card processing fees', '$0.30 per listing', 'Up to 100 active listings/month', 'Unlimited purchases'],
-    highlighted: false,
-    annualSavings: 'Save $89/yr',
+    monthlyPrice: 9.99,
+    annualPrice: null as number | null,
+    description: 'Lower fees and more listings for active collectors.',
+    features: ['1.9% buyer fee', '1.9% seller fee + card processing fees', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'],
+    highlighted: true,
+    annualSavings: null as string | null,
   },
 ]
 
@@ -75,8 +65,7 @@ const DEALER_TIERS = [
 
 const ANNUAL_PRICES: Record<string, number | null> = {
   'Collector Basic': null,
-  'Collector Standard': 99.99,
-  'Collector Premium': 499,
+  'Collector Premium': null,
   'Dealer Basic': 1999,
   'Dealer Standard': 3999,
   'Dealer Premium': 5999,
@@ -84,8 +73,7 @@ const ANNUAL_PRICES: Record<string, number | null> = {
 
 const ANNUAL_SAVINGS: Record<string, string | null> = {
   'Collector Basic': null,
-  'Collector Standard': 'Save $19.89/yr',
-  'Collector Premium': 'Save $89/yr',
+  'Collector Premium': null,
   'Dealer Basic': 'Save $389/yr',
   'Dealer Standard': 'Save $789/yr',
   'Dealer Premium': 'Save $1,189/yr',

@@ -4,9 +4,8 @@ import { Badge } from '@/components/ui/badge'
 import { ProfileForm } from './_components/profile-form'
 
 const TIER_LABEL: Record<string, string> = {
-  collector_basic:    'Collector Basic',
-  collector_standard: 'Collector Standard',
-  collector_premium:  'Collector Premium',
+  collector_basic:    'Free',
+  collector_premium:  'Premium',
   dealer_basic:       'Dealer Basic',
   dealer_standard:    'Dealer Standard',
   dealer_premium:     'Dealer Premium',

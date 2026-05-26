@@ -16,8 +16,7 @@ import { toast } from 'sonner'
 
 const TIER_FEES: Record<string, { sellPct: number; listingFeeCents: number }> = {
   collector_basic:    { sellPct: 7,   listingFeeCents: 50 },
-  collector_standard: { sellPct: 5,   listingFeeCents: 40 },
-  collector_premium:  { sellPct: 3,   listingFeeCents: 30 },
+  collector_premium:  { sellPct: 1.9, listingFeeCents: 40 },
   dealer_basic:       { sellPct: 2.5, listingFeeCents: 20 },
   dealer_standard:    { sellPct: 1,   listingFeeCents: 10 },
   dealer_premium:     { sellPct: 0,   listingFeeCents: 0  },

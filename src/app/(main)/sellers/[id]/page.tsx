@@ -6,9 +6,8 @@ import { formatCents } from '@/lib/utils'
 import { Star, Store, Package } from 'lucide-react'
 
 const TIER_LABEL: Record<string, string> = {
-  collector_basic:    'Collector Basic',
-  collector_standard: 'Collector Standard',
-  collector_premium:  'Collector Premium',
+  collector_basic:    'Free',
+  collector_premium:  'Premium',
   dealer_basic:       'Dealer Basic',
   dealer_standard:    'Dealer Standard',
   dealer_premium:     'Dealer Premium',

@@ -13,22 +13,13 @@ const COLLECTOR_TIERS = [
     annualSavings: null as string | null,
   },
   {
-    name: 'Collector Standard',
-    monthlyPrice: 9.99,
-    annualPrice: 99.99,
-    description: 'For collectors who list more regularly.',
-    features: ['5% buyer fee', '5% seller fee + card processing fees', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'],
-    highlighted: true,
-    annualSavings: 'Save $19.89/yr',
-  },
-  {
     name: 'Collector Premium',
-    monthlyPrice: 49,
-    annualPrice: 499,
-    description: 'For serious collectors with large inventories.',
-    features: ['1% buyer fee', '5% seller fee + card processing fees', '$0.30 per listing', 'Up to 100 active listings/month', 'Unlimited purchases'],
-    highlighted: false,
-    annualSavings: 'Save $89/yr',
+    monthlyPrice: 9.99,
+    annualPrice: null as number | null,
+    description: 'For collectors who list more regularly.',
+    features: ['1.9% buyer fee', '1.9% seller fee + card processing fees', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'],
+    highlighted: true,
+    annualSavings: null as string | null,
   },
 ]
 
@@ -60,7 +51,7 @@ const DEALER_TIERS = [
 ]
 
 const COMPETITORS = [
-  { name: 'Pedigree Coins', plan: 'Collector Basic', sellerFee: '5%', listingFee: '$0.50', buyerPremium: 'None', highlight: true },
+  { name: 'Pedigree Coins', plan: 'Free tier', sellerFee: '7%', listingFee: '$0.50', buyerPremium: 'None', highlight: true },
   { name: 'eBay', plan: 'Coins Category', sellerFee: '~12.35%', listingFee: '$0.35', buyerPremium: 'None', highlight: false },
   { name: 'Heritage Auctions', plan: 'All tiers', sellerFee: 'varies', listingFee: 'None', buyerPremium: '20%+', highlight: false },
   { name: 'PCGS Coin Exchange', plan: 'Marketplace', sellerFee: 'varies', listingFee: 'varies', buyerPremium: 'None', highlight: false },
@@ -141,7 +132,7 @@ export function PricingSection() {
 
       {/* Collector tiers */}
       <p className="text-xs font-bold tracking-[0.2em] uppercase text-muted-foreground/60 mb-3">Collectors</p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         {COLLECTOR_TIERS.map(tier => <TierCard key={tier.name} tier={tier} />)}
       </div>
 

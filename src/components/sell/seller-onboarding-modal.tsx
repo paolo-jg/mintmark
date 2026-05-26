@@ -5,7 +5,7 @@ import { FileText, Landmark, ArrowRight, Loader2, Check, Lock, ChevronLeft } fro
 import { createClient } from '@/lib/supabase/client'
 import { FeatureText } from '@/components/ui/card-fee-tooltip'
 
-type Tier = 'collector_basic' | 'collector_standard' | 'collector_premium' | 'dealer_basic' | 'dealer_standard' | 'dealer_premium'
+type Tier = 'collector_basic' | 'collector_premium' | 'dealer_basic' | 'dealer_standard' | 'dealer_premium'
 type Group = 'collectors' | 'dealers'
 
 interface Props {
@@ -30,7 +30,7 @@ function getAllDisplaySteps(tier: Tier): Step[] {
 const COLLECTOR_TIERS = [
   {
     key: 'collector_basic',
-    name: 'Basic',
+    name: 'Free',
     fullName: 'Collector Basic',
     monthlyPrice: null as number | null,
     annualPrice: null as number | null,
@@ -41,27 +41,15 @@ const COLLECTOR_TIERS = [
     isCurrent: true,
   },
   {
-    key: 'collector_standard',
-    name: 'Standard',
-    fullName: 'Collector Standard',
-    monthlyPrice: 9.99,
-    annualPrice: 99.99,
-    description: 'Lower fees and more listings for active collectors.',
-    features: ['5% buyer fee', '5% seller fee + card processing fees', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'],
-    highlighted: true,
-    annualSavings: 'Save $19.89/yr',
-    isCurrent: false,
-  },
-  {
     key: 'collector_premium',
     name: 'Premium',
     fullName: 'Collector Premium',
-    monthlyPrice: 49,
-    annualPrice: 499,
-    description: 'Maximum listings and the lowest fees for serious collectors.',
-    features: ['1% buyer fee', '5% seller fee + card processing fees', '$0.30 per listing', 'Up to 100 active listings/month', 'Unlimited purchases'],
-    highlighted: false,
-    annualSavings: 'Save $89/yr',
+    monthlyPrice: 9.99,
+    annualPrice: null as number | null,
+    description: 'Lower fees and more listings for active collectors.',
+    features: ['1.9% buyer fee', '1.9% seller fee + card processing fees', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'],
+    highlighted: true,
+    annualSavings: null as string | null,
     isCurrent: false,
   },
 ]

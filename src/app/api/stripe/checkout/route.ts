@@ -17,7 +17,6 @@ function calcConvenienceFee(priceUsd: number): number {
 
 type SubscriptionTier =
   | 'collector_basic'
-  | 'collector_standard'
   | 'collector_premium'
   | 'dealer_basic'
   | 'dealer_standard'
@@ -26,8 +25,7 @@ type SubscriptionTier =
 // Buyer fee: tied to the BUYER's subscription plan
 const BUYER_FEE_RATE: Record<SubscriptionTier, number> = {
   collector_basic:    0.07,
-  collector_standard: 0.05,
-  collector_premium:  0.01,
+  collector_premium:  0.019,
   dealer_basic:       0.01,
   dealer_standard:    0.01,
   dealer_premium:     0.00,
@@ -36,8 +34,7 @@ const BUYER_FEE_RATE: Record<SubscriptionTier, number> = {
 // Seller fee: tied to the SELLER's subscription plan
 const SELLER_FEE_RATE: Record<SubscriptionTier, number> = {
   collector_basic:    0.07,
-  collector_standard: 0.05,
-  collector_premium:  0.05,
+  collector_premium:  0.019,
   dealer_basic:       0.025,
   dealer_standard:    0.01,
   dealer_premium:     0.00,

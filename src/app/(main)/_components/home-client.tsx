@@ -300,7 +300,7 @@ export function HomeClient() {
           </CardHeader>
           <CardContent className="space-y-3">
             {[
-              { label: 'Pedigree Coins', fee: '5%', highlight: true },
+              { label: 'Pedigree Coins', fee: 'From 1.9%', highlight: true },
               { label: 'eBay (coins)', fee: '~12.35%', highlight: false },
               { label: 'Heritage Auctions', fee: '20%+ BP', highlight: false },
               { label: 'PCGS CoinFacts', fee: 'Varies', highlight: false },
