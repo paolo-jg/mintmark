@@ -85,7 +85,7 @@ const DEALER_TIERS = [
     annualPrice: 5999,
     description: 'Priority ranking and significantly reduced fees.',
     features: ['2% buyer fee', '1% seller fee + card processing fees', '$0.10 per listing', 'Unlimited listings', 'Priority dealer ranking', 'Custom logo & description'],
-    highlighted: true,
+    highlighted: false,
     annualSavings: 'Save $1,189/yr',
   },
   {
