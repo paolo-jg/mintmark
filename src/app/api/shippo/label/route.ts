@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { purchaseLabel, requiresInsurance } from '@/lib/shippo'
 
-const AUTO_CONFIRM_DAYS = 21
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -55,9 +54,6 @@ export async function POST(request: NextRequest) {
       insuredValueCents: mustInsure ? order.amount : 0,
     })
 
-    const autoConfirmAt = new Date()
-    autoConfirmAt.setDate(autoConfirmAt.getDate() + AUTO_CONFIRM_DAYS)
-
     const estimatedDelivery = estimatedDays
       ? new Date(Date.now() + estimatedDays * 86400000).toISOString().slice(0, 10)
       : null
@@ -91,7 +87,6 @@ export async function POST(request: NextRequest) {
       .from('orders')
       .update({
         status: 'label_purchased',
-        auto_confirm_at: autoConfirmAt.toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', orderId)
