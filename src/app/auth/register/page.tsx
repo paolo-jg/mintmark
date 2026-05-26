@@ -41,7 +41,8 @@ export default function RegisterPage() {
       toast.error(error.message)
     } else {
       toast.success('Account created! Check your email to confirm.')
-      router.push('/dashboard')
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL
+      window.location.href = appUrl ? `${appUrl}/dashboard` : '/dashboard'
     }
     setLoading(false)
   }

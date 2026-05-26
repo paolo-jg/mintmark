@@ -39,8 +39,8 @@ export default function Navbar() {
 
   const signOut = async () => {
     await supabase.auth.signOut()
-    router.push('/')
-    router.refresh()
+    const marketingUrl = process.env.NEXT_PUBLIC_MARKETING_URL
+    window.location.href = marketingUrl || '/'
   }
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? '??'

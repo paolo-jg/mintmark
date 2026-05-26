@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import { updateSession } from '@/lib/supabase/middleware'
 
-const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_URL ?? 'http://localhost:3000'
-const APP_URL       = process.env.NEXT_PUBLIC_APP_URL       ?? 'http://localhost:3000'
+const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_URL || 'http://localhost:3000'
+const APP_URL       = process.env.NEXT_PUBLIC_APP_URL       || 'http://localhost:3000'
 
 // Paths served on the marketing domain (pedigreecoins.com)
 const MARKETING_ONLY_PATHS = ['/', '/pricing', '/auth/login', '/auth/register', '/auth/callback', '/privacy', '/terms']
@@ -41,7 +42,7 @@ function hasSession(req: NextRequest): boolean {
 
 // ── Proxy ─────────────────────────────────────────────────────────────────────
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Static assets and API routes — pass through immediately
@@ -50,24 +51,24 @@ export function proxy(request: NextRequest) {
     pathname.startsWith('/api') ||
     pathname.includes('.')
   ) {
-    return NextResponse.next()
+    return updateSession(request)
   }
 
-  // Local dev — no subdomain logic, just pass through
+  // Local dev — no subdomain logic, just refresh session
   if (isLocalDev(request)) {
-    return NextResponse.next()
+    return updateSession(request)
   }
 
   const onAppDomain       = isAppDomain(request)
   const onMarketingDomain = isMarketingDomain(request)
   const loggedIn          = hasSession(request)
 
-  // ── On www.pedigreecoins.com ──────────────────────────────────────────────
+  // ── On pedigreecoins.com ──────────────────────────────────────────────────
   if (onMarketingDomain) {
     // Signed-in users don't belong on non-auth marketing pages → send to app
     if (loggedIn) {
-      const isAuthRoute = MARKETING_ONLY_PATHS.includes(pathname)
-      if (!isAuthRoute) {
+      const isMarketingPath = MARKETING_ONLY_PATHS.includes(pathname)
+      if (!isMarketingPath) {
         return NextResponse.redirect(new URL(pathname, APP_URL))
       }
     }
@@ -81,7 +82,7 @@ export function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL(pathname, APP_URL))
     }
 
-    return NextResponse.next()
+    return updateSession(request)
   }
 
   // ── On my.pedigreecoins.com ───────────────────────────────────────────────
@@ -95,10 +96,11 @@ export function proxy(request: NextRequest) {
         )
       }
     }
-    return NextResponse.next()
+    return updateSession(request)
   }
 
-  return NextResponse.next()
+  // Unknown domain (e.g. Vercel preview URLs) — just refresh session
+  return updateSession(request)
 }
 
 export const config = {
