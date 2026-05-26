@@ -3,6 +3,42 @@
 import { Info } from 'lucide-react'
 import { useState, useRef } from 'react'
 
+function BuyerFeeTooltip() {
+  const [open, setOpen] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const show = () => { if (timer.current) clearTimeout(timer.current); setOpen(true) }
+  const hide = () => { timer.current = setTimeout(() => setOpen(false), 120) }
+
+  return (
+    <span className="relative inline-flex items-center align-middle ml-1">
+      <button
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onClick={() => setOpen(v => !v)}
+        className="text-muted-foreground/40 hover:text-muted-foreground transition-colors focus:outline-none"
+        aria-label="Buyer fee info"
+        type="button"
+      >
+        <Info className="h-3 w-3" />
+      </button>
+
+      {open && (
+        <div
+          onMouseEnter={show}
+          onMouseLeave={hide}
+          className="absolute left-1/2 -translate-x-1/2 bottom-6 z-50 w-64 rounded-xl border border-border bg-popover text-popover-foreground shadow-lg p-4"
+        >
+          <p className="text-xs font-semibold mb-1">Buyer Fee</p>
+          <p className="text-xs text-muted-foreground">
+            Added to the purchase price at checkout and charged to the buyer. It is not deducted from the seller&apos;s payout.
+          </p>
+        </div>
+      )}
+    </span>
+  )
+}
+
 function CardFeeTooltip() {
   const [open, setOpen] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -58,19 +94,24 @@ function CardFeeTooltip() {
   )
 }
 
-/** Renders a feature string, injecting the tooltip icon after "card processing fees" if present. */
+/** Renders a feature string, injecting tooltips after "buyer fee" and "card processing fees". */
 export function FeatureText({ text }: { text: string }) {
-  const marker = 'card processing fees'
-  const idx = text.indexOf(marker)
-  if (idx === -1) return <>{text}</>
+  const buyerMarker = 'buyer fee'
+  const cardMarker = 'card processing fees'
 
-  const before = text.slice(0, idx + marker.length)
-  const after = text.slice(idx + marker.length)
-  return (
-    <>
-      {before}
-      <CardFeeTooltip />
-      {after}
-    </>
-  )
+  const cardIdx = text.indexOf(cardMarker)
+  if (cardIdx !== -1) {
+    const before = text.slice(0, cardIdx + cardMarker.length)
+    const after = text.slice(cardIdx + cardMarker.length)
+    return <>{before}<CardFeeTooltip />{after}</>
+  }
+
+  const buyerIdx = text.indexOf(buyerMarker)
+  if (buyerIdx !== -1) {
+    const before = text.slice(0, buyerIdx + buyerMarker.length)
+    const after = text.slice(buyerIdx + buyerMarker.length)
+    return <>{before}<BuyerFeeTooltip />{after}</>
+  }
+
+  return <>{text}</>
 }

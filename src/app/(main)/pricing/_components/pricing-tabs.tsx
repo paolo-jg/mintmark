@@ -32,7 +32,7 @@ const DEALER_TIERS = [
     monthlyPrice: 49.99,
     annualPrice: null as number | null,
     description: 'Unlimited listings, the lowest fees, and advanced tools for serious dealers.',
-    features: ['1% buyer fee', '0% seller fee', '$0 per listing', 'Unlimited listings', 'Unlimited purchases', 'Advanced analytics', 'Advanced listing creation features'],
+    features: ['1% buyer fee', '0% seller fee + card processing fees', '$0 per listing', 'Unlimited listings', 'Unlimited purchases', 'Advanced analytics', 'Advanced listing creation features'],
     highlighted: false,
     annualSavings: null as string | null,
   },
