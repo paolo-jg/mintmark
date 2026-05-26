@@ -148,6 +148,9 @@ export async function POST(req: NextRequest) {
     })
   }
 
+  // ── Build escrow amounts ──────────────────────────────────────────────────
+  const sellerPayoutCents = listing.price - sellerFeeCents
+
   // ── Create Checkout Session ───────────────────────────────────────────────
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
@@ -155,12 +158,6 @@ export async function POST(req: NextRequest) {
     mode: 'payment',
     line_items: lineItems,
     payment_intent_data: {
-      ...(sellerAccountId
-        ? {
-            application_fee_amount: platformFeeCents,
-            transfer_data: { destination: sellerAccountId },
-          }
-        : {}),
       metadata: {
         listing_id,
         buyer_id: user.id,
@@ -182,6 +179,9 @@ export async function POST(req: NextRequest) {
       seller_fee_cents: String(sellerFeeCents),
       buyer_tier: buyerTier,
       seller_tier: sellerTier,
+      seller_payout_cents: String(sellerPayoutCents),
+      platform_fee_cents: String(platformFeeCents),
+      seller_stripe_account_id: sellerAccountId ?? '',
     },
     success_url: `${baseUrl}/buy/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/listings/${listing_id}`,

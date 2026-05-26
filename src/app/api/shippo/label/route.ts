@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { purchaseLabel, requiresInsurance } from '@/lib/shippo'
 
-const AUTO_CONFIRM_DAYS = 7
+const AUTO_CONFIRM_DAYS = 21
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()

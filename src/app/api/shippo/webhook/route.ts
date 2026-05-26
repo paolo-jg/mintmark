@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   // Update order status on delivery
   if (internalStatus === 'delivered') {
     const autoConfirmAt = new Date()
-    autoConfirmAt.setDate(autoConfirmAt.getDate() + 7)
+    autoConfirmAt.setTime(autoConfirmAt.getTime() + 48 * 60 * 60 * 1000)
 
     await supabase
       .from('orders')

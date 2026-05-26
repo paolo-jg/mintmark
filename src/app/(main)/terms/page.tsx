@@ -69,7 +69,7 @@ export default function TermsPage() {
             ['"Buyer"', 'a User who purchases or offers to purchase a Listing from a Seller.'],
             ['"Buyer Fee"', 'the per-transaction fee charged to a Buyer as published at pedigreecoins.com/pricing.'],
             ['"Coin"', 'a physical, government-issued or historically circulated numismatic coin offered or sold through the Platform.'],
-            ['"Held Funds"', 'amounts collected by Pedigree Coins (through Stripe) from a Buyer in respect of a Transaction and held pending release pursuant to Section 6.8.'],
+            ['"Escrowed Funds"', 'amounts collected by Pedigree Coins (through Stripe) from a Buyer in respect of a Transaction and held in the platform\'s Stripe account pending release pursuant to Section 6.8.'],
             ['"Listing"', 'an offer to sell a Coin posted to the Platform by a Seller.'],
             ['"Plan"', 'a paid subscription tier selected by a Seller during onboarding as published at pedigreecoins.com/pricing.'],
             ['"Seller"', 'a User who lists Coins for sale through the Platform.'],
@@ -263,7 +263,7 @@ export default function TermsPage() {
             On each completed Transaction, the Seller owes Pedigree Coins (i) the Seller Fee, (ii) any
             per-listing flat fee under the applicable Plan, and (iii) reimbursement of any Stripe
             processing fees, refunds, chargebacks, or currency conversion fees attributable to that
-            Transaction. These amounts are deducted from Held Funds before payout.
+            Transaction. These amounts are deducted from Escrowed Funds before payout.
           </p>
         </Subsection>
         <Subsection title="6.6 Shipping Requirements">
@@ -281,17 +281,18 @@ export default function TermsPage() {
           <p className="mt-2"><strong>(c) No Pedigree Coins Mediation.</strong> Pedigree Coins will not mediate returns disputes.</p>
           <p className="mt-2"><strong>(d) Counterfeits.</strong> A Coin that is counterfeit, replica, or materially misattributed (and was not disclosed as such) is returnable for a full refund of the purchase price, original shipping, return shipping, and any associated fees.</p>
         </Subsection>
-        <Subsection title="6.8 Payouts: Stripe Connect, Held Funds, and Auto-Release">
-          <p><strong>(a) Held Funds.</strong> Upon successful payment authorization, gross Transaction proceeds (less fees and applicable taxes) are placed in the Seller&rsquo;s Stripe Connect balance as Held Funds until the auto-release conditions are met.</p>
-          <p className="mt-2"><strong>(b) Auto-Release.</strong> Held Funds release automatically on the earlier of: (i) three (3) days after Shippo records a &ldquo;Delivered&rdquo; event; or (ii) twenty-one (21) days after the shipping label is created, if no &ldquo;Delivered&rdquo; event has been recorded.</p>
-          <p className="mt-2"><strong>(c) Early Release on Buyer Confirmation.</strong> A Buyer may manually confirm receipt through the Platform, releasing Held Funds immediately.</p>
+        <Subsection title="6.8 Payouts and Escrow">
+          <p><strong>(a) Platform Escrow.</strong> Upon successful payment, gross Transaction proceeds are held in Pedigree Coins&rsquo; Stripe account (&ldquo;Escrow&rdquo;). Funds are not transferred to the Seller&rsquo;s Stripe Connect balance until the release conditions in Section 6.8(b) are met.</p>
+          <p className="mt-2"><strong>(b) Auto-Release.</strong> Escrowed funds are released to the Seller automatically on the earlier of: (i) 48 hours after Shippo records a &ldquo;Delivered&rdquo; event; or (ii) 21 days after the shipping label is created, if no &ldquo;Delivered&rdquo; event has been recorded.</p>
+          <p className="mt-2"><strong>(c) Early Release on Buyer Confirmation.</strong> A Buyer may manually confirm receipt through the Platform, releasing escrowed funds immediately.</p>
           <p className="mt-2"><strong>(d) Hold Extensions.</strong> Pedigree Coins may extend the hold where a complaint is under active investigation, where the Transaction is being reviewed for suspected fraud, or as required by applicable law.</p>
+          <p className="mt-2"><strong>(e) Disputes.</strong> If a Buyer initiates a chargeback, escrowed funds are frozen and not released to the Seller pending resolution. If the dispute is resolved in the Seller&rsquo;s favour, funds are released. If resolved against the Seller, Stripe issues the refund from the escrowed funds.</p>
         </Subsection>
         <Subsection title="6.9 Chargebacks and Reversals">
           <p>
             If a Buyer initiates a chargeback or reversal, the Seller bears 100% of the resulting loss,
             including the disputed amount, any Stripe chargeback fee, and related costs. Pedigree Coins
-            may reverse related payouts, debit the Seller&rsquo;s Stripe Connect balance, and invoice the
+            will freeze escrowed funds and apply them toward the disputed amount, and may invoice the
             Seller directly for amounts unpaid.
           </p>
         </Subsection>
@@ -363,15 +364,15 @@ export default function TermsPage() {
         <Subsection title="7.3 Payment">
           <p>
             Buyers must pay through Stripe using a payment method supported on the Platform. Upon
-            successful authorization, Stripe transfers the Transaction proceeds to the applicable
-            Stripe Connect balance as Held Funds.
+            successful authorization, the Transaction proceeds are held as Escrowed Funds in the
+            platform&rsquo;s Stripe account pending release pursuant to Section 6.8.
           </p>
         </Subsection>
         <Subsection title="7.4 Inspection and Receipt Confirmation">
           <p>
             Upon delivery, the Buyer should promptly inspect the Coin and, if satisfied, may confirm
             receipt through the Platform. If the Buyer does not confirm receipt or open a complaint,
-            Held Funds will release automatically as set out in Section 6.8(b).
+            escrowed funds will release automatically as set out in Section 6.8(b).
           </p>
         </Subsection>
         <Subsection title="7.5 No Guarantee of Authenticity, Quality, or Delivery">
