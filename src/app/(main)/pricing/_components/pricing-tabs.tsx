@@ -77,7 +77,7 @@ function TierCard({ tier, billing }: {
         </div>
       )}
 
-      <div className="mb-2">
+      <div className="mb-2 min-h-[4rem]">
         <p className="text-xs font-semibold tracking-[0.18em] uppercase text-muted-foreground/60 mb-1">{tier.fullName}</p>
         <h3 className="text-2xl font-bold text-foreground">{tier.name}</h3>
         <p className="text-sm text-muted-foreground mt-1">{tier.description}</p>
@@ -102,18 +102,7 @@ function TierCard({ tier, billing }: {
         )}
       </div>
 
-      <Link
-        href="/auth/register"
-        className={`mt-6 inline-flex w-full items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
-          tier.highlighted
-            ? 'bg-foreground text-background border-foreground hover:bg-foreground/90'
-            : 'bg-background text-foreground border-border hover:bg-muted'
-        }`}
-      >
-        Get started →
-      </Link>
-
-      <div className="mt-8 pt-6 border-t border-border space-y-3">
+      <div className="mt-6 pt-6 border-t border-border space-y-3 flex-1">
         {tier.features.map((f) => (
           <div key={f} className="flex items-start gap-3">
             <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-foreground/8">
@@ -123,6 +112,17 @@ function TierCard({ tier, billing }: {
           </div>
         ))}
       </div>
+
+      <Link
+        href="/auth/register"
+        className={`mt-8 inline-flex w-full items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
+          tier.highlighted
+            ? 'bg-foreground text-background border-foreground hover:bg-foreground/90'
+            : 'bg-background text-foreground border-border hover:bg-muted'
+        }`}
+      >
+        Get started →
+      </Link>
     </div>
   )
 }
