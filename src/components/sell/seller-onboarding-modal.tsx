@@ -169,7 +169,7 @@ function TierCard({ tier, onSelect, onSkip }: {
   const isFree = tier.monthlyPrice === null
 
   return (
-    <div className={`relative flex flex-col rounded-xl border p-5 min-h-[340px] ${
+    <div className={`relative flex flex-col rounded-xl border p-6 min-h-[380px] ${
       tier.highlighted ? 'border-foreground/30 shadow-md' : 'border-border bg-background'
     }`}>
       {tier.highlighted && (
@@ -345,7 +345,7 @@ function PlanStep({ onSkip }: { onSkip: () => void }) {
       </div>
 
       {/* Tier cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-5">
         {tiers.map(tier => (
           <TierCard
             key={tier.key}
@@ -441,7 +441,7 @@ export function SellerOnboardingModal({ tier, sellerTosAgreed, stripeOnboardingC
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-sm px-4 py-8">
-      <div className={`w-full rounded-2xl border border-border bg-background shadow-2xl p-8 overflow-y-auto max-h-[90vh] transition-all duration-300 ${isPlanStep ? 'max-w-5xl' : 'max-w-md'}`}>
+      <div className={`w-full rounded-2xl border border-border bg-background shadow-2xl overflow-y-auto max-h-[90vh] transition-all duration-300 ${isPlanStep ? 'max-w-5xl p-10' : 'max-w-md p-8'}`}>
 
         {/* Progress dots */}
         {totalSteps > 1 && (
