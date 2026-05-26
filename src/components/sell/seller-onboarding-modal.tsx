@@ -108,7 +108,7 @@ function formatPrice(price: number | null, billing: Billing) {
   return `$${price.toFixed(2)}`
 }
 
-// ── Tier card (matches pricing page) ─────────────────────────────────────────
+// ── Tier card ─────────────────────────────────────────────────────────────────
 function TierCard({ tier, billing, isCurrent = false }: {
   tier: typeof COLLECTOR_TIERS[0]
   billing: Billing
@@ -118,60 +118,51 @@ function TierCard({ tier, billing, isCurrent = false }: {
   const isFree = tier.monthlyPrice === null
 
   return (
-    <div className={`relative flex flex-col rounded-2xl border p-6 ${
-      tier.highlighted ? 'border-foreground/30 shadow-lg' : 'border-border bg-background'
+    <div className={`relative flex flex-col rounded-xl border p-4 ${
+      tier.highlighted ? 'border-foreground/30 shadow-md' : 'border-border bg-background'
     }`}>
       {tier.highlighted && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-          <span className="inline-block rounded-full bg-foreground px-4 py-1 text-xs font-semibold text-background">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+          <span className="inline-block rounded-full bg-foreground px-3 py-0.5 text-[11px] font-semibold text-background">
             Most popular
           </span>
         </div>
       )}
       {isCurrent && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-          <span className="inline-block rounded-full bg-muted border border-border px-4 py-1 text-xs font-semibold text-muted-foreground">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+          <span className="inline-block rounded-full bg-muted border border-border px-3 py-0.5 text-[11px] font-semibold text-muted-foreground">
             Current plan
           </span>
         </div>
       )}
 
-      <div className="mb-2">
-        <p className="text-xs font-semibold tracking-[0.18em] uppercase text-muted-foreground/60 mb-1">{tier.fullName}</p>
-        <h3 className="text-2xl font-bold">{tier.name}</h3>
-        <p className="text-sm text-muted-foreground mt-1">{tier.description}</p>
-      </div>
+      {/* Name + price */}
+      <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground/50 mb-0.5">{tier.fullName}</p>
+      <h3 className="text-lg font-bold mb-3">{tier.name}</h3>
 
-      <div className="mt-6 mb-2">
-        <div className="flex items-end gap-1">
-          <span className="text-5xl font-bold tracking-tight">
+      <div className="mb-3">
+        <div className="flex items-baseline gap-1">
+          <span className="text-3xl font-bold tracking-tight">
             {isFree ? 'Free' : formatPrice(displayPrice, billing)}
           </span>
-          {!isFree && (
-            <span className="text-sm text-muted-foreground mb-1.5">/{billing === 'annual' ? 'yr' : 'mo'}</span>
-          )}
+          {!isFree && <span className="text-xs text-muted-foreground">/{billing === 'annual' ? 'yr' : 'mo'}</span>}
         </div>
         {billing === 'annual' && tier.annualSavings && (
-          <p className="text-xs text-muted-foreground mt-1">{tier.annualSavings}</p>
-        )}
-        {billing === 'monthly' && !isFree && tier.annualPrice !== null && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {formatPrice(tier.annualPrice, 'annual')}/yr billed annually
-          </p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{tier.annualSavings}</p>
         )}
       </div>
 
       {isCurrent ? (
-        <div className="mt-6 w-full inline-flex items-center justify-center rounded-xl border border-border px-4 py-3 text-sm font-semibold text-muted-foreground">
+        <div className="w-full inline-flex items-center justify-center rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted-foreground mb-3">
           Current plan
         </div>
       ) : (
         <a
           href="/pricing"
           target="_blank"
-          className={`mt-6 inline-flex w-full items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${
+          className={`inline-flex w-full items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition-colors mb-3 ${
             tier.highlighted
-              ? 'bg-foreground text-background border-foreground hover:bg-foreground/90'
+              ? 'bg-foreground text-background border-foreground hover:opacity-90'
               : 'bg-background text-foreground border-border hover:bg-muted'
           }`}
         >
@@ -179,13 +170,11 @@ function TierCard({ tier, billing, isCurrent = false }: {
         </a>
       )}
 
-      <div className="mt-8 pt-6 border-t border-border space-y-3">
+      <div className="pt-3 border-t border-border space-y-1.5">
         {tier.features.map(f => (
-          <div key={f} className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-foreground/8">
-              <Check className="h-3 w-3 text-foreground/70" />
-            </div>
-            <span className="text-sm text-muted-foreground"><FeatureText text={f} /></span>
+          <div key={f} className="flex items-start gap-2">
+            <Check className="h-3 w-3 text-muted-foreground mt-0.5 shrink-0" />
+            <span className="text-xs text-muted-foreground leading-snug"><FeatureText text={f} /></span>
           </div>
         ))}
       </div>
@@ -281,9 +270,9 @@ function PlanStep({ onSkip }: { onSkip: () => void }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-1.5">Choose a plan</h2>
+        <h2 className="text-xl font-bold mb-1">Choose a plan</h2>
         <p className="text-sm text-muted-foreground">
-          You're on the free plan — limited to 10 listings/month. Upgrade for more listings and lower fees.
+          You're on the free plan. Upgrade for more listings and lower fees, or continue for free.
         </p>
       </div>
 
@@ -440,7 +429,7 @@ export function SellerOnboardingModal({ tier, sellerTosAgreed, stripeOnboardingC
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-sm px-4 py-8">
-      <div className={`w-full rounded-2xl border border-border bg-background shadow-2xl p-8 overflow-y-auto max-h-[90vh] transition-all duration-300 ${isPlanStep ? 'max-w-4xl' : 'max-w-md'}`}>
+      <div className={`w-full rounded-2xl border border-border bg-background shadow-2xl p-8 overflow-y-auto max-h-[90vh] transition-all duration-300 ${isPlanStep ? 'max-w-5xl' : 'max-w-md'}`}>
 
         {/* Progress dots */}
         {totalSteps > 1 && (
