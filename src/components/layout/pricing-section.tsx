@@ -38,7 +38,7 @@ const DEALER_TIERS = [
     monthlyPrice: 199,
     annualPrice: 1999,
     description: 'For dealers ready to scale without limits.',
-    features: ['2.5% buyer fee', '2.5% seller fee + card processing fees', '$0.20 per listing', 'Unlimited listings', 'Unlimited purchases'],
+    features: ['1% buyer fee', '2.5% seller fee + card processing fees', '$0.20 per listing', 'Unlimited listings', 'Unlimited purchases'],
     annualSavings: 'Save $389/yr',
   },
   {
@@ -46,7 +46,7 @@ const DEALER_TIERS = [
     monthlyPrice: 399,
     annualPrice: 3999,
     description: 'For established dealers moving serious volume.',
-    features: ['2% buyer fee', '1% seller fee + card processing fees', '$0.10 per listing', 'Unlimited listings', 'Unlimited purchases'],
+    features: ['1% buyer fee', '1% seller fee + card processing fees', '$0.10 per listing', 'Unlimited listings', 'Unlimited purchases'],
     annualSavings: 'Save $789/yr',
   },
   {
@@ -54,7 +54,7 @@ const DEALER_TIERS = [
     monthlyPrice: 599,
     annualPrice: 5999,
     description: 'Maximum savings for the highest-volume dealers.',
-    features: ['1% buyer fee', '0% seller fee + card processing fees', '$0 per listing', 'Unlimited listings', 'Unlimited purchases'],
+    features: ['0% buyer fee', '0% seller fee + card processing fees', '$0 per listing', 'Unlimited listings', 'Unlimited purchases'],
     annualSavings: 'Save $1,189/yr',
   },
 ]
