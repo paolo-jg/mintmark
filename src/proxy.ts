@@ -3,10 +3,12 @@ import { type NextRequest, NextResponse } from 'next/server'
 const MARKETING_URL = process.env.NEXT_PUBLIC_MARKETING_URL ?? 'http://localhost:3000'
 const APP_URL       = process.env.NEXT_PUBLIC_APP_URL       ?? 'http://localhost:3000'
 
-// Paths only served on the marketing domain (www)
-const MARKETING_ONLY_PATHS = ['/', '/pricing', '/auth/login', '/auth/register', '/auth/callback']
-// Paths that require auth and belong on the app domain (my.)
+// Paths served on the marketing domain (pedigreecoins.com)
+const MARKETING_ONLY_PATHS = ['/', '/pricing', '/auth/login', '/auth/register', '/auth/callback', '/privacy', '/terms']
+// Paths that require auth and belong on the app domain (my.pedigreecoins.com)
 const APP_ONLY_PATHS = ['/sell', '/collect', '/listings', '/buy-now', '/auctions', '/profile', '/dealers', '/orders', '/dashboard']
+// Paths accessible on both domains without auth
+const PUBLIC_PATHS = ['/privacy', '/terms']
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -86,7 +88,7 @@ export function proxy(request: NextRequest) {
   if (onAppDomain) {
     // Unsigned users trying to access protected pages → send to login
     if (!loggedIn) {
-      const isPublicPath = pathname.startsWith('/auth')
+      const isPublicPath = pathname.startsWith('/auth') || PUBLIC_PATHS.includes(pathname)
       if (!isPublicPath) {
         return NextResponse.redirect(
           new URL(`/auth/login?redirectTo=${pathname}`, MARKETING_URL)

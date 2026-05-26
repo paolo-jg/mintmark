@@ -1,7 +1,5 @@
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
-import { CookieBanner } from '@/components/layout/cookie-banner'
-import { CookieSettingsButton } from '@/components/layout/cookie-settings-button'
 import { SWRProvider } from '@/components/providers/swr-provider'
 import { PageDataPrefetcher } from '@/components/layout/page-data-prefetcher'
 
@@ -20,17 +18,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
                 <span aria-hidden>·</span>
                 <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-                <span aria-hidden>·</span>
-                <CookieSettingsButton />
-                <span aria-hidden>·</span>
-                <Link href="/privacy#section-10" className="hover:text-foreground transition-colors">
-                  Do Not Sell or Share My Personal Information
-                </Link>
               </div>
             </div>
           </div>
         </footer>
-        <CookieBanner />
       </div>
     </SWRProvider>
   )
