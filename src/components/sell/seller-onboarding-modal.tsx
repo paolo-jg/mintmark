@@ -246,7 +246,7 @@ function TosStep({ onNext, revisit = false }: { onNext: () => void; revisit?: bo
           <h2 className="text-xl font-bold mb-1.5">Seller Agreements</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
             You've already accepted our{' '}
-            <a href="/legal/seller-terms" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Seller Terms</a>
+            <a href="/terms" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Seller Terms</a>
             {' '}and{' '}
             <a href="/privacy" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Privacy Policy</a>.
           </p>
@@ -301,7 +301,7 @@ function TosStep({ onNext, revisit = false }: { onNext: () => void; revisit?: bo
           </div>
           <span className="text-sm text-muted-foreground leading-snug">
             I agree to the{' '}
-            <a href="/legal/seller-terms" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">
+            <a href="/terms" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">
               Seller Terms of Service
             </a>.
           </span>

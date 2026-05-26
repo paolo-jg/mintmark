@@ -17,6 +17,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
               <p>© {new Date().getFullYear()} Pedigree Coins. All professionally graded coins only.</p>
               <div className="flex items-center gap-4">
+                <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+                <span aria-hidden>·</span>
                 <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
                 <span aria-hidden>·</span>
                 <CookieSettingsButton />
