@@ -174,6 +174,54 @@ export function ListingsPageClient() {
     }, { total: 0, fixed: 0, auction: 0 })
   }
 
+  if (rawListings === undefined) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
+        <div className="flex items-start justify-between gap-4 mb-8">
+          <div className="space-y-2">
+            <div className="h-7 bg-muted rounded w-52" />
+            <div className="h-4 bg-muted rounded w-80" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-9 bg-muted rounded w-24" />
+            <div className="h-9 bg-muted rounded w-28" />
+          </div>
+        </div>
+
+        <div className="flex gap-3 mb-8">
+          <div className="h-9 bg-muted rounded flex-1 max-w-xs" />
+          <div className="h-9 bg-muted rounded w-32" />
+          <div className="h-9 bg-muted rounded w-28" />
+          <div className="h-9 bg-muted rounded w-28" />
+        </div>
+
+        <div className="space-y-10">
+          {Array.from({ length: 3 }).map((_, si) => (
+            <div key={si}>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="h-3 bg-muted rounded w-32" />
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl border border-border bg-card overflow-hidden">
+                    <div className="aspect-square bg-muted/60" />
+                    <div className="px-3.5 pt-3 pb-3.5 space-y-1.5">
+                      <div className="h-2.5 bg-muted rounded w-1/2" />
+                      <div className="h-3.5 bg-muted rounded w-4/5" />
+                      <div className="h-3.5 bg-muted rounded w-3/5" />
+                      <div className="h-3 bg-muted rounded w-24 mt-1" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   const totalListings = rawListings?.length ?? 0
   const isDirectory = category === 'all'
 

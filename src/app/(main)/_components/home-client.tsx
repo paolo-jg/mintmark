@@ -62,12 +62,74 @@ export async function fetchHomeData(): Promise<HomeData> {
   }
 }
 
+function DashboardSkeleton() {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
+      <div className="h-7 w-36 bg-muted rounded mb-6" />
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-xl border border-border bg-card px-4 py-3.5 flex items-start gap-3">
+            <div className="mt-0.5 h-8 w-8 rounded-lg bg-muted/60 flex-shrink-0" />
+            <div className="min-w-0 flex-1 space-y-1.5 pt-0.5">
+              <div className="h-3 bg-muted rounded w-3/4" />
+              <div className="h-2.5 bg-muted rounded w-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-xl border border-border bg-card px-5 pt-5 pb-4 space-y-2">
+            <div className="h-2.5 bg-muted rounded w-2/3" />
+            <div className="h-7 bg-muted rounded w-1/2" />
+            <div className="h-2.5 bg-muted rounded w-4/5" />
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 rounded-xl border border-border bg-card px-6 pt-5 pb-6">
+          <div className="flex items-center justify-between mb-5">
+            <div className="h-4 bg-muted rounded w-56" />
+            <div className="flex gap-4">
+              <div className="h-3 bg-muted rounded w-12" />
+              <div className="h-3 bg-muted rounded w-16" />
+            </div>
+          </div>
+          <div className="flex items-end gap-3 h-32">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                <div className="w-full flex items-end justify-center gap-0.5" style={{ height: `${60 + (i % 3) * 20}px` }}>
+                  <div className="flex-1 rounded-t-sm bg-muted/60" style={{ height: '100%' }} />
+                  <div className="flex-1 rounded-t-sm bg-muted/40" style={{ height: `${40 + (i % 2) * 15}px` }} />
+                </div>
+                <div className="h-2.5 bg-muted rounded w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-card px-6 pt-5 pb-6 space-y-3">
+          <div className="h-4 bg-muted rounded w-32 mb-1" />
+          <div className="h-3 bg-muted rounded w-44 mb-4" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30">
+              <div className="h-3 bg-muted rounded w-28" />
+              <div className="h-3 bg-muted rounded w-10" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function HomeClient() {
   const { data, isLoading } = useSWR('home-dashboard', fetchHomeData, { keepPreviousData: true })
 
-  // Show landing page while loading if we don't know auth state yet
   if (isLoading && !data) {
-    return <LandingPage />
+    return <DashboardSkeleton />
   }
 
   if (!data || !data.isLoggedIn) {

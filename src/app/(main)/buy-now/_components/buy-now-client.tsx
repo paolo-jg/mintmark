@@ -136,6 +136,42 @@ export function BuyNowClient() {
     return list
   }, [listings, tab, query])
 
+  if (isLoading && !data) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
+        <div className="flex items-start justify-between gap-4 mb-8">
+          <div className="space-y-2">
+            <div className="h-7 bg-muted rounded w-32" />
+            <div className="h-4 bg-muted rounded w-56" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-9 bg-muted rounded w-24" />
+            <div className="h-9 bg-muted rounded w-24" />
+          </div>
+        </div>
+        <div className="flex gap-2 mb-6">
+          <div className="h-9 bg-muted rounded flex-1 max-w-xs" />
+          <div className="h-9 bg-muted rounded w-32" />
+          <div className="h-9 bg-muted rounded w-36" />
+          <div className="h-9 bg-muted rounded w-36" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-border overflow-hidden">
+              <div className="aspect-square bg-muted/60" />
+              <div className="p-4 space-y-2">
+                <div className="h-2.5 bg-muted rounded w-2/3" />
+                <div className="h-4 bg-muted rounded w-full" />
+                <div className="h-4 bg-muted rounded w-4/5" />
+                <div className="h-5 bg-muted rounded w-1/2 mt-1" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Header */}

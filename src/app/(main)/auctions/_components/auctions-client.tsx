@@ -212,6 +212,48 @@ export function AuctionsClient() {
     return list
   }, [auctions, tab, query])
 
+  if (isLoading && !data) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
+        <div className="flex items-start justify-between gap-4 mb-8">
+          <div className="space-y-2">
+            <div className="h-7 bg-muted rounded w-36" />
+            <div className="h-4 bg-muted rounded w-64" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-9 bg-muted rounded w-24" />
+            <div className="h-9 bg-muted rounded w-24" />
+          </div>
+        </div>
+        <div className="flex gap-2 mb-6">
+          {['Ending Soon', 'Most Active', 'Just Listed'].map(label => (
+            <div key={label} className="h-9 bg-muted rounded w-28" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-border overflow-hidden">
+              <div className="aspect-square bg-muted/60 relative">
+                <div className="absolute bottom-2 left-2 h-6 bg-muted/80 rounded-full w-20" />
+              </div>
+              <div className="p-4 space-y-2">
+                <div className="h-2.5 bg-muted rounded w-2/3" />
+                <div className="h-4 bg-muted rounded w-full" />
+                <div className="h-4 bg-muted rounded w-4/5" />
+                <div className="flex items-center justify-between mt-2">
+                  <div className="space-y-1">
+                    <div className="h-3 bg-muted rounded w-16" />
+                    <div className="h-5 bg-muted rounded w-20" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Header */}
