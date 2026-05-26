@@ -7,7 +7,6 @@ import { FeatureText } from '@/components/ui/card-fee-tooltip'
 
 type Tier = 'collector_basic' | 'collector_standard' | 'collector_premium' | 'dealer_basic' | 'dealer_standard' | 'dealer_premium'
 type Group = 'collectors' | 'dealers'
-type Billing = 'monthly' | 'annual'
 
 interface Props {
   tier: Tier
@@ -102,23 +101,75 @@ const DEALER_TIERS = [
   },
 ]
 
-function formatPrice(price: number | null, billing: Billing) {
+function formatPrice(price: number | null) {
   if (price === null) return 'Free'
   if (Number.isInteger(price)) return `$${price}`
   return `$${price.toFixed(2)}`
 }
 
+// ── Billing upsell (shown after picking a paid plan) ──────────────────────────
+function BillingChoice({ tier, onBack }: { tier: typeof COLLECTOR_TIERS[0]; onBack: () => void }) {
+  return (
+    <div className="flex flex-col gap-5">
+      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
+        ← Back
+      </button>
+      <div className="text-center">
+        <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground/50 mb-1">{tier.fullName}</p>
+        <h2 className="text-xl font-bold mb-1">How would you like to pay?</h2>
+        <p className="text-sm text-muted-foreground">Annual billing saves you money upfront.</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        {/* Monthly */}
+        <a
+          href="/pricing"
+          target="_blank"
+          className="flex flex-col rounded-xl border border-border p-5 hover:border-foreground/30 transition-colors group"
+        >
+          <p className="text-xs text-muted-foreground font-medium mb-1">Monthly</p>
+          <p className="text-3xl font-bold mb-0.5">{formatPrice(tier.monthlyPrice)}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+          <p className="text-xs text-muted-foreground mt-auto pt-3">Billed monthly, cancel anytime</p>
+          <div className="mt-4 inline-flex w-full items-center justify-center rounded-lg border border-border px-3 py-2.5 text-sm font-semibold hover:bg-muted transition-colors">
+            Choose monthly →
+          </div>
+        </a>
+
+        {/* Annual */}
+        <a
+          href="/pricing"
+          target="_blank"
+          className="flex flex-col rounded-xl border border-foreground/30 bg-muted/20 p-5 hover:border-foreground/50 transition-colors relative"
+        >
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+            <span className="inline-block rounded-full bg-foreground px-3 py-0.5 text-[11px] font-semibold text-background">
+              {tier.annualSavings ?? 'Best value'}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground font-medium mb-1">Annual</p>
+          <p className="text-3xl font-bold mb-0.5">{formatPrice(tier.annualPrice)}<span className="text-sm font-normal text-muted-foreground">/yr</span></p>
+          <p className="text-xs text-muted-foreground mt-auto pt-3">
+            ≈ {formatPrice(tier.annualPrice !== null ? Math.round(tier.annualPrice / 12) : null)}/mo · billed once
+          </p>
+          <div className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-foreground text-background px-3 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity">
+            Choose annual →
+          </div>
+        </a>
+      </div>
+    </div>
+  )
+}
+
 // ── Tier card ─────────────────────────────────────────────────────────────────
-function TierCard({ tier, billing, isCurrent = false }: {
+function TierCard({ tier, onSelect, onSkip }: {
   tier: typeof COLLECTOR_TIERS[0]
-  billing: Billing
-  isCurrent?: boolean
+  onSelect: () => void
+  onSkip?: () => void
 }) {
-  const displayPrice = billing === 'annual' ? tier.annualPrice : tier.monthlyPrice
   const isFree = tier.monthlyPrice === null
 
   return (
-    <div className={`relative flex flex-col rounded-xl border p-4 ${
+    <div className={`relative flex flex-col rounded-xl border p-5 min-h-[340px] ${
       tier.highlighted ? 'border-foreground/30 shadow-md' : 'border-border bg-background'
     }`}>
       {tier.highlighted && (
@@ -128,55 +179,49 @@ function TierCard({ tier, billing, isCurrent = false }: {
           </span>
         </div>
       )}
-      {isCurrent && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="inline-block rounded-full bg-muted border border-border px-3 py-0.5 text-[11px] font-semibold text-muted-foreground">
-            Current plan
-          </span>
-        </div>
-      )}
 
-      {/* Name + price */}
       <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground/50 mb-0.5">{tier.fullName}</p>
       <h3 className="text-lg font-bold mb-3">{tier.name}</h3>
 
-      <div className="mb-3">
+      <div className="mb-4">
         <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-bold tracking-tight">
-            {isFree ? 'Free' : formatPrice(displayPrice, billing)}
-          </span>
-          {!isFree && <span className="text-xs text-muted-foreground">/{billing === 'annual' ? 'yr' : 'mo'}</span>}
+          <span className="text-3xl font-bold tracking-tight">{isFree ? 'Free' : formatPrice(tier.monthlyPrice)}</span>
+          {!isFree && <span className="text-xs text-muted-foreground">/mo</span>}
         </div>
-        {billing === 'annual' && tier.annualSavings && (
-          <p className="text-[11px] text-muted-foreground mt-0.5">{tier.annualSavings}</p>
+        {!isFree && tier.annualPrice !== null && (
+          <p className="text-[11px] text-muted-foreground mt-0.5">{formatPrice(tier.annualPrice)}/yr billed annually</p>
         )}
       </div>
 
-      {isCurrent ? (
-        <div className="w-full inline-flex items-center justify-center rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted-foreground mb-3">
-          Current plan
-        </div>
-      ) : (
-        <a
-          href="/pricing"
-          target="_blank"
-          className={`inline-flex w-full items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition-colors mb-3 ${
-            tier.highlighted
-              ? 'bg-foreground text-background border-foreground hover:opacity-90'
-              : 'bg-background text-foreground border-border hover:bg-muted'
-          }`}
-        >
-          Get started →
-        </a>
-      )}
-
-      <div className="pt-3 border-t border-border space-y-1.5">
+      <div className="space-y-1.5 flex-1">
         {tier.features.map(f => (
           <div key={f} className="flex items-start gap-2">
             <Check className="h-3 w-3 text-muted-foreground mt-0.5 shrink-0" />
             <span className="text-xs text-muted-foreground leading-snug"><FeatureText text={f} /></span>
           </div>
         ))}
+      </div>
+
+      <div className="mt-5">
+        {isFree ? (
+          <button
+            onClick={onSkip}
+            className="w-full inline-flex items-center justify-center rounded-lg border border-border px-3 py-2.5 text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors"
+          >
+            Continue for free
+          </button>
+        ) : (
+          <button
+            onClick={onSelect}
+            className={`w-full inline-flex items-center justify-center rounded-lg border px-3 py-2.5 text-xs font-semibold transition-colors ${
+              tier.highlighted
+                ? 'bg-foreground text-background border-foreground hover:opacity-90'
+                : 'bg-background text-foreground border-border hover:bg-muted'
+            }`}
+          >
+            Get started →
+          </button>
+        )}
       </div>
     </div>
   )
@@ -263,16 +308,20 @@ function TosStep({ onNext }: { onNext: () => void }) {
 // ── Step: Plan upgrade ────────────────────────────────────────────────────────
 function PlanStep({ onSkip }: { onSkip: () => void }) {
   const [group, setGroup] = useState<Group>('collectors')
-  const [billing, setBilling] = useState<Billing>('monthly')
+  const [selectedTier, setSelectedTier] = useState<typeof COLLECTOR_TIERS[0] | null>(null)
 
   const tiers = group === 'collectors' ? COLLECTOR_TIERS : DEALER_TIERS
 
+  if (selectedTier) {
+    return <BillingChoice tier={selectedTier} onBack={() => setSelectedTier(null)} />
+  }
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <div className="text-center">
         <h2 className="text-xl font-bold mb-1">Choose a plan</h2>
         <p className="text-sm text-muted-foreground">
-          You're on the free plan. Upgrade for more listings and lower fees, or continue for free.
+          Upgrade for more listings and lower fees, or continue for free.
         </p>
       </div>
 
@@ -295,53 +344,16 @@ function PlanStep({ onSkip }: { onSkip: () => void }) {
         </div>
       </div>
 
-      {/* Billing toggle */}
-      <div className="flex items-center justify-center gap-3">
-        <button
-          onClick={() => setBilling('monthly')}
-          className={`text-sm font-medium transition-colors ${billing === 'monthly' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          Monthly
-        </button>
-        <button
-          onClick={() => setBilling(billing === 'monthly' ? 'annual' : 'monthly')}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full border border-border transition-colors ${billing === 'annual' ? 'bg-foreground' : 'bg-muted'}`}
-          role="switch"
-          aria-checked={billing === 'annual'}
-        >
-          <span className={`inline-block h-4 w-4 rounded-full bg-background shadow transition-transform ${billing === 'annual' ? 'translate-x-6' : 'translate-x-1'}`} />
-        </button>
-        <button
-          onClick={() => setBilling('annual')}
-          className={`text-sm font-medium transition-colors ${billing === 'annual' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          Annual
-          <span className="ml-1.5 inline-block rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
-            Save up to 17%
-          </span>
-        </button>
-      </div>
-
       {/* Tier cards */}
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-3 gap-4">
         {tiers.map(tier => (
           <TierCard
             key={tier.key}
             tier={tier as typeof COLLECTOR_TIERS[0]}
-            billing={billing}
-            isCurrent={'isCurrent' in tier ? tier.isCurrent : false}
+            onSelect={() => setSelectedTier(tier as typeof COLLECTOR_TIERS[0])}
+            onSkip={onSkip}
           />
         ))}
-      </div>
-
-      {/* Skip */}
-      <div className="border-t border-border pt-4">
-        <button
-          onClick={onSkip}
-          className="w-full inline-flex items-center justify-center rounded-xl border border-border text-sm font-medium h-11 px-4 hover:bg-muted transition-colors text-muted-foreground"
-        >
-          Continue with free plan (10 listings/month)
-        </button>
       </div>
     </div>
   )
