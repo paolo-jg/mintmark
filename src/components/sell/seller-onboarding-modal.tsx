@@ -11,6 +11,7 @@ type Group = 'collectors' | 'dealers'
 interface Props {
   tier: Tier
   sellerTosAgreed: boolean
+  privacyPolicyAgreed: boolean
   stripeOnboardingComplete: boolean
   onComplete: () => void
 }
@@ -267,7 +268,10 @@ function TosStep({ onNext, revisit = false }: { onNext: () => void; revisit?: bo
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      await supabase.from('profiles').update({ seller_tos_agreed: true }).eq('id', user.id)
+      await supabase.from('profiles').update({
+        seller_tos_agreed: true,
+        privacy_policy_agreed: true,
+      }).eq('id', user.id)
     }
     setLoading(false)
     onNext()
@@ -444,13 +448,13 @@ function StripeStep() {
 }
 
 // ── Main modal ────────────────────────────────────────────────────────────────
-export function SellerOnboardingModal({ tier, sellerTosAgreed, stripeOnboardingComplete, onComplete }: Props) {
+export function SellerOnboardingModal({ tier, sellerTosAgreed, privacyPolicyAgreed, stripeOnboardingComplete, onComplete }: Props) {
   const allDisplaySteps = getAllDisplaySteps(tier)
 
   // Track which steps have been completed
   const [completedSteps, setCompletedSteps] = useState<Set<Step>>(() => {
     const set = new Set<Step>()
-    if (sellerTosAgreed) set.add('tos')
+    if (sellerTosAgreed && privacyPolicyAgreed) set.add('tos')
     // 'plan' is never pre-completed — must be chosen each session until bank is linked
     if (stripeOnboardingComplete) set.add('stripe')
     return set
@@ -558,7 +562,7 @@ export function SellerOnboardingModal({ tier, sellerTosAgreed, stripeOnboardingC
 
         {/* Content area */}
         <div className={`flex-1 min-h-0 flex flex-col ${isPlanStep ? 'overflow-hidden relative' : 'overflow-y-auto justify-center'}`}>
-          {currentStep === 'tos'    && <TosStep onNext={next} revisit={completedSteps.has('tos')} />}
+          {currentStep === 'tos'    && <TosStep onNext={next} revisit={sellerTosAgreed && privacyPolicyAgreed} />}
           {currentStep === 'plan'   && <PlanStep onSkip={next} selectedTier={planSelectedTier} onSelectTier={setPlanSelectedTier} />}
           {currentStep === 'stripe' && <StripeStep />}
         </div>
