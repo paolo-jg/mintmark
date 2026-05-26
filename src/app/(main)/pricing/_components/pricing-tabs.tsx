@@ -1,11 +1,6 @@
-'use client'
-
-import { useState } from 'react'
 import { Check } from 'lucide-react'
 import Link from 'next/link'
 import { FeatureText } from '@/components/ui/card-fee-tooltip'
-
-type Group = 'collectors' | 'dealers'
 
 const COLLECTOR_TIERS = [
   {
@@ -133,86 +128,13 @@ function TierCard({ tier, billing }: {
 }
 
 export function PricingTabs() {
-  const [group, setGroup] = useState<Group>('collectors')
-  const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly')
-
-  const tiers = group === 'collectors' ? COLLECTOR_TIERS : DEALER_TIERS
+  const tiers = [...COLLECTOR_TIERS, ...DEALER_TIERS]
 
   return (
-    <div>
-      {/* Group tabs */}
-      <div className="flex items-center justify-center mb-10">
-        <div className="inline-flex rounded-2xl border border-border bg-muted/40 p-1.5 gap-1">
-          {(['collectors', 'dealers'] as Group[]).map(g => (
-            <button
-              key={g}
-              onClick={() => setGroup(g)}
-              className={`px-8 py-2.5 rounded-xl text-sm font-semibold capitalize transition-all ${
-                group === g
-                  ? 'bg-background text-foreground shadow-sm border border-border'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {g === 'collectors' ? 'Collectors' : 'Dealers'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Group description */}
-      <div className="text-center mb-8">
-        {group === 'collectors' ? (
-          <>
-            <h2 className="text-2xl font-bold mb-2">Collector Plans</h2>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              Start free and upgrade as your collection grows. All plans include unlimited purchases and access to the full marketplace.
-            </p>
-          </>
-        ) : (
-          <>
-            <h2 className="text-2xl font-bold mb-2">Dealer Plans</h2>
-            <p className="text-muted-foreground text-sm max-w-md mx-auto">
-              Unlimited listings, a ranked dealer profile, and the lowest fees on the platform. Built for volume.
-            </p>
-          </>
-        )}
-      </div>
-
-      {/* Billing toggle */}
-      <div className="flex items-center justify-center gap-3 mb-10">
-        <button
-          onClick={() => setBilling('monthly')}
-          className={`text-sm font-medium transition-colors ${billing === 'monthly' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          Monthly
-        </button>
-        <button
-          onClick={() => setBilling(billing === 'monthly' ? 'annual' : 'monthly')}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full border border-border transition-colors ${
-            billing === 'annual' ? 'bg-foreground' : 'bg-muted'
-          }`}
-          role="switch"
-          aria-checked={billing === 'annual'}
-        >
-          <span className={`inline-block h-4 w-4 rounded-full bg-background shadow transition-transform ${billing === 'annual' ? 'translate-x-6' : 'translate-x-1'}`} />
-        </button>
-        <button
-          onClick={() => setBilling('annual')}
-          className={`text-sm font-medium transition-colors ${billing === 'annual' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-        >
-          Annual
-          <span className="ml-1.5 inline-block rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
-            Save up to 17%
-          </span>
-        </button>
-      </div>
-
-      {/* Tier cards */}
-      <div className={`grid grid-cols-1 gap-5 ${tiers.length > 1 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
-        {tiers.map(tier => (
-          <TierCard key={tier.fullName} tier={tier} billing={billing} />
-        ))}
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {tiers.map(tier => (
+        <TierCard key={tier.fullName} tier={tier} billing="monthly" />
+      ))}
     </div>
   )
 }

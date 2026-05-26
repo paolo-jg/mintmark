@@ -115,16 +115,8 @@ export function PricingSection() {
         </p>
       </div>
 
-      {/* Collector tiers */}
-      <p className="text-xs font-bold tracking-[0.2em] uppercase text-muted-foreground/60 mb-3">Collectors</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        {COLLECTOR_TIERS.map(tier => <TierCard key={tier.name} tier={tier} />)}
-      </div>
-
-      {/* Dealer tier */}
-      <p className="text-xs font-bold tracking-[0.2em] uppercase text-muted-foreground/60 mb-3">Dealers</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-16">
-        {DEALER_TIERS.map(tier => <TierCard key={tier.name} tier={tier} isDealer />)}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
+        {[...COLLECTOR_TIERS, ...DEALER_TIERS].map(tier => <TierCard key={tier.name} tier={tier} />)}
       </div>
 
       {/* Comparison table */}
