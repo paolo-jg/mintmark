@@ -12,7 +12,7 @@ const TAB_ID_KEY     = 'pc_tab_id'
 const ACTIVITY_EVENTS = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'] as const
 
 export function InactivityGuard() {
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     const supabase = createClient()
