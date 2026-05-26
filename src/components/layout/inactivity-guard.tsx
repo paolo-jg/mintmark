@@ -55,11 +55,19 @@ export function InactivityGuard() {
       tabId = crypto.randomUUID()
       sessionStorage.setItem(TAB_ID_KEY, tabId)
 
-      // Fresh open with no other active tabs → sign out any lingering session
+      // Fresh open with no other active tabs → sign out any lingering session,
+      // unless the session was just created (cross-origin redirect after login
+      // clears sessionStorage so the first app-domain load looks like a fresh tab)
       const activeTabs = getActiveTabs()
       if (activeTabs.length === 0) {
         supabase.auth.getSession().then(({ data }) => {
-          if (data.session) doSignOut()
+          if (!data.session) return
+          try {
+            const payload = JSON.parse(atob(data.session.access_token.split('.')[1]))
+            const sessionAgeMs = Date.now() - (payload.iat as number) * 1000
+            if (sessionAgeMs < 60_000) return // just logged in — don't sign out
+          } catch { /* malformed JWT, fall through to sign out */ }
+          doSignOut()
         })
       }
     }

@@ -27,7 +27,7 @@ function LoginForm() {
       toast.error(error.message)
     } else {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-      const redirectTo = searchParams.get('redirectTo') ?? '/'
+      const redirectTo = searchParams.get('redirectTo') ?? '/dashboard'
       // Hard redirect to app domain — router.push stays on the same domain
       window.location.href = appUrl ? `${appUrl}${redirectTo}` : redirectTo
     }
