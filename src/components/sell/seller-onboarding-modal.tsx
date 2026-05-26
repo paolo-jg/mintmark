@@ -248,7 +248,7 @@ function TosStep({ onNext, revisit = false }: { onNext: () => void; revisit?: bo
             You've already accepted our{' '}
             <a href="/legal/seller-terms" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Seller Terms</a>
             {' '}and{' '}
-            <a href="/legal/privacy" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Privacy Policy</a>.
+            <a href="/privacy" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Privacy Policy</a>.
           </p>
         </div>
         <button
@@ -316,7 +316,7 @@ function TosStep({ onNext, revisit = false }: { onNext: () => void; revisit?: bo
           </div>
           <span className="text-sm text-muted-foreground leading-snug">
             I have read and agree to the{' '}
-            <a href="/legal/privacy" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">
+            <a href="/privacy" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">
               Privacy Policy
             </a>.
           </span>
