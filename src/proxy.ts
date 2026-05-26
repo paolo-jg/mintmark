@@ -65,11 +65,11 @@ export async function proxy(request: NextRequest) {
 
   // ── On pedigreecoins.com ──────────────────────────────────────────────────
   if (onMarketingDomain) {
-    // Signed-in users don't belong on non-auth marketing pages → send to app
+    // Signed-in users → send to app domain except for auth/legal/pricing
     if (loggedIn) {
-      const isMarketingPath = MARKETING_ONLY_PATHS.includes(pathname)
-      if (!isMarketingPath) {
-        return NextResponse.redirect(new URL(pathname, APP_URL))
+      const stayOnMarketing = pathname.startsWith('/auth') || pathname === '/privacy' || pathname === '/terms' || pathname === '/pricing'
+      if (!stayOnMarketing) {
+        return NextResponse.redirect(new URL(pathname === '/' ? '/' : pathname, APP_URL))
       }
     }
 
