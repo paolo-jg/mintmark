@@ -327,12 +327,12 @@ function PlanStep({ onSkip }: { onSkip: () => void }) {
 
       {/* Group toggle */}
       <div className="flex items-center justify-center">
-        <div className="inline-flex rounded-2xl border border-border bg-muted/40 p-1.5 gap-1">
+        <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1 gap-1">
           {(['collectors', 'dealers'] as Group[]).map(g => (
             <button
               key={g}
               onClick={() => setGroup(g)}
-              className={`px-8 py-2.5 rounded-xl text-sm font-semibold capitalize transition-all ${
+              className={`px-5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
                 group === g
                   ? 'bg-background text-foreground shadow-sm border border-border'
                   : 'text-muted-foreground hover:text-foreground'
