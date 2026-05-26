@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import { CookieBanner } from '@/components/layout/cookie-banner'
+import { CookieSettingsButton } from '@/components/layout/cookie-settings-button'
 import { SWRProvider } from '@/components/providers/swr-provider'
 import { PageDataPrefetcher } from '@/components/layout/page-data-prefetcher'
 
@@ -18,18 +19,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <div className="flex items-center gap-4">
                 <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
                 <span aria-hidden>·</span>
-                <button
-                  id="cookie-settings-btn"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      localStorage.removeItem('pc_cookie_consent')
-                      window.location.reload()
-                    }
-                  }}
-                  className="hover:text-foreground transition-colors cursor-pointer"
-                >
-                  Cookie Settings
-                </button>
+                <CookieSettingsButton />
                 <span aria-hidden>·</span>
                 <Link href="/privacy#section-10" className="hover:text-foreground transition-colors">
                   Do Not Sell or Share My Personal Information
