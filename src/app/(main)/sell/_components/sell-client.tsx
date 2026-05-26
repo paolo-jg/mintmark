@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
-import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, Landmark, X, ArrowRight, Loader2 } from 'lucide-react'
+import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { SellerOnboardingModal } from '@/components/sell/seller-onboarding-modal'
 
@@ -67,7 +67,6 @@ interface SellData {
   tier: Tier
   carryOver: number
   createdThisMonth: number
-  stripeAccountId: string | null
   stripeOnboardingComplete: boolean
   sellerTosAgreed: boolean
 }
@@ -114,7 +113,6 @@ export async function fetchSellData(): Promise<SellData | null> {
     tier: ((profile?.subscription_tier ?? 'collector_basic') as Tier),
     carryOver: carryOver ?? 0,
     createdThisMonth: createdThisMonth ?? 0,
-    stripeAccountId: profile?.stripe_account_id ?? null,
     stripeOnboardingComplete: profile?.stripe_onboarding_complete ?? false,
     sellerTosAgreed: profile?.seller_tos_agreed ?? false,
   }
@@ -126,7 +124,6 @@ export function SellClient() {
   const [tab, setTab] = useState<TabId>('all')
   const [connectLoading, setConnectLoading] = useState(false)
   const [dismissedOnboarded, setDismissedOnboarded] = useState(false)
-  const [onboardingDismissed, setOnboardingDismissed] = useState(false)
 
   // Check for ?onboarded=1 or ?onboarding=incomplete from Stripe return
   const [stripeReturn, setStripeReturn] = useState<'success' | 'incomplete' | null>(null)
@@ -176,9 +173,9 @@ export function SellClient() {
     return null
   }
 
-  const { allListings, orders, tier, carryOver, createdThisMonth, stripeAccountId, stripeOnboardingComplete, sellerTosAgreed } = data
-  const needsStripeConnect = !stripeOnboardingComplete
-  const needsOnboarding = !onboardingDismissed && (!sellerTosAgreed || !stripeOnboardingComplete || tier === 'collector_basic')
+  const { allListings, orders, tier, carryOver, createdThisMonth, stripeOnboardingComplete, sellerTosAgreed } = data
+  // needsOnboarding: true until ToS agreed AND Stripe connected (plan step is optional/in-modal)
+  const needsOnboarding = !sellerTosAgreed || !stripeOnboardingComplete
   const tierConfig = TIER_CONFIG[tier]
 
   // Stats
@@ -209,12 +206,14 @@ export function SellClient() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* Seller onboarding — blocks the sell page until setup is complete.
+          Modal is z-40; navbar is z-50 so navigation away is still possible. */}
       {needsOnboarding && (
         <SellerOnboardingModal
           tier={tier}
           sellerTosAgreed={sellerTosAgreed}
           stripeOnboardingComplete={stripeOnboardingComplete}
-          onComplete={() => { setOnboardingDismissed(true); mutate() }}
+          onComplete={() => mutate()}
         />
       )}
 
@@ -266,35 +265,6 @@ export function SellClient() {
           >
             {connectLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRight className="h-3.5 w-3.5" />}
             Resume setup
-          </button>
-        </div>
-      )}
-
-      {/* Connect bank account banner */}
-      {needsStripeConnect && stripeReturn === null && (
-        <div className="rounded-xl border border-border bg-card px-5 py-4 mb-6 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-              <Landmark className="h-4.5 w-4.5 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold">Connect your payout account</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Add your bank account to receive payments from sales.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleConnectStripe}
-            disabled={connectLoading}
-            className="flex items-center gap-1.5 flex-shrink-0 rounded-lg bg-foreground text-background text-sm font-semibold px-4 py-2 hover:bg-foreground/90 transition-colors disabled:opacity-60"
-          >
-            {connectLoading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <ArrowRight className="h-3.5 w-3.5" />
-            )}
-            Set up payouts
           </button>
         </div>
       )}

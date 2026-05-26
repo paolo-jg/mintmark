@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { FileText, Landmark, ArrowRight, Loader2, CheckCircle2, ExternalLink, Check } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { FileText, Landmark, ArrowRight, Loader2, Check, Lock, ChevronLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { FeatureText } from '@/components/ui/card-fee-tooltip'
 
@@ -17,11 +17,11 @@ interface Props {
 
 type Step = 'tos' | 'plan' | 'stripe'
 
-function getSteps(tier: Tier, tosAgreed: boolean, stripeComplete: boolean): Step[] {
-  const steps: Step[] = []
-  if (!tosAgreed) steps.push('tos')
+// All steps for this user — used for the progress bar (never shrinks)
+function getAllDisplaySteps(tier: Tier): Step[] {
+  const steps: Step[] = ['tos']
   if (tier === 'collector_basic') steps.push('plan')
-  if (!stripeComplete) steps.push('stripe')
+  steps.push('stripe')
   return steps
 }
 
@@ -111,9 +111,6 @@ function formatPrice(price: number | null) {
 function BillingChoice({ tier, onBack }: { tier: typeof COLLECTOR_TIERS[0]; onBack: () => void }) {
   return (
     <div className="flex flex-col gap-5">
-      <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
-        ← Back
-      </button>
       <div className="text-center">
         <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-muted-foreground/50 mb-1">{tier.fullName}</p>
         <h2 className="text-xl font-bold mb-1">How would you like to pay?</h2>
@@ -149,7 +146,7 @@ function BillingChoice({ tier, onBack }: { tier: typeof COLLECTOR_TIERS[0]; onBa
           <p className="text-xs text-muted-foreground font-medium mb-1">Annual</p>
           <p className="text-3xl font-bold mb-0.5">{formatPrice(tier.annualPrice)}<span className="text-sm font-normal text-muted-foreground">/yr</span></p>
           <p className="text-xs text-muted-foreground mt-auto pt-3">
-            ≈ {formatPrice(tier.annualPrice !== null ? Math.round(tier.annualPrice / 12) : null)}/mo · billed once
+            Billed annually, cancel any time
           </p>
           <div className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-foreground text-background px-3 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity">
             Choose annual →
@@ -169,7 +166,7 @@ function TierCard({ tier, onSelect, onSkip }: {
   const isFree = tier.monthlyPrice === null
 
   return (
-    <div className={`relative flex flex-col rounded-xl border p-6 min-h-[380px] ${
+    <div className={`relative flex flex-col rounded-xl border p-6 ${
       tier.highlighted ? 'border-foreground/30 shadow-md' : 'border-border bg-background'
     }`}>
       {tier.highlighted && (
@@ -227,13 +224,45 @@ function TierCard({ tier, onSelect, onSkip }: {
   )
 }
 
-// ── Step: Seller ToS ─────────────────────────────────────────────────────────
-function TosStep({ onNext }: { onNext: () => void }) {
-  const [agreed, setAgreed] = useState(false)
+// ── Step: Seller ToS + Privacy Policy ────────────────────────────────────────
+function TosStep({ onNext, revisit = false }: { onNext: () => void; revisit?: boolean }) {
+  const [agreedSeller, setAgreedSeller] = useState(false)
+  const [agreedPrivacy, setAgreedPrivacy] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  const allAgreed = agreedSeller && agreedPrivacy
+
+  // Revisit view — already agreed, no need to re-check boxes
+  if (revisit) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="text-center">
+          <div className="flex justify-center mb-5">
+            <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
+              <Check className="h-7 w-7 text-muted-foreground" />
+            </div>
+          </div>
+          <h2 className="text-xl font-bold mb-1.5">Seller Agreements</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            You've already accepted our{' '}
+            <a href="/legal/seller-terms" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Seller Terms</a>
+            {' '}and{' '}
+            <a href="/legal/privacy" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Privacy Policy</a>.
+          </p>
+        </div>
+        <button
+          onClick={onNext}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background text-sm font-semibold h-11 px-4 hover:opacity-90 transition-opacity"
+        >
+          <ArrowRight className="h-4 w-4" />
+          Continue
+        </button>
+      </div>
+    )
+  }
+
   const handleAccept = async () => {
-    if (!agreed) return
+    if (!allAgreed) return
     setLoading(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -245,57 +274,54 @@ function TosStep({ onNext }: { onNext: () => void }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <div className="text-center">
-        <div className="flex justify-center mb-5">
-          <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
-            <FileText className="h-7 w-7 text-muted-foreground" />
+        <div className="flex justify-center mb-6">
+          <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
+            <FileText className="h-8 w-8 text-muted-foreground" />
           </div>
         </div>
-        <h2 className="text-xl font-bold mb-1.5">Seller Agreement</h2>
+        <h2 className="text-2xl font-bold mb-2">Seller Agreements</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Before listing coins for sale, please review and accept our seller terms.
+          Before listing coins for sale, please review and accept our terms and privacy policy.
         </p>
       </div>
 
-      <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3 text-sm">
-        {[
-          'All coins must be accurately described and authentically graded.',
-          'Sellers are responsible for shipping within 3 business days of sale.',
-          'Pedigree Coins charges a platform fee on each completed sale.',
-          'Misrepresentation or fraud will result in immediate account suspension.',
-          'Disputes are handled through our resolution centre per platform policy.',
-        ].map((term, i) => (
-          <div key={i} className="flex items-start gap-2.5">
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-            <span className="text-muted-foreground leading-snug">{term}</span>
+      <div className="space-y-4">
+        <label className="flex items-start gap-4 cursor-pointer group">
+          <div className="relative mt-0.5 flex-shrink-0">
+            <input type="checkbox" checked={agreedSeller} onChange={e => setAgreedSeller(e.target.checked)} className="sr-only" />
+            <div className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-colors ${agreedSeller ? 'bg-foreground border-foreground' : 'border-border group-hover:border-foreground/40'}`}>
+              {agreedSeller && <Check className="h-3 w-3 text-background" />}
+            </div>
           </div>
-        ))}
+          <span className="text-sm text-muted-foreground leading-snug">
+            I agree to the{' '}
+            <a href="/legal/seller-terms" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">
+              Seller Terms of Service
+            </a>.
+          </span>
+        </label>
+
+        <label className="flex items-start gap-4 cursor-pointer group">
+          <div className="relative mt-0.5 flex-shrink-0">
+            <input type="checkbox" checked={agreedPrivacy} onChange={e => setAgreedPrivacy(e.target.checked)} className="sr-only" />
+            <div className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-colors ${agreedPrivacy ? 'bg-foreground border-foreground' : 'border-border group-hover:border-foreground/40'}`}>
+              {agreedPrivacy && <Check className="h-3 w-3 text-background" />}
+            </div>
+          </div>
+          <span className="text-sm text-muted-foreground leading-snug">
+            I have read and agree to the{' '}
+            <a href="/legal/privacy" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">
+              Privacy Policy
+            </a>.
+          </span>
+        </label>
       </div>
-
-      <a
-        href="/legal/seller-terms"
-        target="_blank"
-        className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        Read full Seller Terms <ExternalLink className="h-3.5 w-3.5" />
-      </a>
-
-      <label className="flex items-start gap-3 cursor-pointer group">
-        <div className="relative mt-0.5 flex-shrink-0">
-          <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} className="sr-only" />
-          <div className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-colors ${agreed ? 'bg-foreground border-foreground' : 'border-border group-hover:border-foreground/40'}`}>
-            {agreed && <Check className="h-3 w-3 text-background" />}
-          </div>
-        </div>
-        <span className="text-sm text-muted-foreground leading-snug">
-          I have read and agree to the Pedigree Coins Seller Terms of Service.
-        </span>
-      </label>
 
       <button
         onClick={handleAccept}
-        disabled={!agreed || loading}
+        disabled={!allAgreed || loading}
         className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background text-sm font-semibold h-11 px-4 hover:opacity-90 transition-opacity disabled:opacity-40"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
@@ -306,33 +332,33 @@ function TosStep({ onNext }: { onNext: () => void }) {
 }
 
 // ── Step: Plan upgrade ────────────────────────────────────────────────────────
-function PlanStep({ onSkip }: { onSkip: () => void }) {
+function PlanStep({ onSkip, selectedTier, onSelectTier }: {
+  onSkip: () => void
+  selectedTier: typeof COLLECTOR_TIERS[0] | null
+  onSelectTier: (t: typeof COLLECTOR_TIERS[0] | null) => void
+}) {
   const [group, setGroup] = useState<Group>('collectors')
-  const [selectedTier, setSelectedTier] = useState<typeof COLLECTOR_TIERS[0] | null>(null)
-
-  const tiers = group === 'collectors' ? COLLECTOR_TIERS : DEALER_TIERS
 
   if (selectedTier) {
-    return <BillingChoice tier={selectedTier} onBack={() => setSelectedTier(null)} />
+    return <BillingChoice tier={selectedTier} onBack={() => onSelectTier(null)} />
   }
 
+  // CSS grid with explicit row sizes so nothing can reflow on toggle.
+  // Row 1 (auto): header. Row 2 (auto): notice. Row 3 (1fr): cards.
   return (
-    <div className="flex flex-col gap-5">
-      <div className="text-center">
-        <h2 className="text-xl font-bold mb-1">Choose a plan</h2>
-        <p className="text-sm text-muted-foreground">
-          Upgrade for more listings and lower fees, or continue for free.
-        </p>
-      </div>
-
-      {/* Group toggle */}
-      <div className="flex items-center justify-center">
+    <div
+      className="absolute inset-0"
+      style={{ display: 'grid', gridTemplateRows: 'auto auto 1fr', gap: '12px' }}
+    >
+      {/* Row 1 — header */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold">Choose a plan</h2>
         <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1 gap-1">
           {(['collectors', 'dealers'] as Group[]).map(g => (
             <button
               key={g}
               onClick={() => setGroup(g)}
-              className={`px-5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
+              className={`px-4 py-1 rounded-lg text-xs font-semibold capitalize transition-colors ${
                 group === g
                   ? 'bg-background text-foreground shadow-sm border border-border'
                   : 'text-muted-foreground hover:text-foreground'
@@ -344,23 +370,33 @@ function PlanStep({ onSkip }: { onSkip: () => void }) {
         </div>
       </div>
 
-      {/* Tier cards */}
-      <div className="grid grid-cols-3 gap-5">
-        {tiers.map(tier => (
-          <TierCard
-            key={tier.key}
-            tier={tier as typeof COLLECTOR_TIERS[0]}
-            onSelect={() => setSelectedTier(tier as typeof COLLECTOR_TIERS[0])}
-            onSkip={onSkip}
-          />
-        ))}
+      {/* Row 2 — trial notice */}
+      <p className="text-xs text-muted-foreground text-center">
+        All paid plans include a{' '}
+        <span className="font-medium text-foreground">30-day free trial</span>.
+        {' '}You can change your plan at any time from Settings.
+      </p>
+
+      {/* Row 3 — both grids always in DOM, stacked, visibility-toggled only.
+          visibility:hidden keeps each grid's box intact so row 3 never resizes. */}
+      <div className="relative">
+        <div className={`absolute inset-0 grid grid-cols-3 gap-4 ${group !== 'collectors' ? 'invisible pointer-events-none' : ''}`}>
+          {COLLECTOR_TIERS.map((tier, i) => (
+            <TierCard key={i} tier={tier} onSelect={() => onSelectTier(tier)} onSkip={onSkip} />
+          ))}
+        </div>
+        <div className={`absolute inset-0 grid grid-cols-3 gap-4 ${group !== 'dealers' ? 'invisible pointer-events-none' : ''}`}>
+          {DEALER_TIERS.map((tier, i) => (
+            <TierCard key={i} tier={tier as typeof COLLECTOR_TIERS[0]} onSelect={() => onSelectTier(tier as typeof COLLECTOR_TIERS[0])} onSkip={onSkip} />
+          ))}
+        </div>
       </div>
     </div>
   )
 }
 
 // ── Step: Stripe Connect ──────────────────────────────────────────────────────
-function StripeStep({ onComplete }: { onComplete: () => void }) {
+function StripeStep() {
   const [loading, setLoading] = useState(false)
 
   const handleSetup = async () => {
@@ -385,85 +421,147 @@ function StripeStep({ onComplete }: { onComplete: () => void }) {
         </div>
         <h2 className="text-xl font-bold mb-1.5">Connect your bank</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Set up payouts so you can receive money when your coins sell.
-          Powered by Stripe — secure and takes about 2 minutes.
+          Link your bank account to receive payouts when your coins sell.
+          Takes about 2 minutes.
         </p>
       </div>
 
-      <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
-        {[
-          'Bank-level encryption via Stripe',
-          'Payouts deposited directly to your account',
-          'Only the platform fee applies — no charge to connect',
-        ].map((item, i) => (
-          <div key={i} className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <span className="text-sm text-muted-foreground">{item}</span>
-          </div>
-        ))}
+      <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+        <Lock className="h-3 w-3" />
+        <span>Secured with 256-bit AES encryption via Stripe</span>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <button
-          onClick={handleSetup}
-          disabled={loading}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background text-sm font-semibold h-11 px-4 hover:opacity-90 transition-opacity disabled:opacity-60"
-        >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-          {loading ? 'Redirecting to Stripe…' : 'Set up payouts'}
-        </button>
-        <button
-          onClick={onComplete}
-          className="w-full inline-flex items-center justify-center rounded-xl border border-border text-sm font-medium h-11 px-4 hover:bg-muted transition-colors text-muted-foreground"
-        >
-          I'll do this later
-        </button>
-      </div>
+      <button
+        onClick={handleSetup}
+        disabled={loading}
+        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background text-sm font-semibold h-11 px-4 hover:opacity-90 transition-opacity disabled:opacity-60"
+      >
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+        {loading ? 'Redirecting to Stripe…' : 'Link bank account'}
+      </button>
     </div>
   )
 }
 
 // ── Main modal ────────────────────────────────────────────────────────────────
 export function SellerOnboardingModal({ tier, sellerTosAgreed, stripeOnboardingComplete, onComplete }: Props) {
-  const allSteps = getSteps(tier, sellerTosAgreed, stripeOnboardingComplete)
+  const allDisplaySteps = getAllDisplaySteps(tier)
+
+  // Track which steps have been completed
+  const [completedSteps, setCompletedSteps] = useState<Set<Step>>(() => {
+    const set = new Set<Step>()
+    if (sellerTosAgreed) set.add('tos')
+    // 'plan' is never pre-completed — must be chosen each session until bank is linked
+    if (stripeOnboardingComplete) set.add('stripe')
+    return set
+  })
+
+  // Always start at step 0 — no skipping ahead on refresh
   const [stepIndex, setStepIndex] = useState(0)
 
-  if (allSteps.length === 0) return null
-
-  const currentStep = allSteps[stepIndex]
-  const totalSteps = allSteps.length
-  const isPlanStep = currentStep === 'plan'
-
-  const next = () => {
-    if (stepIndex + 1 < allSteps.length) setStepIndex(stepIndex + 1)
-    else onComplete()
+  // selectedTier lives here so the back button can detect the BillingChoice sub-page.
+  // Reset to null on every step change so returning to plan always shows the grid.
+  const [planSelectedTier, setPlanSelectedTier] = useState<typeof COLLECTOR_TIERS[0] | null>(null)
+  const prevStepIndex = useRef(stepIndex)
+  if (prevStepIndex.current !== stepIndex) {
+    prevStepIndex.current = stepIndex
+    if (planSelectedTier !== null) setPlanSelectedTier(null)
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-sm px-4 py-8">
-      <div className={`w-full rounded-2xl border border-border bg-background shadow-2xl overflow-y-auto max-h-[90vh] transition-all duration-300 ${isPlanStep ? 'max-w-5xl p-10' : 'max-w-md p-8'}`}>
+  const currentStep = allDisplaySteps[stepIndex]
 
-        {/* Progress dots */}
-        {totalSteps > 1 && (
-          <div className="flex items-center justify-center gap-2 mb-6">
-            {allSteps.map((_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 rounded-full transition-all ${i <= stepIndex ? 'w-6 bg-foreground' : 'w-3 bg-muted-foreground/30'}`}
-              />
-            ))}
+  // Advance to the next step after completing the current one
+  const next = () => {
+    const step = allDisplaySteps[stepIndex]
+    const updated = new Set(completedSteps)
+    updated.add(step)
+    setCompletedSteps(updated)
+
+    if (stepIndex + 1 < allDisplaySteps.length) {
+      setStepIndex(stepIndex + 1)
+    } else if (allDisplaySteps.every(s => updated.has(s))) {
+      onComplete()
+    }
+  }
+
+  const isPlanStep = currentStep === 'plan'
+
+  return (
+    // z-40 keeps us below the navbar (z-50) so users can navigate away via the nav
+    <div className="fixed top-16 inset-x-0 bottom-0 z-40 flex items-center justify-center bg-background/90 backdrop-blur-sm px-4 py-4">
+      <div className={`relative w-full rounded-2xl border border-border bg-background shadow-2xl flex flex-col max-h-[calc(100vh-4rem)] transition-[max-width,height] duration-300 ${isPlanStep ? 'max-w-5xl p-6 h-[640px]' : 'max-w-lg p-8 h-[560px]'}`}>
+
+        {/* Back button — top-left corner, absolutely positioned so it never affects layout.
+            On BillingChoice sub-page: clears planSelectedTier (back to plan grid).
+            On other steps: goes to previous step. Hidden on plan grid (use progress bar). */}
+        <button
+          onClick={() => {
+            if (planSelectedTier) { setPlanSelectedTier(null); return }
+            setStepIndex(stepIndex - 1)
+          }}
+          style={{ visibility: (planSelectedTier || stepIndex > 0) ? 'visible' : 'hidden' }}
+          className={`absolute ${isPlanStep ? 'top-10' : 'top-12'} left-6 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors`}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back
+        </button>
+
+        {/* Progress bar — flex-shrink-0 keeps it fixed; only the content area scrolls */}
+        {allDisplaySteps.length > 1 && (
+          <div className="flex-shrink-0 flex items-start justify-center gap-0 mb-8">
+            {allDisplaySteps.map((step, i) => {
+              const isCurrent  = i === stepIndex
+              const isComplete = i < stepIndex          // positional: everything before current = done
+              const isUpcoming = i > stepIndex
+              // Disable all navigation while on the ToS step (must agree before moving)
+              const isClickable = currentStep !== 'tos' && completedSteps.has(step) && !isCurrent
+              const label = step === 'tos' ? 'Agreement' : step === 'plan' ? 'Plan' : 'Bank Account'
+
+              return (
+                <div key={step} className="flex items-start">
+                  {/* Circle + label as one interactive unit */}
+                  <button
+                    onClick={() => setStepIndex(i)}
+                    disabled={!isClickable}
+                    className={`flex flex-col items-center gap-1.5 ${isClickable ? 'cursor-pointer group' : 'cursor-default'}`}
+                    aria-label={isClickable ? `Go back to ${label}` : label}
+                  >
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center transition-all duration-300 text-xs font-bold ${
+                      isComplete
+                        ? 'bg-foreground text-background group-hover:opacity-75'
+                        : isCurrent
+                        ? 'border-2 border-foreground bg-background text-foreground'
+                        : 'border-2 border-border bg-background text-muted-foreground/40'
+                    }`}>
+                      {isComplete ? <Check className="h-3.5 w-3.5" /> : i + 1}
+                    </div>
+                    <span className={`text-[10px] font-medium whitespace-nowrap transition-colors ${
+                      isCurrent   ? 'text-foreground'
+                      : isComplete ? 'text-muted-foreground'
+                      : 'text-muted-foreground/40'
+                    }`}>
+                      {label}
+                    </span>
+                  </button>
+
+                  {/* Connector — solid once the step to its left is behind the current position */}
+                  {i < allDisplaySteps.length - 1 && (
+                    <div className="flex-1 mt-4 mx-2" style={{ minWidth: '3rem' }}>
+                      <div className={`h-px transition-colors duration-300 ${i < stepIndex ? 'bg-foreground' : 'bg-border'}`} />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
 
-        {totalSteps > 1 && (
-          <p className="text-center text-xs text-muted-foreground font-medium tracking-widest uppercase mb-6">
-            Step {stepIndex + 1} of {totalSteps}
-          </p>
-        )}
-
-        {currentStep === 'tos' && <TosStep onNext={next} />}
-        {currentStep === 'plan' && <PlanStep onSkip={next} />}
-        {currentStep === 'stripe' && <StripeStep onComplete={next} />}
+        {/* Content area */}
+        <div className={`flex-1 min-h-0 flex flex-col ${isPlanStep ? 'overflow-hidden relative' : 'overflow-y-auto justify-center'}`}>
+          {currentStep === 'tos'    && <TosStep onNext={next} revisit={completedSteps.has('tos')} />}
+          {currentStep === 'plan'   && <PlanStep onSkip={next} selectedTier={planSelectedTier} onSelectTier={setPlanSelectedTier} />}
+          {currentStep === 'stripe' && <StripeStep />}
+        </div>
       </div>
     </div>
   )

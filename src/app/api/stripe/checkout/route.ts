@@ -15,6 +15,39 @@ function calcConvenienceFee(priceUsd: number): number {
   return (priceUsd * 0.029 + 0.30) / (1 - 0.029) + 0.30
 }
 
+type SubscriptionTier =
+  | 'collector_basic'
+  | 'collector_standard'
+  | 'collector_premium'
+  | 'dealer_basic'
+  | 'dealer_standard'
+  | 'dealer_premium'
+
+// Buyer fee: tied to the BUYER's subscription plan
+const BUYER_FEE_RATE: Record<SubscriptionTier, number> = {
+  collector_basic:    0.07,
+  collector_standard: 0.05,
+  collector_premium:  0.01,
+  dealer_basic:       0.01,
+  dealer_standard:    0.01,
+  dealer_premium:     0.00,
+}
+
+// Seller fee: tied to the SELLER's subscription plan
+const SELLER_FEE_RATE: Record<SubscriptionTier, number> = {
+  collector_basic:    0.07,
+  collector_standard: 0.05,
+  collector_premium:  0.05,
+  dealer_basic:       0.025,
+  dealer_standard:    0.01,
+  dealer_premium:     0.00,
+}
+
+function fmtPct(rate: number): string {
+  const pct = rate * 100
+  return pct % 1 === 0 ? `${pct}%` : `${pct}%`
+}
+
 export async function POST(req: NextRequest) {
   // ── Auth ──────────────────────────────────────────────────────────────────
   const supabase = await createClient()
@@ -52,12 +85,19 @@ export async function POST(req: NextRequest) {
   if (listing.seller_id === user.id) return NextResponse.json({ error: 'You cannot buy your own listing' }, { status: 400 })
   if (!listing.price) return NextResponse.json({ error: 'Listing has no price' }, { status: 400 })
 
-  // ── Fetch seller's Connect account ────────────────────────────────────────
-  const { data: sellerProfile } = await db
-    .from('profiles')
-    .select('stripe_account_id, stripe_onboarding_complete')
-    .eq('id', listing.seller_id)
-    .single()
+  // ── Fetch seller profile + buyer profile (parallel) ──────────────────────
+  const [{ data: sellerProfile }, { data: buyerProfile }] = await Promise.all([
+    db
+      .from('profiles')
+      .select('stripe_account_id, stripe_onboarding_complete, subscription_tier')
+      .eq('id', listing.seller_id)
+      .single(),
+    db
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', user.id)
+      .single(),
+  ])
 
   const sellerAccountId =
     sellerProfile?.stripe_onboarding_complete && sellerProfile?.stripe_account_id
@@ -66,7 +106,16 @@ export async function POST(req: NextRequest) {
 
   // ── Fee calculation ───────────────────────────────────────────────────────
   const priceUsd = listing.price / 100
-  const buyerFeeCents = Math.round(listing.price * 0.05)           // 5% platform fee
+
+  const buyerTier = (buyerProfile?.subscription_tier ?? 'collector_basic') as SubscriptionTier
+  const sellerTier = (sellerProfile?.subscription_tier ?? 'collector_basic') as SubscriptionTier
+  const buyerFeeRate = BUYER_FEE_RATE[buyerTier] ?? 0.07
+  const sellerFeeRate = SELLER_FEE_RATE[sellerTier] ?? 0.07
+
+  const buyerFeeCents = Math.round(listing.price * buyerFeeRate)
+  const sellerFeeCents = Math.round(listing.price * sellerFeeRate)
+  const platformFeeCents = buyerFeeCents + sellerFeeCents   // total platform take
+
   const convFeeCents = listing.pass_convenience_fee
     ? Math.round(calcConvenienceFee(priceUsd) * 100)
     : 0
@@ -90,7 +139,7 @@ export async function POST(req: NextRequest) {
     {
       price_data: {
         currency: 'usd',
-        product_data: { name: 'Buyer fee (5%)' },
+        product_data: { name: `Buyer fee (${fmtPct(buyerFeeRate)})` },
         unit_amount: buyerFeeCents,
       },
       quantity: 1,
@@ -117,7 +166,7 @@ export async function POST(req: NextRequest) {
     payment_intent_data: {
       ...(sellerAccountId
         ? {
-            application_fee_amount: buyerFeeCents,
+            application_fee_amount: platformFeeCents,
             transfer_data: { destination: sellerAccountId },
           }
         : {}),
@@ -138,6 +187,10 @@ export async function POST(req: NextRequest) {
       ship_to_zip,
       seller_id: listing.seller_id,
       amount: String(listing.price),
+      buyer_fee_cents: String(buyerFeeCents),
+      seller_fee_cents: String(sellerFeeCents),
+      buyer_tier: buyerTier,
+      seller_tier: sellerTier,
     },
     success_url: `${baseUrl}/buy/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/listings/${listing_id}`,
