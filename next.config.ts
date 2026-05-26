@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'i.usacoinbook.com',
       },
+      {
+        // Wikipedia coin images (used in listings)
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
   },

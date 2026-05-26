@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
 import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, Landmark, X, ArrowRight, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { StripeConnectGate } from '@/components/stripe/stripe-connect-gate'
+import { SellerOnboardingModal } from '@/components/sell/seller-onboarding-modal'
 
 // ── Tier config ───────────────────────────────────────────────────────────────
 type Tier =
@@ -69,6 +69,7 @@ interface SellData {
   createdThisMonth: number
   stripeAccountId: string | null
   stripeOnboardingComplete: boolean
+  sellerTosAgreed: boolean
 }
 
 export async function fetchSellData(): Promise<SellData | null> {
@@ -93,7 +94,7 @@ export async function fetchSellData(): Promise<SellData | null> {
       .eq('seller_id', user.id)
       .order('created_at', { ascending: false }),
     supabase.from('orders').select('amount, status').eq('seller_id', user.id),
-    supabase.from('profiles').select('subscription_tier, stripe_account_id, stripe_onboarding_complete').eq('id', user.id).single(),
+    supabase.from('profiles').select('subscription_tier, stripe_account_id, stripe_onboarding_complete, seller_tos_agreed').eq('id', user.id).single(),
     supabase
       .from('listings')
       .select('id', { count: 'exact', head: true })
@@ -115,6 +116,7 @@ export async function fetchSellData(): Promise<SellData | null> {
     createdThisMonth: createdThisMonth ?? 0,
     stripeAccountId: profile?.stripe_account_id ?? null,
     stripeOnboardingComplete: profile?.stripe_onboarding_complete ?? false,
+    sellerTosAgreed: profile?.seller_tos_agreed ?? false,
   }
 }
 
@@ -124,7 +126,7 @@ export function SellClient() {
   const [tab, setTab] = useState<TabId>('all')
   const [connectLoading, setConnectLoading] = useState(false)
   const [dismissedOnboarded, setDismissedOnboarded] = useState(false)
-  const [showStripeGate, setShowStripeGate] = useState(false)
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false)
 
   // Check for ?onboarded=1 or ?onboarding=incomplete from Stripe return
   const [stripeReturn, setStripeReturn] = useState<'success' | 'incomplete' | null>(null)
@@ -174,8 +176,9 @@ export function SellClient() {
     return null
   }
 
-  const { allListings, orders, tier, carryOver, createdThisMonth, stripeAccountId, stripeOnboardingComplete } = data
+  const { allListings, orders, tier, carryOver, createdThisMonth, stripeAccountId, stripeOnboardingComplete, sellerTosAgreed } = data
   const needsStripeConnect = !stripeOnboardingComplete
+  const needsOnboarding = !onboardingDismissed && (!sellerTosAgreed || !stripeOnboardingComplete || tier === 'collector_basic')
   const tierConfig = TIER_CONFIG[tier]
 
   // Stats
@@ -206,6 +209,14 @@ export function SellClient() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {needsOnboarding && (
+        <SellerOnboardingModal
+          tier={tier}
+          sellerTosAgreed={sellerTosAgreed}
+          stripeOnboardingComplete={stripeOnboardingComplete}
+          onComplete={() => { setOnboardingDismissed(true); mutate() }}
+        />
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -214,21 +225,11 @@ export function SellClient() {
         </div>
         <Button
           disabled={atLimit}
-          onClick={() => {
-            if (needsStripeConnect) {
-              setShowStripeGate(true)
-            } else {
-              router.push('/listings/new')
-            }
-          }}
+          onClick={() => router.push('/listings/new')}
         >
           <Plus className="h-4 w-4 mr-1.5" />
           Create Listing
         </Button>
-
-        {showStripeGate && (
-          <StripeConnectGate onBack={() => setShowStripeGate(false)} />
-        )}
       </div>
 
       {/* Stripe onboarding success toast */}
