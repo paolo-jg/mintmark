@@ -142,7 +142,7 @@ export function HomeClient() {
   const totalSpent = allBuyingOrders.filter(o => o.status !== 'disputed').reduce((s, o) => s + (o.amount ?? 0), 0)
   const activeListingsCount = activeListingsData.length
 
-  const isDealer = subscriptionTier?.startsWith('dealer_') ?? false
+  const isDealer = subscriptionTier === 'dealer'
   const inventoryValueCents = activeListingsData.reduce((s, l) => s + ((l as { price?: number | null }).price ?? 0), 0)
 
   const now = new Date()

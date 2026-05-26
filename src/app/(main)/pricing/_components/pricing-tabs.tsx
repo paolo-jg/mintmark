@@ -32,51 +32,27 @@ const COLLECTOR_TIERS = [
 
 const DEALER_TIERS = [
   {
-    name: 'Basic',
-    fullName: 'Dealer Basic',
-    monthlyPrice: 199,
-    annualPrice: 1999,
-    description: 'Unlimited listings and a dedicated dealer profile.',
-    features: ['1% buyer fee', '2.5% seller fee + card processing fees', '$0.20 per listing', 'Unlimited listings', 'Dealer profile page', 'Custom logo & description'],
+    name: 'Dealer',
+    fullName: 'Dealer',
+    monthlyPrice: 49.99,
+    annualPrice: null as number | null,
+    description: 'Unlimited listings, the lowest fees, and advanced tools for serious dealers.',
+    features: ['1% buyer fee', '0% seller fee', '$0 per listing', 'Unlimited listings', 'Unlimited purchases', 'Advanced analytics', 'Advanced listing creation features'],
     highlighted: false,
-    annualSavings: 'Save $389/yr',
-  },
-  {
-    name: 'Standard',
-    fullName: 'Dealer Standard',
-    monthlyPrice: 399,
-    annualPrice: 3999,
-    description: 'Priority ranking and significantly reduced fees.',
-    features: ['1% buyer fee', '1% seller fee + card processing fees', '$0.10 per listing', 'Unlimited listings', 'Priority dealer ranking', 'Custom logo & description'],
-    highlighted: true,
-    annualSavings: 'Save $789/yr',
-  },
-  {
-    name: 'Premium',
-    fullName: 'Dealer Premium',
-    monthlyPrice: 599,
-    annualPrice: 5999,
-    description: 'Zero sell fees and top placement across the platform.',
-    features: ['0% buyer fee', '0% seller fee + card processing fees', '$0 per listing', 'Unlimited listings', 'Top dealer ranking', 'Custom logo & description'],
-    highlighted: false,
-    annualSavings: 'Save $1,189/yr',
+    annualSavings: null as string | null,
   },
 ]
 
 const ANNUAL_PRICES: Record<string, number | null> = {
   'Collector Basic': null,
   'Collector Premium': null,
-  'Dealer Basic': 1999,
-  'Dealer Standard': 3999,
-  'Dealer Premium': 5999,
+  'Dealer': null,
 }
 
 const ANNUAL_SAVINGS: Record<string, string | null> = {
   'Collector Basic': null,
   'Collector Premium': null,
-  'Dealer Basic': 'Save $389/yr',
-  'Dealer Standard': 'Save $789/yr',
-  'Dealer Premium': 'Save $1,189/yr',
+  'Dealer': null,
 }
 
 function formatPrice(price: number | null): string {
@@ -232,7 +208,7 @@ export function PricingTabs() {
       </div>
 
       {/* Tier cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className={`grid grid-cols-1 gap-5 ${tiers.length > 1 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
         {tiers.map(tier => (
           <TierCard key={tier.fullName} tier={tier} billing={billing} />
         ))}

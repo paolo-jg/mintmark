@@ -6,9 +6,7 @@ import { ProfileForm } from './_components/profile-form'
 const TIER_LABEL: Record<string, string> = {
   collector_basic:    'Free',
   collector_premium:  'Premium',
-  dealer_basic:       'Dealer Basic',
-  dealer_standard:    'Dealer Standard',
-  dealer_premium:     'Dealer Premium',
+  dealer:             'Dealer',
 }
 
 export default async function ProfilePage() {
@@ -24,7 +22,7 @@ export default async function ProfilePage() {
     .single()
 
   const tier = profile?.subscription_tier ?? 'collector_basic'
-  const isDealer = tier.startsWith('dealer_')
+  const isDealer = tier === 'dealer'
   const tierLabel = TIER_LABEL[tier] ?? tier
 
   return (

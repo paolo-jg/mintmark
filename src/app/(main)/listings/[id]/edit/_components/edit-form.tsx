@@ -17,9 +17,7 @@ import { toast } from 'sonner'
 const TIER_FEES: Record<string, { sellPct: number; listingFeeCents: number }> = {
   collector_basic:    { sellPct: 7,   listingFeeCents: 50 },
   collector_premium:  { sellPct: 1.9, listingFeeCents: 40 },
-  dealer_basic:       { sellPct: 2.5, listingFeeCents: 20 },
-  dealer_standard:    { sellPct: 1,   listingFeeCents: 10 },
-  dealer_premium:     { sellPct: 0,   listingFeeCents: 0  },
+  dealer:             { sellPct: 0,   listingFeeCents: 0  },
 }
 
 const BIN_DURATIONS = [
@@ -549,7 +547,7 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
               })()}
 
               {/* Convenience fee — dealers only */}
-              {sellerTier.startsWith('dealer_') && (
+              {sellerTier === 'dealer' && (
                 <label
                   htmlFor="convFee"
                   className={`flex items-center justify-between gap-4 rounded-xl border-2 px-4 py-3.5 cursor-pointer transition-all ${

@@ -228,7 +228,7 @@ export default async function ListingPage({
                   subscription_tier?: string | null
                 } | null
                 const sellerName = p?.display_name ?? `@${p?.username ?? 'seller'}`
-                const isDealer = p?.subscription_tier?.startsWith('dealer_')
+                const isDealer = p?.subscription_tier === 'dealer'
                 const rating = p?.average_rating ?? 0
                 const ratingCount = p?.rating_count ?? 0
                 return (

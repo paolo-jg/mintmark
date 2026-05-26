@@ -8,9 +8,7 @@ import { Star, Store, Package } from 'lucide-react'
 const TIER_LABEL: Record<string, string> = {
   collector_basic:    'Free',
   collector_premium:  'Premium',
-  dealer_basic:       'Dealer Basic',
-  dealer_standard:    'Dealer Standard',
-  dealer_premium:     'Dealer Premium',
+  dealer:             'Dealer',
 }
 
 function StarRating({ rating, count }: { rating: number; count: number }) {
@@ -67,7 +65,7 @@ export default async function SellerPage({
 
   if (!profile) notFound()
 
-  const isDealer = profile.subscription_tier?.startsWith('dealer_')
+  const isDealer = profile.subscription_tier === 'dealer'
   const name = profile.display_name ?? profile.email
   const tierLabel = TIER_LABEL[profile.subscription_tier] ?? profile.subscription_tier
 

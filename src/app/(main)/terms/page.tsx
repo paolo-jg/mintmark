@@ -134,8 +134,14 @@ export default function TermsPage() {
           <p>
             Sellers must select a Plan during onboarding. The Plans available, the features included in
             each Plan, and the subscription prices are published at pedigreecoins.com/pricing and are
-            incorporated into these Terms by reference.
+            incorporated into these Terms by reference. The current Plans are:
           </p>
+          <ul className="list-disc pl-6 mt-2 space-y-1">
+            <li><strong>Collector Basic</strong> — Free; 7% buyer fee; 7% seller fee; $0.50 per listing; up to 10 active listings/month; unlimited purchases.</li>
+            <li><strong>Collector Premium</strong> — $9.99/month; 1.9% buyer fee; 1.9% seller fee; $0.40 per listing; up to 50 active listings/month; unlimited purchases.</li>
+            <li><strong>Dealer</strong> — $49.99/month; 1% buyer fee; 0% seller fee; $0 per listing; unlimited listings; unlimited purchases.</li>
+          </ul>
+          <p className="mt-2">Pedigree Coins may change Plan pricing or features at any time on notice as described in Section 17.</p>
         </Subsection>
         <Subsection title="4.2 Transaction Fees">
           <p>

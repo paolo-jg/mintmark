@@ -16,16 +16,12 @@ import { SellerOnboardingModal } from '@/components/sell/seller-onboarding-modal
 type Tier =
   | 'collector_basic'
   | 'collector_premium'
-  | 'dealer_basic'
-  | 'dealer_standard'
-  | 'dealer_premium'
+  | 'dealer'
 
 const TIER_CONFIG: Record<Tier, { label: string; monthlyLimit: number | null }> = {
-  collector_basic:    { label: 'Free',          monthlyLimit: 10 },
-  collector_premium:  { label: 'Premium',       monthlyLimit: 50 },
-  dealer_basic:       { label: 'Dealer Basic',  monthlyLimit: null },
-  dealer_standard:    { label: 'Dealer Standard', monthlyLimit: null },
-  dealer_premium:     { label: 'Dealer Premium',  monthlyLimit: null },
+  collector_basic:    { label: 'Free',    monthlyLimit: 10 },
+  collector_premium:  { label: 'Premium', monthlyLimit: 50 },
+  dealer:             { label: 'Dealer',  monthlyLimit: null },
 }
 
 const STATUS_LABEL: Record<string, string> = {

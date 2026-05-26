@@ -25,28 +25,13 @@ const COLLECTOR_TIERS = [
 
 const DEALER_TIERS = [
   {
-    name: 'Dealer Basic',
-    monthlyPrice: 199,
-    annualPrice: 1999,
+    name: 'Dealer',
+    monthlyPrice: 49.99,
+    annualPrice: null as number | null,
     description: 'For dealers ready to scale without limits.',
-    features: ['1% buyer fee', '2.5% seller fee + card processing fees', '$0.20 per listing', 'Unlimited listings', 'Unlimited purchases'],
-    annualSavings: 'Save $389/yr',
-  },
-  {
-    name: 'Dealer Standard',
-    monthlyPrice: 399,
-    annualPrice: 3999,
-    description: 'For established dealers moving serious volume.',
-    features: ['1% buyer fee', '1% seller fee + card processing fees', '$0.10 per listing', 'Unlimited listings', 'Unlimited purchases'],
-    annualSavings: 'Save $789/yr',
-  },
-  {
-    name: 'Dealer Premium',
-    monthlyPrice: 599,
-    annualPrice: 5999,
-    description: 'Maximum savings for the highest-volume dealers.',
-    features: ['0% buyer fee', '0% seller fee + card processing fees', '$0 per listing', 'Unlimited listings', 'Unlimited purchases'],
-    annualSavings: 'Save $1,189/yr',
+    features: ['1% buyer fee', '0% seller fee', '$0 per listing', 'Unlimited listings', 'Unlimited purchases', 'Advanced analytics', 'Advanced listing creation features'],
+    highlighted: false,
+    annualSavings: null as string | null,
   },
 ]
 
@@ -136,9 +121,9 @@ export function PricingSection() {
         {COLLECTOR_TIERS.map(tier => <TierCard key={tier.name} tier={tier} />)}
       </div>
 
-      {/* Dealer tiers */}
+      {/* Dealer tier */}
       <p className="text-xs font-bold tracking-[0.2em] uppercase text-muted-foreground/60 mb-3">Dealers</p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-16">
         {DEALER_TIERS.map(tier => <TierCard key={tier.name} tier={tier} isDealer />)}
       </div>
 

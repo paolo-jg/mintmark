@@ -5,7 +5,7 @@ import { FileText, Landmark, ArrowRight, Loader2, Check, Lock, ChevronLeft } fro
 import { createClient } from '@/lib/supabase/client'
 import { FeatureText } from '@/components/ui/card-fee-tooltip'
 
-type Tier = 'collector_basic' | 'collector_premium' | 'dealer_basic' | 'dealer_standard' | 'dealer_premium'
+type Tier = 'collector_basic' | 'collector_premium' | 'dealer'
 type Group = 'collectors' | 'dealers'
 
 interface Props {
@@ -56,37 +56,15 @@ const COLLECTOR_TIERS = [
 
 const DEALER_TIERS = [
   {
-    key: 'dealer_basic',
-    name: 'Basic',
-    fullName: 'Dealer Basic',
-    monthlyPrice: 199,
-    annualPrice: 1999,
-    description: 'Unlimited listings and a dedicated dealer profile.',
-    features: ['1% buyer fee', '2.5% seller fee + card processing fees', '$0.20 per listing', 'Unlimited listings', 'Dealer profile page', 'Custom logo & description'],
+    key: 'dealer',
+    name: 'Dealer',
+    fullName: 'Dealer',
+    monthlyPrice: 49.99,
+    annualPrice: null as number | null,
+    description: 'Unlimited listings, the lowest fees, and advanced tools for serious dealers.',
+    features: ['1% buyer fee', '0% seller fee', '$0 per listing', 'Unlimited listings', 'Unlimited purchases', 'Advanced analytics', 'Advanced listing creation features'],
     highlighted: false,
-    annualSavings: 'Save $389/yr',
-  },
-  {
-    key: 'dealer_standard',
-    name: 'Standard',
-    fullName: 'Dealer Standard',
-    monthlyPrice: 399,
-    annualPrice: 3999,
-    description: 'Priority ranking and significantly reduced fees.',
-    features: ['1% buyer fee', '1% seller fee + card processing fees', '$0.10 per listing', 'Unlimited listings', 'Priority dealer ranking', 'Custom logo & description'],
-    highlighted: false,
-    annualSavings: 'Save $789/yr',
-  },
-  {
-    key: 'dealer_premium',
-    name: 'Premium',
-    fullName: 'Dealer Premium',
-    monthlyPrice: 599,
-    annualPrice: 5999,
-    description: 'Zero sell fees and top placement across the platform.',
-    features: ['0% buyer fee', '0% seller fee + card processing fees', '$0 per listing', 'Unlimited listings', 'Top dealer ranking', 'Custom logo & description'],
-    highlighted: false,
-    annualSavings: 'Save $1,189/yr',
+    annualSavings: null as string | null,
   },
 ]
 
