@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
+import { InactivityGuard } from '@/components/layout/inactivity-guard'
 import { SWRProvider } from '@/components/providers/swr-provider'
 import { PageDataPrefetcher } from '@/components/layout/page-data-prefetcher'
 
@@ -22,6 +23,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
         </footer>
+        <InactivityGuard />
       </div>
     </SWRProvider>
   )
