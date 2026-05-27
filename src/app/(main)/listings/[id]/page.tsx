@@ -275,7 +275,6 @@ export default async function ListingPage({
                   coinName={listing.coin_name ?? null}
                   year={listing.year ?? null}
                   mintMark={listing.mint_mark ?? null}
-                  gradingService={listing.grading_service}
                   grade={listing.grade}
                   seriesSlug={(listing as any).series_slug ?? null}
                 />

@@ -22,7 +22,6 @@ interface Props {
   coinName: string | null
   year: number | null
   mintMark: string | null
-  gradingService: string
   grade: string
   seriesSlug: string | null
 }
@@ -46,13 +45,12 @@ const CustomTooltip = ({ active, payload }: any) => {
   )
 }
 
-export default function PriceHistoryChart({ coinName, year, mintMark, gradingService, grade, seriesSlug }: Props) {
+export default function PriceHistoryChart({ coinName, year, mintMark, grade, seriesSlug }: Props) {
   const [data, setData] = useState<DataPoint[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const params = new URLSearchParams({
-      grading_service: gradingService,
       grade,
       ...(seriesSlug ? { series_slug: seriesSlug } : { coin_name: coinName ?? '' }),
       ...(year != null ? { year: String(year) } : {}),
@@ -63,7 +61,7 @@ export default function PriceHistoryChart({ coinName, year, mintMark, gradingSer
       .then(({ data }) => setData(data ?? []))
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [coinName, year, mintMark, gradingService, grade, seriesSlug])
+  }, [coinName, year, mintMark, grade, seriesSlug])
 
   if (loading) {
     return (

@@ -6,11 +6,10 @@ export async function GET(req: NextRequest) {
   const coin_name = searchParams.get('coin_name')
   const year = searchParams.get('year')
   const mint_mark = searchParams.get('mint_mark')
-  const grading_service = searchParams.get('grading_service')
   const grade = searchParams.get('grade')
   const series_slug = searchParams.get('series_slug')
 
-  if (!grading_service || !grade || (!coin_name && !series_slug)) {
+  if (!grade || (!coin_name && !series_slug)) {
     return NextResponse.json({ data: [] })
   }
 
@@ -21,7 +20,6 @@ export async function GET(req: NextRequest) {
   let query = supabase
     .from('price_history')
     .select('sale_price, sale_date, listing_id')
-    .eq('grading_service', grading_service)
     .eq('grade', grade)
     .order('sale_date', { ascending: true })
     .limit(200)
