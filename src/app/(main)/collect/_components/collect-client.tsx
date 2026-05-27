@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
-import { Plus, Trash2, Star, Coins, ScanLine, ArrowRight, ArrowUpRight, Search, X, Pencil, LogIn, Tag, ChevronDown, CheckCheck } from 'lucide-react'
+import { Plus, Trash2, Star, Coins, ScanLine, ArrowRight, ArrowUpRight, Search, X, Pencil, LogIn, Tag, ChevronDown, CheckCheck, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -586,7 +587,9 @@ export function CollectClient() {
   })
   const isLoggedIn = data?.isLoggedIn ?? false
 
-  const [tab, setTab] = useState<Tab>('owned')
+  const searchParams = useSearchParams()
+  const initialTab = (searchParams.get('tab') as Tab | null) ?? 'owned'
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [items, setItems] = useState<CollectionItem[]>([])
   const [showOwned, setShowOwned] = useState(false)
   const [showScan, setShowScan] = useState(false)
@@ -733,6 +736,13 @@ export function CollectClient() {
           ))}
         </div>
         <div className="pb-2 flex items-center gap-2">
+          <Link
+            href="/dashboard/portfolio"
+            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            Portfolio Valuation
+          </Link>
           {tab === 'owned' && (
             <>
               <Button variant="outline" size="lg" className="h-11 px-4" onClick={openAddScan}>

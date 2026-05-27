@@ -191,41 +191,12 @@ function TierCard({ tier, onSelect, onSkip }: {
 }
 
 // ── Step: Seller ToS + Privacy Policy ────────────────────────────────────────
-function TosStep({ onNext, revisit = false }: { onNext: () => void; revisit?: boolean }) {
+function TosStep({ onNext }: { onNext: () => void }) {
   const [agreedSeller, setAgreedSeller] = useState(false)
   const [agreedPrivacy, setAgreedPrivacy] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const allAgreed = agreedSeller && agreedPrivacy
-
-  // Revisit view — already agreed, no need to re-check boxes
-  if (revisit) {
-    return (
-      <div className="flex flex-col gap-6">
-        <div className="text-center">
-          <div className="flex justify-center mb-5">
-            <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
-              <Check className="h-7 w-7 text-muted-foreground" />
-            </div>
-          </div>
-          <h2 className="text-xl font-bold mb-1.5">Seller Agreements</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            You've already accepted our{' '}
-            <a href="/terms" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Seller Terms</a>
-            {' '}and{' '}
-            <a href="/privacy" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">Privacy Policy</a>.
-          </p>
-        </div>
-        <button
-          onClick={onNext}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background text-sm font-semibold h-11 px-4 hover:opacity-90 transition-opacity"
-        >
-          <ArrowRight className="h-4 w-4" />
-          Continue
-        </button>
-      </div>
-    )
-  }
 
   const handleAccept = async () => {
     if (!allAgreed) return
@@ -397,24 +368,11 @@ function StripeStep() {
 export function SellerOnboardingModal({ tier, sellerTosAgreed, privacyPolicyAgreed, stripeOnboardingComplete, onComplete }: Props) {
   const allDisplaySteps = getAllDisplaySteps(tier)
 
-  // Track which steps have been completed
-  const [completedSteps, setCompletedSteps] = useState<Set<Step>>(() => {
-    const set = new Set<Step>()
-    if (sellerTosAgreed && privacyPolicyAgreed) set.add('tos')
-    // 'plan' is never pre-completed — must be chosen each session until bank is linked
-    if (stripeOnboardingComplete) set.add('stripe')
-    return set
-  })
-
-  // Start at the first incomplete step so returning users don't re-read agreements
-  const [stepIndex, setStepIndex] = useState(() => {
-    const firstIncomplete = allDisplaySteps.findIndex(s => {
-      if (s === 'tos') return !(sellerTosAgreed && privacyPolicyAgreed)
-      if (s === 'stripe') return !stripeOnboardingComplete
-      return true // 'plan' always needs to be chosen
-    })
-    return firstIncomplete === -1 ? 0 : firstIncomplete
-  })
+  // Always start from the beginning — user must explicitly re-agree every session
+  // until the entire flow (ToS + Stripe) is complete. This avoids any possibility
+  // of the system silently advancing past agreements on the user's behalf.
+  const [completedSteps, setCompletedSteps] = useState<Set<Step>>(new Set())
+  const [stepIndex, setStepIndex] = useState(0)
 
   // selectedTier lives here so the back button can detect the BillingChoice sub-page.
   // Reset to null on every step change so returning to plan always shows the grid.
@@ -515,7 +473,7 @@ export function SellerOnboardingModal({ tier, sellerTosAgreed, privacyPolicyAgre
 
         {/* Content area */}
         <div className={`flex-1 min-h-0 flex flex-col ${isPlanStep ? 'overflow-hidden relative' : 'overflow-y-auto justify-center'}`}>
-          {currentStep === 'tos'    && <TosStep onNext={next} revisit={sellerTosAgreed && privacyPolicyAgreed} />}
+          {currentStep === 'tos'    && <TosStep onNext={next} />}
           {currentStep === 'plan'   && <PlanStep onSkip={next} selectedTier={planSelectedTier} onSelectTier={setPlanSelectedTier} />}
           {currentStep === 'stripe' && <StripeStep />}
         </div>

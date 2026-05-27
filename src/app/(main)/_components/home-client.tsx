@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Shield, TrendingUp, Clock, List, Heart, ShoppingBag, Tag, Package, CheckCircle2, X, ArrowLeftRight, Loader2, BarChart2, Wallet, Users } from 'lucide-react'
+import { Shield, TrendingUp, Clock, List, Heart, ShoppingBag, Tag, Package, CheckCircle2, X, ArrowLeftRight, Loader2, Wallet, Users, Gavel } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 import type { OrderStatus } from '@/types'
 import { PricingSection } from '@/components/layout/pricing-section'
@@ -389,28 +389,25 @@ export function HomeClient() {
       </div>
 
       {/* Quick nav shortcuts */}
-      <div className={`grid gap-3 mb-6 grid-cols-2 ${isDealer ? 'sm:grid-cols-4 lg:grid-cols-7' : 'sm:grid-cols-3 lg:grid-cols-6'}`}>
+      <div className={`grid gap-2 mb-6 grid-cols-3 ${isDealer ? 'sm:grid-cols-7' : 'sm:grid-cols-6'}`}>
         {[
-          { href: '/collect', icon: Heart, label: 'Wish List', desc: 'Track coins you want' },
-          { href: '/buy-now', icon: ShoppingBag, label: 'Buy Now', desc: 'Browse fixed-price coins' },
-          { href: '/listings', icon: Tag, label: 'Marketplace', desc: 'Explore all listings' },
-          { href: '/sell', icon: Package, label: 'My Listings', desc: 'Manage your listings' },
-          { href: '/dashboard/analytics', icon: BarChart2, label: 'Analytics', desc: 'Sales & revenue insights' },
-          { href: '/dashboard/portfolio', icon: Wallet, label: 'Portfolio', desc: 'Estimate collection value' },
-          ...(isDealer ? [{ href: '/dashboard/team', icon: Users, label: 'Team', desc: 'Manage your team' }] : []),
-        ].map(({ href, icon: Icon, label, desc }) => (
+          { href: '/collect?tab=wishlist', icon: Heart, label: 'Wish List' },
+          { href: '/listings', icon: Tag, label: 'Marketplace' },
+          { href: '/buy-now', icon: ShoppingBag, label: 'Buy Now' },
+          { href: '/auctions', icon: Gavel, label: 'Auctions' },
+          { href: '/sell', icon: Package, label: 'My Listings' },
+          { href: '/collect', icon: Wallet, label: 'Collection' },
+          ...(isDealer ? [{ href: '/dashboard/team', icon: Users, label: 'Team' }] : []),
+        ].map(({ href, icon: Icon, label }) => (
           <Link
             key={href}
             href={href}
-            className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3.5 hover:border-foreground/20 hover:bg-muted/40 transition-colors group"
+            className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-3 py-3 hover:border-foreground/20 hover:bg-muted/40 transition-colors group"
           >
-            <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-muted group-hover:bg-background transition-colors">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted group-hover:bg-background transition-colors">
               <Icon className="h-4 w-4 text-muted-foreground" />
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold leading-tight">{label}</p>
-              <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{desc}</p>
-            </div>
+            <p className="text-xs font-semibold text-center leading-tight">{label}</p>
           </Link>
         ))}
       </div>
