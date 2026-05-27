@@ -12,6 +12,7 @@ import { ListingActions, type AuctionData } from './_components/listing-actions'
 import { SetNavSection } from '@/components/layout/nav-context'
 import { ReportListingButton } from './_components/report-listing-button'
 import { MessageSellerButton } from './_components/message-seller-button'
+import PriceHistoryChart from './_components/price-history-chart'
 
 function formatGrade(grade: string | null): string {
   if (!grade) return ''
@@ -260,6 +261,24 @@ export default async function ListingPage({
               <div className="space-y-2">
                 <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">Seller's Description</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">{listing.description}</p>
+              </div>
+            </>
+          )}
+
+          {/* Price History */}
+          {listing.grade && listing.grading_service && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">Price History</p>
+                <PriceHistoryChart
+                  coinName={listing.coin_name ?? null}
+                  year={listing.year ?? null}
+                  mintMark={listing.mint_mark ?? null}
+                  gradingService={listing.grading_service}
+                  grade={listing.grade}
+                  seriesSlug={(listing as any).series_slug ?? null}
+                />
               </div>
             </>
           )}

@@ -83,6 +83,22 @@ export async function POST(req: NextRequest) {
 
         await db.from('listings').update({ status: 'sold' }).eq('id', listing_id)
 
+        // Record sale in price history for the coin tracker
+        if (listing.coin_name && listing.grade && listing.grading_service) {
+          void db.from('price_history').insert({
+            coin_name: listing.coin_name,
+            year: listing.year ?? null,
+            mint_mark: listing.mint_mark ?? null,
+            denomination: listing.denomination ?? null,
+            grading_service: listing.grading_service,
+            grade: listing.grade,
+            series_slug: listing.series_slug ?? null,
+            sale_price: Number(amount ?? 0),
+            sale_date: new Date().toISOString(),
+            listing_id,
+          })
+        }
+
         if (listing.collection_item_id) {
           await db.from('collection_items').update({ status: 'sold' }).eq('id', listing.collection_item_id)
         }
