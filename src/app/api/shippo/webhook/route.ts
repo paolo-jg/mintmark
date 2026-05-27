@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { sendPackageDelivered } from '@/lib/resend'
 import type { TrackingStatus } from '@/types'
 
 // Maps Shippo tracking statuses to our internal statuses
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest) {
     const autoConfirmAt = new Date()
     autoConfirmAt.setTime(autoConfirmAt.getTime() + 48 * 60 * 60 * 1000)
 
-    await supabase
+    const { data: order } = await supabase
       .from('orders')
       .update({
         status: 'delivered',
@@ -80,6 +82,32 @@ export async function POST(request: NextRequest) {
         updated_at: now,
       })
       .eq('id', shipment.order_id)
+      .select('buyer_id, listing_id')
+      .single()
+
+    // Fire-and-forget delivery email to buyer
+    if (order?.buyer_id) {
+      void (async () => {
+        try {
+          const db = createServiceClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+          )
+          const [{ data: authData }, { data: listing }] = await Promise.all([
+            db.auth.admin.getUserById(order.buyer_id),
+            db.from('listings').select('coin_name').eq('id', order.listing_id).single(),
+          ])
+          const buyerEmail = authData.user?.email
+          if (buyerEmail) {
+            await sendPackageDelivered({
+              to: buyerEmail,
+              buyerName: buyerEmail.split('@')[0],
+              listingTitle: listing?.coin_name ?? 'your order',
+            })
+          }
+        } catch { /* non-critical */ }
+      })()
+    }
   } else if (internalStatus === 'transit') {
     await supabase
       .from('orders')

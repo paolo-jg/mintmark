@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import stripe from '@/lib/stripe'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { sendOrderConfirmationBuyer, sendNewOrderSeller, sendDisputeOpened, sendDisputeResolved } from '@/lib/resend'
 
 function getServiceDb() {
   return createServiceClient(
@@ -101,6 +102,36 @@ export async function POST(req: NextRequest) {
           series_slug: listing.series_slug,
           price_row_label: listing.price_row_label,
         })
+
+        // Fire-and-forget confirmation emails
+        const orderId = listing_id // order tied to listing
+        const [buyerAuth, sellerAuth] = await Promise.all([
+          db.auth.admin.getUserById(buyer_id),
+          db.auth.admin.getUserById(seller_id),
+        ])
+        const buyerEmail = buyerAuth.data.user?.email
+        const sellerEmail = sellerAuth.data.user?.email
+        const listingTitle = listing.coin_name ?? 'your listing'
+        const payoutCents = seller_payout_cents ? Number(seller_payout_cents) : 0
+
+        if (buyerEmail) {
+          sendOrderConfirmationBuyer({
+            to: buyerEmail,
+            buyerName: buyerEmail.split('@')[0],
+            orderId,
+            listingTitle,
+            amountCents: Number(amount ?? 0),
+          }).catch(() => null)
+        }
+        if (sellerEmail) {
+          sendNewOrderSeller({
+            to: sellerEmail,
+            sellerName: sellerEmail.split('@')[0],
+            orderId,
+            listingTitle,
+            payoutCents,
+          }).catch(() => null)
+        }
       }
     }
   }
@@ -113,11 +144,32 @@ export async function POST(req: NextRequest) {
       : dispute.payment_intent?.id
 
     if (paymentIntentId) {
-      await db
+      const { data: order } = await db
         .from('orders')
         .update({ status: 'disputed', updated_at: new Date().toISOString() })
         .eq('stripe_payment_intent_id', paymentIntentId)
         .neq('transfer_released', true)
+        .select('buyer_id, seller_id, listing_id')
+        .single()
+
+      if (order) {
+        void (async () => {
+          try {
+            const [{ data: buyerAuth }, { data: sellerAuth }, { data: listing }] = await Promise.all([
+              db.auth.admin.getUserById(order.buyer_id),
+              db.auth.admin.getUserById(order.seller_id),
+              db.from('listings').select('coin_name').eq('id', order.listing_id).single(),
+            ])
+            const title = listing?.coin_name ?? 'your order'
+            if (buyerAuth.user?.email) {
+              await sendDisputeOpened({ to: buyerAuth.user.email, name: buyerAuth.user.email.split('@')[0], listingTitle: title, role: 'buyer' })
+            }
+            if (sellerAuth.user?.email) {
+              await sendDisputeOpened({ to: sellerAuth.user.email, name: sellerAuth.user.email.split('@')[0], listingTitle: title, role: 'seller' })
+            }
+          } catch { /* non-critical */ }
+        })()
+      }
     }
   }
 
@@ -129,20 +181,29 @@ export async function POST(req: NextRequest) {
       : dispute.payment_intent?.id
 
     if (paymentIntentId) {
-      if (dispute.status === 'won') {
-        // Dispute won — restore to delivered so cron will release funds
-        await db
-          .from('orders')
-          .update({ status: 'delivered', updated_at: new Date().toISOString() })
-          .eq('stripe_payment_intent_id', paymentIntentId)
-          .eq('status', 'disputed')
-      } else {
-        // Dispute lost — mark complete with no transfer (buyer refunded by Stripe)
-        await db
-          .from('orders')
-          .update({ status: 'complete', transfer_released: true, updated_at: new Date().toISOString() })
-          .eq('stripe_payment_intent_id', paymentIntentId)
-          .eq('status', 'disputed')
+      const won = dispute.status === 'won'
+      const { data: order } = won
+        ? await db.from('orders').update({ status: 'delivered', updated_at: new Date().toISOString() }).eq('stripe_payment_intent_id', paymentIntentId).eq('status', 'disputed').select('buyer_id, seller_id, listing_id').single()
+        : await db.from('orders').update({ status: 'complete', transfer_released: true, updated_at: new Date().toISOString() }).eq('stripe_payment_intent_id', paymentIntentId).eq('status', 'disputed').select('buyer_id, seller_id, listing_id').single()
+
+      if (order) {
+        void (async () => {
+          try {
+            const [{ data: buyerAuth }, { data: sellerAuth }, { data: listing }] = await Promise.all([
+              db.auth.admin.getUserById(order.buyer_id),
+              db.auth.admin.getUserById(order.seller_id),
+              db.from('listings').select('coin_name').eq('id', order.listing_id).single(),
+            ])
+            const title = listing?.coin_name ?? 'your order'
+            const outcome = won ? 'won' : 'lost'
+            if (buyerAuth.user?.email) {
+              await sendDisputeResolved({ to: buyerAuth.user.email, name: buyerAuth.user.email.split('@')[0], listingTitle: title, role: 'buyer', outcome })
+            }
+            if (sellerAuth.user?.email) {
+              await sendDisputeResolved({ to: sellerAuth.user.email, name: sellerAuth.user.email.split('@')[0], listingTitle: title, role: 'seller', outcome })
+            }
+          } catch { /* non-critical */ }
+        })()
       }
     }
   }

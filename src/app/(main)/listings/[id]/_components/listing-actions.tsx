@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { formatCents } from '@/lib/utils'
 import { BuyNowModal } from './buy-now-modal'
 import { BidModal } from './bid-modal'
+import { MakeOfferModal } from './make-offer-modal'
 import { Pencil, Trash2, AlertTriangle, X, Loader2, Clock, Gavel } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
@@ -307,6 +308,7 @@ export function ListingActions({
   auction,
 }: Props) {
   const [showBuyModal, setShowBuyModal] = useState(false)
+  const [showOfferModal, setShowOfferModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   if (isOwner) {
@@ -374,7 +376,12 @@ export function ListingActions({
           Buy Now{listing.price ? ` · ${formatCents(listing.price)}` : ''}
         </Button>
         {listing.accept_offers && (
-          <Button variant="outline" size="lg" className="w-full h-12 text-base" disabled>
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full h-12 text-base"
+            onClick={() => setShowOfferModal(true)}
+          >
             Make Offer
           </Button>
         )}
@@ -384,6 +391,13 @@ export function ListingActions({
         <BuyNowModal
           listing={listing}
           onClose={() => setShowBuyModal(false)}
+        />
+      )}
+      {showOfferModal && (
+        <MakeOfferModal
+          listing={listing}
+          onClose={() => setShowOfferModal(false)}
+          onSuccess={() => setShowOfferModal(false)}
         />
       )}
     </>

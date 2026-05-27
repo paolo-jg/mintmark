@@ -18,7 +18,18 @@ export interface DealerProfile {
   dealer_description: string | null
   average_rating: number
   rating_count: number
+  completed_orders_count: number
   subscription_tier: string
+}
+
+// Bayesian average: pull new dealers toward the global mean until they've
+// accumulated enough reviews. Then break ties by completed order volume.
+const PRIOR_MEAN = 3.8   // slightly below "good" so unreviewed dealers don't rank first
+const PRIOR_WEIGHT = 5   // minimum review count before the rating dominates
+
+function dealerScore(d: DealerProfile): number {
+  return (PRIOR_MEAN * PRIOR_WEIGHT + d.average_rating * d.rating_count) /
+    (PRIOR_WEIGHT + d.rating_count)
 }
 
 export interface DealersData {
@@ -39,12 +50,13 @@ export async function fetchDealersData(): Promise<DealersData> {
 
   const { data } = await db
     .from('profiles')
-    .select('id, email, display_name, dealer_logo_url, dealer_description, average_rating, rating_count, subscription_tier')
+    .select('id, email, display_name, dealer_logo_url, dealer_description, average_rating, rating_count, completed_orders_count, subscription_tier')
     .eq('subscription_tier', 'dealer')
 
   const sorted = ((data ?? []) as DealerProfile[]).sort((a, b) => {
-    if (b.average_rating !== a.average_rating) return b.average_rating - a.average_rating
-    return b.rating_count - a.rating_count
+    const scoreDiff = dealerScore(b) - dealerScore(a)
+    if (Math.abs(scoreDiff) > 0.01) return scoreDiff
+    return b.completed_orders_count - a.completed_orders_count
   })
 
   return { dealers: sorted, unauthorized: false }
@@ -159,8 +171,15 @@ export function DealersClient() {
                   </div>
                 </div>
 
-                {/* Rating */}
-                <StarRating rating={dealer.average_rating} count={dealer.rating_count} />
+                {/* Rating + completed orders */}
+                <div className="space-y-1">
+                  <StarRating rating={dealer.average_rating} count={dealer.rating_count} />
+                  {dealer.completed_orders_count > 0 && (
+                    <p className="text-[11px] text-muted-foreground">
+                      {dealer.completed_orders_count} sale{dealer.completed_orders_count !== 1 ? 's' : ''} completed
+                    </p>
+                  )}
+                </div>
 
                 {/* Description snippet */}
                 {dealer.dealer_description && (

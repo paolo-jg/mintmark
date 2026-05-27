@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import stripe from '@/lib/stripe'
+import { sendWelcomeSeller } from '@/lib/resend'
 
 function getServiceDb() {
   return createServiceClient(
@@ -25,12 +26,22 @@ export async function GET(req: NextRequest) {
       !account.requirements?.currently_due?.length
 
     if (isComplete) {
-      // Mark onboarding complete in our DB
       const db = getServiceDb()
-      await db
+      const { data: profile } = await db
         .from('profiles')
         .update({ stripe_onboarding_complete: true })
         .eq('stripe_account_id', accountId)
+        .select('id')
+        .single()
+
+      if (profile?.id) {
+        db.auth.admin.getUserById(profile.id).then(({ data }) => {
+          const email = data.user?.email
+          if (email) {
+            sendWelcomeSeller({ to: email, name: email.split('@')[0] }).catch(() => null)
+          }
+        }).catch(() => null)
+      }
     }
 
     const baseUrl = req.nextUrl.origin

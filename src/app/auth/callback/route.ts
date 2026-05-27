@@ -1,18 +1,25 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendWelcomeBuyer } from '@/lib/resend'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
+  const isNewUser = searchParams.get('new') === '1'
 
-  // After login always land on the app domain, not the marketing domain
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? origin
 
   if (code) {
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      if (isNewUser && data.user?.email) {
+        sendWelcomeBuyer({
+          to: data.user.email,
+          name: data.user.email.split('@')[0],
+        }).catch(() => null)
+      }
       return NextResponse.redirect(`${appUrl}${next}`)
     }
   }

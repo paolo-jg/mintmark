@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { purchaseLabel, requiresInsurance } from '@/lib/shippo'
+import { sendShippingUpdate } from '@/lib/resend'
 
 
 export async function POST(request: NextRequest) {
@@ -90,6 +92,29 @@ export async function POST(request: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', orderId)
+
+    // Fire-and-forget shipping email to buyer
+    void (async () => {
+      try {
+        const db = createServiceClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+        const { data: authData } = await db.auth.admin.getUserById(order.buyer_id)
+        const buyerEmail = authData.user?.email
+        const { data: listing } = await db.from('listings').select('coin_name').eq('id', order.listing_id).single()
+        if (buyerEmail) {
+          await sendShippingUpdate({
+            to: buyerEmail,
+            buyerName: buyerEmail.split('@')[0],
+            listingTitle: listing?.coin_name ?? 'your order',
+            trackingNumber: label.trackingNumber,
+            trackingUrl: label.trackingUrlProvider,
+            carrier,
+          })
+        }
+      } catch { /* non-critical */ }
+    })()
 
     return NextResponse.json({
       trackingNumber: label.trackingNumber,
