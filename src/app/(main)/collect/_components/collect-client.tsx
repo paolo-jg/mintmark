@@ -130,6 +130,8 @@ export interface CollectionItem {
   coin_profile: unknown | null
   series_slug: string | null
   created_at: string
+  // canonical coin type from the linked listing (if auto-created from a listing)
+  listing_coin_name?: string | null
 }
 
 function formatPrice(cents: number) {
@@ -314,14 +316,16 @@ function OwnedCard({ item, onDelete, onUpdate, onClick }: {
 
   const isSold = item.status === 'sold'
 
+  const displayName = item.listing_coin_name ?? item.coin_name
+
   return (
     <div
-      className={`group relative rounded-2xl border border-border bg-background overflow-hidden hover:shadow-md transition-shadow cursor-pointer ${isSold ? 'opacity-60' : ''}`}
+      className={`group relative rounded-2xl border border-border bg-background overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex flex-col ${isSold ? 'opacity-60' : ''}`}
       onClick={onClick}
     >
-      <div className="aspect-square bg-muted/40 flex items-center justify-center overflow-hidden relative">
+      <div className="aspect-square bg-muted/40 flex items-center justify-center overflow-hidden relative shrink-0">
         {item.pcgs_image_url ? (
-          <Image src={item.pcgs_image_url} alt={item.coin_name} fill sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw" className="object-contain mix-blend-multiply" />
+          <Image src={item.pcgs_image_url} alt={displayName} fill sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw" className="object-contain mix-blend-multiply" />
         ) : (
           <Coins className="h-12 w-12 text-muted-foreground/20" />
         )}
@@ -337,7 +341,7 @@ function OwnedCard({ item, onDelete, onUpdate, onClick }: {
         <Trash2 className="h-3.5 w-3.5" />
       </button>
 
-      <div className="p-4">
+      <div className="p-4 flex flex-col flex-1">
         {(item.grading_service || item.grade) && (
           <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-muted-foreground/60 mb-1">
             {[item.grading_service, item.grade].filter(Boolean).join(' · ')}
@@ -345,7 +349,7 @@ function OwnedCard({ item, onDelete, onUpdate, onClick }: {
           </p>
         )}
         <p className={`text-[14px] font-semibold leading-snug text-foreground ${isSold ? 'line-through text-muted-foreground' : ''}`}>
-          {item.coin_name}
+          {displayName}
         </p>
         {item.cert_number && (
           <p className="text-[11px] text-muted-foreground mt-1">Cert #{item.cert_number}</p>
@@ -353,7 +357,7 @@ function OwnedCard({ item, onDelete, onUpdate, onClick }: {
         {item.notes && (
           <p className="text-[12px] text-muted-foreground/70 mt-1.5 italic">{item.notes}</p>
         )}
-        <div className="mt-3 pt-2.5 border-t border-border/50 space-y-2" onClick={e => e.stopPropagation()}>
+        <div className="mt-auto pt-3 border-t border-border/50 space-y-2" onClick={e => e.stopPropagation()}>
           <StatusDropdown item={item} onMarkAsSold={handleMarkAsSold} onMoveToWishlist={handleMoveToWishlist} />
           {item.status === 'owned' && (
             <Link
@@ -549,7 +553,31 @@ export async function fetchCollectionItems(): Promise<{ items: CollectionItem[];
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
-  return { items: (data ?? []) as CollectionItem[], isLoggedIn: true }
+
+  const rawItems = (data ?? []) as CollectionItem[]
+
+  // For items auto-created from listings, backfill the canonical coin_name
+  // (the listing's coin_name field, not the seller's custom title)
+  if (rawItems.length > 0) {
+    const { data: linkedListings } = await db
+      .from('listings')
+      .select('collection_item_id, coin_name')
+      .in('collection_item_id', rawItems.map(i => i.id))
+    const coinNameByItemId = new Map(
+      (linkedListings ?? [])
+        .filter(l => l.coin_name)
+        .map(l => [l.collection_item_id as string, l.coin_name as string])
+    )
+    return {
+      items: rawItems.map(item => ({
+        ...item,
+        listing_coin_name: coinNameByItemId.get(item.id) ?? null,
+      })),
+      isLoggedIn: true,
+    }
+  }
+
+  return { items: rawItems, isLoggedIn: true }
 }
 
 export function CollectClient() {

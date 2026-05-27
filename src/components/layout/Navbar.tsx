@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { LOGO_HORIZONTAL } from '@/lib/brand'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import {
@@ -65,7 +65,7 @@ export default function Navbar() {
           {/* Logo — far left, flex-1 so nav stays centered */}
           <div className="flex-1">
             <Link href="/" className="flex items-center w-fit">
-              <Image src="/logo-horizontal.png" alt="Pedigree Coins" height={36} width={180} className="object-contain" priority />
+              <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="object-contain h-9 w-auto" />
             </Link>
           </div>
 

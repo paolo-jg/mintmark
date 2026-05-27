@@ -15,6 +15,17 @@ function formatGrade(grade: string | null): string {
   return grade.replace(/^([A-Za-z]+)(\d+)$/, '$1-$2')
 }
 
+const MINT_NAMES: Record<string, string> = {
+  P:  'Philadelphia',
+  D:  'Denver',
+  S:  'San Francisco',
+  O:  'New Orleans',
+  CC: 'Carson City',
+  W:  'West Point',
+  C:  'Charlotte',
+  M:  'Manila',
+}
+
 export default async function ListingPage({
   params,
 }: {
@@ -54,10 +65,10 @@ export default async function ListingPage({
 
       {/* Back */}
       <Link
-        href="/listings"
+        href={isOwner ? '/sell' : '/listings'}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
       >
-        <ChevronLeft className="h-3.5 w-3.5" /> Browse Coins
+        <ChevronLeft className="h-3.5 w-3.5" /> {isOwner ? 'My Listings' : 'Browse Coins'}
       </Link>
 
       {/* Main layout: gallery + details */}
@@ -121,7 +132,7 @@ export default async function ListingPage({
 
           <Separator />
 
-          {/* Coin details */}
+          {/* Specifications */}
           {(() => {
             const profile = listing.coin_profile as {
               specs?: {
@@ -133,9 +144,14 @@ export default async function ListingPage({
             } | null
 
             const specs = profile?.specs
+            const mintName = listing.mint_mark
+              ? (MINT_NAMES[listing.mint_mark.toUpperCase()] ?? listing.mint_mark)
+              : null
 
             const rows: { label: string; value: string }[] = []
-            if (listing.year) rows.push({ label: 'Year', value: `${listing.year}${listing.mint_mark ? `-${listing.mint_mark}` : ''}` })
+            if (listing.coin_name) rows.push({ label: 'Coin Type', value: listing.coin_name })
+            if (listing.year) rows.push({ label: 'Year', value: String(listing.year) })
+            if (mintName) rows.push({ label: 'Mint', value: mintName })
             if (listing.denomination) rows.push({ label: 'Denomination', value: listing.denomination })
             if (specs?.composition) rows.push({ label: 'Composition', value: specs.composition })
             if (specs?.diameter) rows.push({ label: 'Diameter', value: specs.diameter })
@@ -147,6 +163,7 @@ export default async function ListingPage({
             if (rows.length === 0) return null
             return (
               <div className="space-y-2.5 text-sm">
+                <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">Specifications</p>
                 {rows.map(({ label, value }) => (
                   <div key={label} className="flex justify-between gap-4">
                     <span className="text-muted-foreground shrink-0">{label}</span>
@@ -210,7 +227,10 @@ export default async function ListingPage({
           {listing.description && (
             <>
               <Separator />
-              <p className="text-sm text-muted-foreground leading-relaxed">{listing.description}</p>
+              <div className="space-y-2">
+                <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">Seller's Description</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{listing.description}</p>
+              </div>
             </>
           )}
 

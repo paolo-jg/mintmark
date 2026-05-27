@@ -175,6 +175,8 @@ export default async function SeriesPage({
                             <img
                               src={obverse}
                               alt={listing.title}
+                              // @ts-ignore — fetchpriority valid HTML, not yet in React typedefs
+                              fetchpriority="high"
                               className="absolute inset-0 w-full h-full object-contain p-3"
                             />
                           </div>

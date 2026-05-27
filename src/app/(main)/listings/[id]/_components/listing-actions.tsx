@@ -8,7 +8,7 @@ import { formatCents } from '@/lib/utils'
 import { BuyNowModal } from './buy-now-modal'
 import { BidModal } from './bid-modal'
 import { MakeOfferModal } from './make-offer-modal'
-import { Pencil, Trash2, AlertTriangle, X, Loader2, Clock, Gavel } from 'lucide-react'
+import { Pencil, Trash2, AlertTriangle, X, Loader2, Clock, Gavel, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -49,10 +49,12 @@ interface Props {
 function DeleteModal({
   listing,
   sellerTier,
+  isExpired,
   onClose,
 }: {
   listing: Props['listing']
   sellerTier: string
+  isExpired: boolean
   onClose: () => void
 }) {
   const router = useRouter()
@@ -63,26 +65,41 @@ function DeleteModal({
   const handleDelete = async () => {
     setDeleting(true)
 
-    const { error } = await supabase
-      .from('listings')
-      .update({ status: 'expired' })
-      .eq('id', listing.id)
+    if (isExpired) {
+      // Permanently remove expired listing
+      const { error } = await supabase
+        .from('listings')
+        .delete()
+        .eq('id', listing.id)
 
-    if (error) {
-      toast.error(error.message)
-      setDeleting(false)
-      return
+      if (error) {
+        toast.error(error.message)
+        setDeleting(false)
+        return
+      }
+    } else {
+      // Soft-delete active listing → expired
+      const { error } = await supabase
+        .from('listings')
+        .update({ status: 'expired' })
+        .eq('id', listing.id)
+
+      if (error) {
+        toast.error(error.message)
+        setDeleting(false)
+        return
+      }
+
+      // Return the coin to the collection as 'owned'
+      if (listing.collection_item_id) {
+        await supabase
+          .from('collection_items')
+          .update({ status: 'owned' })
+          .eq('id', listing.collection_item_id)
+      }
     }
 
-    // Return the coin to the collection as 'owned'
-    if (listing.collection_item_id) {
-      await supabase
-        .from('collection_items')
-        .update({ status: 'owned' })
-        .eq('id', listing.collection_item_id)
-    }
-
-    toast.success('Listing deleted')
+    toast.success('Listing removed')
     router.push('/sell')
     router.refresh()
   }
@@ -92,7 +109,7 @@ function DeleteModal({
       <div className="bg-background rounded-2xl shadow-2xl w-full max-w-sm border border-border">
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4">
-          <h2 className="text-base font-semibold">Delete listing?</h2>
+          <h2 className="text-base font-semibold">{isExpired ? 'Remove listing?' : 'Delete listing?'}</h2>
           <button
             onClick={onClose}
             disabled={deleting}
@@ -105,11 +122,11 @@ function DeleteModal({
         <div className="px-5 pb-5 space-y-4">
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">{listing.coin_name ?? 'This listing'}</span> will
-            be removed and no longer visible to buyers.
+            be {isExpired ? 'permanently removed' : 'removed and no longer visible to buyers'}.
           </p>
 
-          {/* Capped-tier warning */}
-          {isCapped && (
+          {/* Capped-tier warning — only relevant for active deletions */}
+          {!isExpired && isCapped && (
             <div className="flex items-start gap-2.5 rounded-xl border border-amber-400/40 bg-amber-50/60 dark:bg-amber-950/20 px-4 py-3">
               <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
@@ -135,8 +152,8 @@ function DeleteModal({
               className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-transparent bg-destructive/10 text-destructive hover:bg-destructive/20 text-sm font-medium h-8 px-3 transition-colors disabled:opacity-50 disabled:pointer-events-none"
             >
               {deleting
-                ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Deleting…</>
-                : <><Trash2 className="h-3.5 w-3.5" /> Delete</>
+                ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Removing…</>
+                : <><Trash2 className="h-3.5 w-3.5" /> {isExpired ? 'Remove' : 'Delete'}</>
               }
             </button>
           </div>
@@ -310,29 +327,69 @@ export function ListingActions({
   const [showBuyModal, setShowBuyModal] = useState(false)
   const [showOfferModal, setShowOfferModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [relisting, setRelisting] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleRelist = async () => {
+    setRelisting(true)
+    const { error } = await supabase
+      .from('listings')
+      .update({ status: 'active' })
+      .eq('id', listing.id)
+    if (error) {
+      toast.error(error.message)
+      setRelisting(false)
+      return
+    }
+    toast.success('Listing is active again')
+    router.refresh()
+  }
 
   if (isOwner) {
+    const isExpired = listing.status === 'expired'
     return (
       <>
         <div className="space-y-2.5">
-          {listing.status === 'active' && (
-            <Button render={<Link href={`/listings/${listing.id}/edit`} />} variant="outline" size="lg" className="w-full h-12 text-base">
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit Listing
-            </Button>
-          )}
-          <button
-            type="button"
-            onClick={() => setShowDeleteModal(true)}
-            className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10 text-sm font-medium h-10 px-4 transition-colors"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Delete Listing
-          </button>
-          {listing.status !== 'active' && (
-            <p className="text-xs text-center text-muted-foreground capitalize">
-              This listing is {listing.status}
-            </p>
+          {isExpired ? (
+            <>
+              <Button
+                size="lg"
+                className="w-full h-12 text-base"
+                onClick={handleRelist}
+                disabled={relisting}
+              >
+                {relisting
+                  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Relisting…</>
+                  : <><RotateCcw className="h-4 w-4 mr-2" /> Relist</>
+                }
+              </Button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-border text-muted-foreground hover:text-destructive hover:border-destructive/40 text-sm font-medium h-9 px-4 transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Remove Listing
+              </button>
+            </>
+          ) : (
+            <>
+              {listing.status === 'active' && (
+                <Button render={<Link href={`/listings/${listing.id}/edit`} />} variant="outline" size="lg" className="w-full h-12 text-base">
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit Listing
+                </Button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive hover:bg-destructive/10 text-sm font-medium h-10 px-4 transition-colors"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete Listing
+              </button>
+            </>
           )}
         </div>
 
@@ -340,6 +397,7 @@ export function ListingActions({
           <DeleteModal
             listing={listing}
             sellerTier={sellerTier}
+            isExpired={isExpired}
             onClose={() => setShowDeleteModal(false)}
           />
         )}

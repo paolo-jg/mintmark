@@ -52,6 +52,8 @@ export function ListingGallery({ images, title }: Props) {
         <img
           src={images[active]}
           alt={title}
+          // @ts-ignore — fetchpriority is valid HTML but not yet in React's typedefs
+          fetchpriority="high"
           className="w-full h-full object-contain transition-opacity duration-200"
         />
 

@@ -27,6 +27,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${geist.variable} ${dmSans.variable} h-full antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://jlelkunjjbyitnknzhpp.supabase.co" />
+        <link rel="dns-prefetch" href="https://jlelkunjjbyitnknzhpp.supabase.co" />
+      </head>
       <body className="min-h-full flex flex-col font-[family-name:var(--font-dm-sans)]">
         {children}
         <Toaster />
