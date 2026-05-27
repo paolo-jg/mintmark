@@ -12,7 +12,7 @@ export default function TermsPage() {
       <h1 className="text-3xl font-bold mb-2">Terms of Service</h1>
       <p className="text-muted-foreground mb-1">Terms of Service, Sellers Agreement, and Buyers Agreement</p>
       <p className="text-sm text-muted-foreground mb-6">
-        Effective Date: May 26, 2026 · Last Updated: May 26, 2026
+        Effective Date: May 26, 2026 · Last Updated: May 27, 2026
       </p>
 
       <div className="bg-muted/40 border border-border rounded-xl p-5 mb-10 text-sm leading-relaxed">
@@ -69,6 +69,7 @@ export default function TermsPage() {
             ['"Buyer"', 'a User who purchases or offers to purchase a Listing from a Seller.'],
             ['"Buyer Fee"', 'the per-transaction fee charged to a Buyer as published at pedigreecoins.com/pricing.'],
             ['"Coin"', 'a physical, government-issued or historically circulated numismatic coin offered or sold through the Platform.'],
+            ['"Dispute"', 'a formal complaint filed by a Buyer through the Platform\'s in-app dispute system asserting a problem with a Transaction, as described in Section 7.5.'],
             ['"Escrowed Funds"', 'amounts collected by Pedigree Coins (through Stripe) from a Buyer in respect of a Transaction and held in the platform\'s Stripe account pending release pursuant to Section 6.8.'],
             ['"Listing"', 'an offer to sell a Coin posted to the Platform by a Seller.'],
             ['"Plan"', 'a paid subscription tier selected by a Seller during onboarding as published at pedigreecoins.com/pricing.'],
@@ -207,10 +208,16 @@ export default function TermsPage() {
             authentic.
           </p>
         </Subsection>
-        <Subsection title="5.4 No Dispute Adjudication">
+        <Subsection title="5.4 Limited In-Platform Dispute Resolution">
           <p>
-            Pedigree Coins does not adjudicate factual disputes between Buyers and Sellers, including
-            disputes over delivery, condition, authenticity, grade, attribution, or fitness for purpose.
+            Pedigree Coins provides an in-platform dispute resolution process (described in Section 7.5)
+            as a convenience to Users. When a Buyer files a Dispute, Pedigree Coins will review the
+            available information and make an administrative determination to either release Escrowed
+            Funds to the Seller or issue a refund to the Buyer. This determination is made solely to
+            resolve the disposition of Escrowed Funds and does not constitute adjudication of any legal
+            claim, finding of fact, or legal ruling. Pedigree Coins&rsquo;s determination is not a
+            substitute for legal remedies and does not prevent either party from pursuing other
+            available remedies, including arbitration under Section 15.
           </p>
         </Subsection>
         <Subsection title="5.5 Independent Contractor">
@@ -286,7 +293,8 @@ export default function TermsPage() {
           <p className="mt-2"><strong>(b) Auto-Release.</strong> Escrowed funds are released to the Seller automatically 48 hours after Shippo records a &ldquo;Delivered&rdquo; event. Funds will not be released until delivery is confirmed by the shipping carrier.</p>
           <p className="mt-2"><strong>(c) Early Release on Buyer Confirmation.</strong> A Buyer may manually confirm receipt through the Platform, releasing escrowed funds immediately.</p>
           <p className="mt-2"><strong>(d) Hold Extensions.</strong> Pedigree Coins may extend the hold where a complaint is under active investigation, where the Transaction is being reviewed for suspected fraud, or as required by applicable law.</p>
-          <p className="mt-2"><strong>(e) Disputes.</strong> If a Buyer initiates a chargeback, escrowed funds are frozen and not released to the Seller pending resolution. If the dispute is resolved in the Seller&rsquo;s favour, funds are released. If resolved against the Seller, Stripe issues the refund from the escrowed funds.</p>
+          <p className="mt-2"><strong>(e) In-Platform Disputes.</strong> If a Buyer files a Dispute through the Platform before the 48-hour auto-release window closes, Escrowed Funds are immediately frozen and will not be released to the Seller pending resolution. Pedigree Coins will review the Dispute and, at its sole discretion, either (i) release Escrowed Funds to the Seller or (ii) issue a refund to the Buyer. Pedigree Coins aims to resolve Disputes within two (2) business days of receipt but makes no guarantee as to timing. The Seller will be notified of the Dispute and the outcome by email.</p>
+          <p className="mt-2"><strong>(f) Chargebacks.</strong> If a Buyer initiates a chargeback through their payment provider or card issuer, Escrowed Funds are frozen pending resolution by Stripe and the card network. If the chargeback is resolved in the Seller&rsquo;s favor, funds are released. If resolved against the Seller, Stripe issues the refund from Escrowed Funds. Buyers are strongly encouraged to file an in-platform Dispute before initiating a chargeback, as doing so allows Pedigree Coins to facilitate resolution without card-network involvement.</p>
         </Subsection>
         <Subsection title="6.9 Chargebacks and Reversals">
           <p>
@@ -370,12 +378,22 @@ export default function TermsPage() {
         </Subsection>
         <Subsection title="7.4 Inspection and Receipt Confirmation">
           <p>
-            Upon delivery, the Buyer should promptly inspect the Coin and, if satisfied, may confirm
-            receipt through the Platform. If the Buyer does not confirm receipt or open a complaint,
-            escrowed funds will release automatically as set out in Section 6.8(b).
+            Upon delivery, the Buyer should promptly inspect the Coin. If satisfied, the Buyer may
+            confirm receipt through the Platform, which immediately releases Escrowed Funds to the
+            Seller. If the Buyer does not confirm receipt and does not file a Dispute within 48 hours
+            of the carrier&rsquo;s recorded delivery event, Escrowed Funds will release automatically to
+            the Seller as set out in Section 6.8(b).
           </p>
         </Subsection>
-        <Subsection title="7.5 No Guarantee of Authenticity, Quality, or Delivery">
+        <Subsection title="7.5 In-Platform Dispute Process">
+          <p><strong>(a) How to File.</strong> If you have a problem with a Transaction (including non-delivery, item not as described, suspected counterfeit, or unauthorized purchase), you must file a Dispute through the Platform before the 48-hour auto-release window closes. To file, navigate to the order detail page and click &ldquo;File a Dispute.&rdquo;</p>
+          <p className="mt-2"><strong>(b) Required Information.</strong> You must select a dispute reason and provide a written description of the problem. Pedigree Coins may request additional evidence, such as photographs or carrier documentation.</p>
+          <p className="mt-2"><strong>(c) Fund Freeze.</strong> Upon submission of a Dispute, Escrowed Funds are immediately frozen. Funds will not be released to the Seller while the Dispute is under review.</p>
+          <p className="mt-2"><strong>(d) Review and Decision.</strong> Pedigree Coins will review the Dispute and aims to issue a determination within two (2) business days. Pedigree Coins may, at its sole discretion, (i) release Escrowed Funds to the Seller or (ii) refund the Buyer. Both parties will be notified of the outcome by email.</p>
+          <p className="mt-2"><strong>(e) Finality.</strong> Pedigree Coins&rsquo;s determination governs the disposition of Escrowed Funds and is not subject to appeal within the Platform. Either party may pursue other remedies, including arbitration under Section 15, independently of Pedigree Coins&rsquo;s determination.</p>
+          <p className="mt-2"><strong>(f) Limitation.</strong> The in-platform Dispute process is available only for Transactions where delivery was recorded by the carrier within the preceding 30 days and where Escrowed Funds have not yet been released. Disputes filed after Escrowed Funds have been released are not eligible for in-platform resolution.</p>
+        </Subsection>
+        <Subsection title="7.6 No Guarantee of Authenticity, Quality, or Delivery">
           <p>
             The Buyer expressly acknowledges that Pedigree Coins does not authenticate, grade, appraise,
             certify, inspect, possess, or guarantee any Coin; that Pedigree Coins is not a carrier and
@@ -383,17 +401,18 @@ export default function TermsPage() {
             the Listing and on the Seller&rsquo;s representations and warranties.
           </p>
         </Subsection>
-        <Subsection title="7.6 Returns">
-          <p>Returns are governed by the Seller&rsquo;s published return policy and by the counterfeit remedy in Section 6.7(d). Pedigree Coins does not mediate returns disputes.</p>
+        <Subsection title="7.7 Returns">
+          <p>Returns are governed by the Seller&rsquo;s published return policy and by the counterfeit remedy in Section 6.7(d). For disputes about item condition, authenticity, or non-delivery, Buyers are directed to the in-platform Dispute process in Section 7.5 before seeking other remedies.</p>
         </Subsection>
-        <Subsection title="7.7 Chargebacks">
+        <Subsection title="7.8 Chargebacks">
           <p>
-            Buyers acknowledge that chargebacks should be used only for legitimate disputes with the
-            Seller after good-faith attempts to resolve the dispute directly. Abusive or fraudulent
-            chargebacks may result in suspension or termination of the Buyer&rsquo;s Account.
+            Buyers are strongly encouraged to use the in-platform Dispute process (Section 7.5) before
+            initiating a chargeback with their payment provider. Initiating a chargeback without first
+            attempting in-platform resolution may result in suspension or termination of the Buyer&rsquo;s
+            Account. Abusive or fraudulent chargebacks will result in permanent termination.
           </p>
         </Subsection>
-        <Subsection title="7.8 Risk Acknowledgment">
+        <Subsection title="7.9 Risk Acknowledgment">
           <p>
             The Buyer acknowledges that the numismatic market involves risks including authenticity
             risk, grading and attribution risk, market-value volatility, illiquidity, in-transit loss,
