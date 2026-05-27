@@ -768,7 +768,7 @@ export default function NewListingPage() {
         accept_offers: acceptOffers,
         min_offer_amount: acceptOffers && minOfferAmount ? parsePriceCents(minOfferAmount) : null,
         auction_bin_price: listingType === 'auction' && auctionBinPrice ? parsePriceCents(auctionBinPrice) : null,
-        returns_accepted: returnsPolicy !== 'final_sale',
+        returns_accepted: false,
         returns_policy_type: returnsPolicy === 'final_sale' ? null : returnsPolicy,
         returns_policy_days: returnsPolicy === 'standard' ? parseInt(standardReturnDays) : null,
         returns_policy_custom: returnsPolicy === 'custom' ? customReturnPolicy.trim() || null : null,
@@ -1833,97 +1833,6 @@ export default function NewListingPage() {
                     </>
                   )
                 })()}
-              </CardContent>
-            </Card>
-
-            {/* Returns Policy */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Returns Policy</CardTitle>
-                <CardDescription>Let buyers know whether you accept returns on this listing.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setReturnsPolicy('final_sale')}
-                    className={`flex flex-col items-start rounded-xl border-2 px-4 py-3.5 text-left transition-all ${
-                      returnsPolicy === 'final_sale' ? 'border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'
-                    }`}
-                  >
-                    <span className={`text-sm font-semibold ${returnsPolicy === 'final_sale' ? 'text-foreground' : 'text-muted-foreground'}`}>Final Sale</span>
-                    <span className="text-xs text-muted-foreground mt-0.5">No returns or refunds</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setReturnsPolicy(p => p === 'final_sale' ? 'standard' : p)}
-                    className={`flex flex-col items-start rounded-xl border-2 px-4 py-3.5 text-left transition-all ${
-                      returnsPolicy !== 'final_sale' ? 'border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'
-                    }`}
-                  >
-                    <span className={`text-sm font-semibold ${returnsPolicy !== 'final_sale' ? 'text-foreground' : 'text-muted-foreground'}`}>Returns Accepted</span>
-                    <span className="text-xs text-muted-foreground mt-0.5">Define your return terms</span>
-                  </button>
-                </div>
-
-                {returnsPolicy !== 'final_sale' && (
-                  <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-4">
-                    <div className="grid grid-cols-2 gap-2">
-                      {(['standard', 'custom'] as const).map(t => (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => setReturnsPolicy(t)}
-                          className={`rounded-lg border-2 py-2 text-sm font-semibold capitalize transition-all ${
-                            returnsPolicy === t
-                              ? 'border-foreground bg-foreground text-background'
-                              : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
-                          }`}
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-
-                    {returnsPolicy === 'standard' && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground">Return window</p>
-                        <div className="flex gap-2">
-                          {['7', '14', '30'].map(d => (
-                            <button
-                              key={d}
-                              type="button"
-                              onClick={() => setStandardReturnDays(d)}
-                              className={`flex-1 rounded-lg border-2 py-2 text-sm font-semibold transition-all ${
-                                standardReturnDays === d
-                                  ? 'border-foreground bg-foreground text-background'
-                                  : 'border-border text-muted-foreground hover:border-foreground/30'
-                              }`}
-                            >
-                              {d} days
-                            </button>
-                          ))}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Item must be returned in original, unaltered condition. Buyer covers return shipping.
-                        </p>
-                      </div>
-                    )}
-
-                    {returnsPolicy === 'custom' && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground">Describe your return policy</p>
-                        <textarea
-                          value={customReturnPolicy}
-                          onChange={e => setCustomReturnPolicy(e.target.value)}
-                          placeholder="e.g. Returns accepted within 7 days if item is not as described. Buyer pays return shipping. Refund issued upon receipt."
-                          rows={4}
-                          className="w-full rounded-xl border-2 border-border bg-transparent px-4 py-3 text-sm placeholder:text-muted-foreground/40 focus:border-foreground focus:outline-none transition-colors resize-none"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
               </CardContent>
             </Card>
 
