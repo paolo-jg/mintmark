@@ -44,14 +44,13 @@ export default function RegisterPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding&new=1`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard&new=1`,
       },
     })
     if (error) {
       toast.error(error.message)
     } else {
       toast.success('Account created! Check your email to confirm.')
-      window.location.href = '/onboarding'
     }
     setLoading(false)
   }
@@ -61,7 +60,7 @@ export default function RegisterPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/onboarding&new=1`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard&new=1`,
       },
     })
     if (error) {

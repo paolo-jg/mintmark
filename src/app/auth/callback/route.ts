@@ -19,6 +19,8 @@ export async function GET(request: Request) {
           to: data.user.email,
           name: data.user.email.split('@')[0],
         }).catch(() => null)
+        // Always send new users through onboarding
+        return NextResponse.redirect(`${appUrl}/onboarding`)
       }
       return NextResponse.redirect(`${appUrl}${next}`)
     }
