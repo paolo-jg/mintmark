@@ -76,7 +76,7 @@ export default function Navbar() {
               { href: '/listings', label: user ? 'Buy' : 'Browse' },
               { href: '/sell', label: 'Sell' },
               { href: '/collect', label: 'Collect' },
-              ...(user ? [{ href: '/dealers', label: 'Dealers' }] : [{ href: '/pricing', label: 'Pricing' }]),
+              ...(user ? [{ href: '/dealers', label: 'Dealers' }, { href: '/leaderboard', label: 'Leaderboard' }] : [{ href: '/pricing', label: 'Pricing' }]),
             ].map(({ href, label }) => {
               const active = isActive(href)
               return (

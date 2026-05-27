@@ -769,7 +769,7 @@ export function CollectClient() {
             <p className="text-base font-medium mb-1.5">No coins in your collection yet</p>
             <p className="text-sm mb-5">Browse the catalog manually or scan a photo to identify your coin with AI.</p>
             <div className="flex items-center justify-center gap-2">
-              <Button variant="outline" size="sm" onClick={openAddScan}>
+              <Button variant="outline" size="lg" className="h-11 px-4" onClick={openAddScan}>
                 <ScanLine className="h-4 w-4 mr-1.5" />Scan with AI
               </Button>
               <Button variant="outline" size="lg" className="h-11 px-4" onClick={openAddOwned}>

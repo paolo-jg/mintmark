@@ -676,7 +676,7 @@ function LandingPage() {
   return (
     <div>
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
-        <Badge variant="secondary" className="mb-6">Only professionally graded coins</Badge>
+        <Badge variant="secondary" className="mb-6">Only professionally rare coins</Badge>
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
           The marketplace for<br />
           <span className="text-muted-foreground">rare, verified coins</span>

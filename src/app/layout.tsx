@@ -15,7 +15,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Pedigree Coins — Professionally Graded Coins",
+  title: "Pedigree Coins — Professionally Rare Coins",
   description:
     "The marketplace for professionally graded rare coins. Buy and sell PCGS, NGC, and ANACS certified coins with confidence.",
 };

@@ -33,7 +33,7 @@ const COLLECTOR_TIERS = [
     fullName: 'Collector Basic',
     monthlyPrice: null as number | null,
     annualPrice: null as number | null,
-    description: 'Get listed and start buying and selling graded coins.',
+    description: 'Get listed and start buying and selling rare coins.',
     features: ['7% buyer fee', '7% seller fee + card processing fees', '$0.50 per listing', 'Up to 10 active listings/month', 'Unlimited purchases'],
     highlighted: false,
     annualSavings: null as string | null,

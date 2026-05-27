@@ -20,7 +20,7 @@ export async function sendWelcomeBuyer({
     subject: 'Welcome to Pedigree Coins',
     html: `
       <p>Hi ${name},</p>
-      <p>Welcome to Pedigree Coins — the marketplace for graded coins.</p>
+      <p>Welcome to Pedigree Coins — the marketplace for rare coins.</p>
       <p>You can browse listings, place bids, and buy coins with confidence. Every purchase is protected by our escrow system, so your payment is held safely until delivery is confirmed.</p>
       <p><a href="https://pedigreecoins.com/buy-now">Start browsing</a></p>
       <p>— Pedigree Coins</p>

@@ -81,7 +81,7 @@ export default function RegisterPage() {
         <Card>
           <CardHeader>
             <CardTitle>Create an account</CardTitle>
-            <CardDescription>Join Pedigree Coins to buy and sell graded coins</CardDescription>
+            <CardDescription>Join Pedigree Coins to buy and sell rare coins</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

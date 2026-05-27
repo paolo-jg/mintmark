@@ -23,9 +23,11 @@ const PLANS = [
   {
     key: 'collector_basic',
     name: 'Free',
+    fullName: 'Collector Basic',
     price: '$0',
     per: '/mo',
-    features: ['10 listings/month', '7% seller fee', 'Unlimited purchases'],
+    description: 'Get listed and start buying and selling rare coins.',
+    features: ['7% seller fee', '$0.50 per listing', 'Up to 10 active listings/month', 'Unlimited purchases'],
     cta: 'Start Free',
     highlight: false,
     badge: null,
@@ -33,9 +35,11 @@ const PLANS = [
   {
     key: 'collector_premium',
     name: 'Premium',
+    fullName: 'Collector Premium',
     price: '$9.99',
     per: '/mo',
-    features: ['50 listings/month', '1.9% seller fee', 'Unlimited purchases'],
+    description: 'Lower fees and more listings for active collectors.',
+    features: ['1.9% seller fee', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'],
     cta: 'Choose Premium',
     highlight: true,
     badge: 'Most Popular',
@@ -43,9 +47,11 @@ const PLANS = [
   {
     key: 'dealer',
     name: 'Dealer',
+    fullName: 'Dealer',
     price: '$49.99',
     per: '/mo',
-    features: ['Unlimited listings', '0% seller fee', 'Advanced analytics'],
+    description: 'Unlimited listings and the lowest fees for serious dealers.',
+    features: ['0% seller fee', '$0 per listing', 'Unlimited listings', 'Unlimited purchases', 'Advanced analytics'],
     cta: 'Choose Dealer',
     highlight: false,
     badge: null,
@@ -159,8 +165,8 @@ export function OnboardingClient({ initialUsername }: Props) {
         }}
       />
 
-      {/* Modal card — wider on step 3 to fit plan cards */}
-      <div className={`relative z-10 w-full bg-background rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${step === 3 ? 'max-w-3xl' : 'max-w-xl'}`}>
+      {/* Modal card — wider and taller on step 3 to fit plan cards */}
+      <div className={`relative z-10 w-full bg-background rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${step === 3 ? 'max-w-4xl' : 'max-w-xl'}`}>
 
         {/* Progress bar */}
         <div className="h-1 bg-muted">
@@ -296,10 +302,10 @@ export function OnboardingClient({ initialUsername }: Props) {
                 {PLANS.map(plan => (
                   <div
                     key={plan.key}
-                    className={`relative rounded-xl border p-6 flex flex-col gap-5 ${
+                    className={`relative rounded-xl border p-6 flex flex-col gap-4 ${
                       plan.highlight
                         ? 'border-foreground bg-foreground text-background'
-                        : 'border-border bg-muted/30'
+                        : 'border-border bg-background'
                     }`}
                   >
                     {plan.badge && (
@@ -307,29 +313,35 @@ export function OnboardingClient({ initialUsername }: Props) {
                         {plan.badge}
                       </span>
                     )}
+
+                    {/* Header */}
                     <div>
-                      <p className={`text-xs font-semibold uppercase tracking-widest mb-2 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
-                        {plan.name}
+                      <p className={`text-[10px] font-bold tracking-[0.18em] uppercase mb-0.5 ${plan.highlight ? 'text-background/50' : 'text-muted-foreground/50'}`}>
+                        {plan.fullName}
                       </p>
-                      <p className="text-3xl font-bold">
-                        {plan.price}
-                        <span className={`text-sm font-normal ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
-                          {plan.per}
-                        </span>
+                      <p className="text-lg font-bold mb-3">{plan.name}</p>
+                      <div className="flex items-baseline gap-1 mb-2">
+                        <span className="text-3xl font-bold tracking-tight">{plan.price}</span>
+                        <span className={`text-xs ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>{plan.per}</span>
+                      </div>
+                      <p className={`text-xs leading-snug ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
+                        {plan.description}
                       </p>
                     </div>
-                    <ul className="space-y-2 flex-1">
+
+                    {/* Features */}
+                    <ul className="space-y-1.5 flex-1">
                       {plan.features.map(f => (
-                        <li key={f} className="flex items-start gap-2 text-sm">
-                          <Check className={`h-4 w-4 mt-0.5 shrink-0 ${plan.highlight ? 'text-background/70' : 'text-muted-foreground'}`} />
-                          <span className={plan.highlight ? 'text-background/80' : ''}>
-                            {f}
-                          </span>
+                        <li key={f} className="flex items-start gap-2">
+                          <Check className={`h-3 w-3 mt-0.5 shrink-0 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`} />
+                          <span className={`text-xs leading-snug ${plan.highlight ? 'text-background/80' : 'text-muted-foreground'}`}>{f}</span>
                         </li>
                       ))}
                     </ul>
+
+                    {/* CTA */}
                     <Button
-                      className={`w-full h-11 text-sm font-medium ${
+                      className={`w-full h-10 text-sm font-semibold mt-1 ${
                         plan.highlight
                           ? 'bg-white text-zinc-900 hover:bg-white/90 border-0'
                           : 'bg-foreground text-background hover:bg-foreground/90'
