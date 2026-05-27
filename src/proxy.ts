@@ -42,10 +42,13 @@ function hasSession(req: NextRequest): boolean {
   )
 }
 
+const GATE_TIMEOUT_MS = 3000
+
 /**
  * Ensures a logged-in user has completed onboarding before accessing the app.
  * Fast path: pc_onboarded cookie skips the DB query.
  * Returns a redirect to /onboarding if incomplete, null otherwise.
+ * Fails open on timeout or error so a slow Supabase response never blocks page load.
  */
 async function onboardingGate(
   request: NextRequest,
@@ -56,6 +59,33 @@ async function onboardingGate(
   if (ONBOARDING_BYPASS.some(p => pathname.startsWith(p))) return null
   if (request.cookies.get('pc_onboarded')?.value === '1') return null
 
+  try {
+    const result = await Promise.race([
+      checkOnboarding(request),
+      new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), GATE_TIMEOUT_MS)),
+    ])
+
+    if (result === 'timeout' || result === 'pass') return null
+
+    if (result === 'redirect') {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
+
+    // result === 'stamp': onboarding complete, set cookie
+    response.cookies.set('pc_onboarded', '1', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365,
+    })
+  } catch {
+    // Fail open — never block a page load due to a Supabase error
+  }
+
+  return null
+}
+
+async function checkOnboarding(request: NextRequest): Promise<'pass' | 'redirect' | 'stamp'> {
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -67,28 +97,20 @@ async function onboardingGate(
     }
   )
 
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session?.user) return null
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError || !session?.user) return 'pass'
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('onboarding_completed')
     .eq('id', session.user.id)
     .single()
 
-  if (!profile?.onboarding_completed) {
-    return NextResponse.redirect(new URL('/onboarding', request.url))
-  }
+  if (profileError) return 'pass' // DB error — fail open
 
-  // Stamp cookie so we skip the DB query from now on
-  response.cookies.set('pc_onboarded', '1', {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 365,
-  })
+  if (!profile?.onboarding_completed) return 'redirect'
 
-  return null
+  return 'stamp'
 }
 
 // ── Proxy ─────────────────────────────────────────────────────────────────────
@@ -107,7 +129,7 @@ export async function proxy(request: NextRequest) {
 
   // Local dev — no subdomain logic, just refresh session + onboarding gate
   if (isLocalDev(request)) {
-    const response = await updateSession(request)
+    const response = await updateSession(request).catch(() => NextResponse.next())
     return (await onboardingGate(request, response)) ?? response
   }
 
@@ -119,7 +141,7 @@ export async function proxy(request: NextRequest) {
   if (onMarketingDomain) {
     // Validate/refresh the session first so stale tokens are cleared before
     // we make any routing decisions based on hasSession().
-    const marketingResponse = await updateSession(request)
+    const marketingResponse = await updateSession(request).catch(() => NextResponse.next())
 
     if (loggedIn) {
       // Always keep the landing page and marketing-only paths on this domain —
@@ -156,12 +178,12 @@ export async function proxy(request: NextRequest) {
         )
       }
     }
-    const response = await updateSession(request)
+    const response = await updateSession(request).catch(() => NextResponse.next())
     return (await onboardingGate(request, response)) ?? response
   }
 
   // Unknown domain (e.g. Vercel preview URLs) — refresh session + onboarding gate
-  const response = await updateSession(request)
+  const response = await updateSession(request).catch(() => NextResponse.next())
   return (await onboardingGate(request, response)) ?? response
 }
 

@@ -2,50 +2,157 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
 const FROM = 'Pedigree Coins <no-reply@pedigreecoins.com>'
+const BASE_URL = 'https://pedigreecoins.com'
 
 function fmt(cents: number) {
   return (cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 }
 
-export async function sendWelcomeBuyer({
-  to,
-  name,
+function emailHtml({
+  preheader,
+  body,
+  ctaLabel,
+  ctaUrl,
 }: {
-  to: string
-  name: string
+  preheader: string
+  body: string
+  ctaLabel?: string
+  ctaUrl?: string
 }) {
+  const cta = ctaLabel && ctaUrl
+    ? `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:32px 0 0;">
+        <tr>
+          <td align="center">
+            <a href="${ctaUrl}" style="display:inline-block;padding:14px 32px;background:#18181b;color:#ffffff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;letter-spacing:-0.01em;">${ctaLabel}</a>
+          </td>
+        </tr>
+      </table>`
+    : ''
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>${preheader}</title>
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+  <!-- preheader -->
+  <span style="display:none;max-height:0;overflow:hidden;">${preheader}</span>
+
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f4f4f5;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:560px;width:100%;">
+
+          <!-- Header / Logo -->
+          <tr>
+            <td align="center" style="padding-bottom:24px;">
+              <img src="${BASE_URL}/logo-horizontal.png" alt="Pedigree Coins" height="36" style="display:block;height:36px;width:auto;" />
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background:#ffffff;border-radius:12px;border:1px solid #e4e4e7;padding:40px 40px 36px;">
+              ${body}
+              ${cta}
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 0 8px;" align="center">
+              <p style="margin:0 0 8px;color:#71717a;font-size:13px;line-height:1.6;">
+                You're receiving this email because you have an account at Pedigree Coins.
+              </p>
+              <p style="margin:0;color:#71717a;font-size:13px;">
+                <a href="${BASE_URL}/settings?section=notifications" style="color:#71717a;text-decoration:underline;">Unsubscribe</a>
+                &nbsp;·&nbsp;
+                <a href="${BASE_URL}/settings" style="color:#71717a;text-decoration:underline;">Email preferences</a>
+              </p>
+              <p style="margin:12px 0 0;color:#a1a1aa;font-size:12px;">
+                © ${new Date().getFullYear()} Pedigree Coins. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
+function greeting(name: string) {
+  return `<p style="margin:0 0 4px;color:#71717a;font-size:13px;font-weight:500;text-transform:uppercase;letter-spacing:0.06em;">Hello,</p>
+<h1 style="margin:0 0 24px;color:#18181b;font-size:24px;font-weight:700;letter-spacing:-0.02em;line-height:1.2;">${name}</h1>`
+}
+
+function divider() {
+  return `<hr style="border:none;border-top:1px solid #e4e4e7;margin:24px 0;" />`
+}
+
+function bodyText(text: string) {
+  return `<p style="margin:0 0 16px;color:#3f3f46;font-size:15px;line-height:1.7;">${text}</p>`
+}
+
+function metaRow(label: string, value: string) {
+  return `<tr>
+    <td style="padding:10px 0;border-bottom:1px solid #f4f4f5;color:#71717a;font-size:13px;white-space:nowrap;padding-right:24px;">${label}</td>
+    <td style="padding:10px 0;border-bottom:1px solid #f4f4f5;color:#18181b;font-size:13px;font-weight:600;">${value}</td>
+  </tr>`
+}
+
+function metaTable(rows: string) {
+  return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:20px 0;">${rows}</table>`
+}
+
+// ─── Email functions ──────────────────────────────────────────────────────────
+
+export async function sendWelcomeBuyer({ to, name }: { to: string; name: string }) {
   return resend.emails.send({
     from: FROM,
     to,
     subject: 'Welcome to Pedigree Coins',
-    html: `
-      <p>Hi ${name},</p>
-      <p>Welcome to Pedigree Coins — the marketplace for rare coins.</p>
-      <p>You can browse listings, place bids, and buy coins with confidence. Every purchase is protected by our escrow system, so your payment is held safely until delivery is confirmed.</p>
-      <p><a href="https://pedigreecoins.com/buy-now">Start browsing</a></p>
-      <p>— Pedigree Coins</p>
-    `,
+    html: emailHtml({
+      preheader: 'Your account is ready start discovering rare coins.',
+      body: `
+        ${greeting(name)}
+        ${bodyText('Welcome to <strong>Pedigree Coins</strong> the marketplace for rare coins.')}
+        ${bodyText('You can browse listings, place bids, and buy with confidence. Every purchase is protected by our escrow system, so your payment is held safely until delivery is confirmed.')}
+        ${divider()}
+        ${bodyText('Have a question? Reply to this email and our team will get back to you.')}
+      `,
+      ctaLabel: 'Start Browsing',
+      ctaUrl: `${BASE_URL}/listings`,
+    }),
   })
 }
 
-export async function sendWelcomeSeller({
-  to,
-  name,
-}: {
-  to: string
-  name: string
-}) {
+export async function sendWelcomeSeller({ to, name }: { to: string; name: string }) {
   return resend.emails.send({
     from: FROM,
     to,
     subject: "You're ready to sell on Pedigree Coins",
-    html: `
-      <p>Hi ${name},</p>
-      <p>Your seller account is fully set up. You can now create listings and receive payouts directly to your connected bank account.</p>
-      <p>Payouts are held in escrow and released 48 hours after delivery is confirmed.</p>
-      <p><a href="https://pedigreecoins.com/sell">Go to your seller dashboard</a></p>
-      <p>— Pedigree Coins</p>
-    `,
+    html: emailHtml({
+      preheader: 'Your seller account is active create your first listing.',
+      body: `
+        ${greeting(name)}
+        ${bodyText('Your seller account is fully set up. You can now create listings and receive payouts directly to your connected bank account.')}
+        ${divider()}
+        ${metaTable(
+          metaRow('Payout timing', '48 hours after delivery confirmed') +
+          metaRow('Escrow', 'All payments held until delivery')
+        )}
+        ${bodyText('Ship every order promptly and mark it shipped in your dashboard to trigger payout.')}
+      `,
+      ctaLabel: 'Go to Seller Dashboard',
+      ctaUrl: `${BASE_URL}/sell`,
+    }),
   })
 }
 
@@ -65,14 +172,24 @@ export async function sendOrderConfirmationBuyer({
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `Order confirmed – ${listingTitle}`,
-    html: `
-      <p>Hi ${buyerName},</p>
-      <p>Your order for <strong>${listingTitle}</strong> has been confirmed for <strong>${fmt(amountCents)}</strong>.</p>
-      <p>Your payment is held in escrow and will be released to the seller once delivery is confirmed. You'll receive a tracking number once the seller ships.</p>
-      <p><a href="https://pedigreecoins.com/orders/${orderId}">View your order</a></p>
-      <p>— Pedigree Coins</p>
-    `,
+    subject: `Order confirmed - ${listingTitle}`,
+    html: emailHtml({
+      preheader: `Your order for ${listingTitle} is confirmed.`,
+      body: `
+        ${greeting(buyerName)}
+        ${bodyText('Your order has been confirmed and payment is held in escrow.')}
+        ${divider()}
+        ${metaTable(
+          metaRow('Item', listingTitle) +
+          metaRow('Total', fmt(amountCents)) +
+          metaRow('Order', `#${orderId.slice(0, 8).toUpperCase()}`) +
+          metaRow('Status', 'Awaiting shipment')
+        )}
+        ${bodyText("Your payment is secure and will only be released to the seller once you've confirmed delivery.")}
+      `,
+      ctaLabel: 'View Order',
+      ctaUrl: `${BASE_URL}/orders/${orderId}`,
+    }),
   })
 }
 
@@ -92,14 +209,24 @@ export async function sendNewOrderSeller({
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `You made a sale – ${listingTitle}`,
-    html: `
-      <p>Hi ${sellerName},</p>
-      <p>Your listing <strong>${listingTitle}</strong> sold! Your payout of <strong>${fmt(payoutCents)}</strong> is held in escrow.</p>
-      <p>Ship the item and mark it shipped. Your funds will be released 48 hours after delivery is confirmed.</p>
-      <p><a href="https://pedigreecoins.com/sell">Go to your seller dashboard</a></p>
-      <p>— Pedigree Coins</p>
-    `,
+    subject: `You made a sale - ${listingTitle}`,
+    html: emailHtml({
+      preheader: `${listingTitle} sold! Ship it to unlock your payout.`,
+      body: `
+        ${greeting(sellerName)}
+        ${bodyText("Congratulations you made a sale! Ship the item as soon as possible to keep buyers happy.")}
+        ${divider()}
+        ${metaTable(
+          metaRow('Item', listingTitle) +
+          metaRow('Payout', fmt(payoutCents)) +
+          metaRow('Order', `#${orderId.slice(0, 8).toUpperCase()}`) +
+          metaRow('Status', 'Awaiting shipment from you')
+        )}
+        ${bodyText('Your payout is held in escrow and released 48 hours after the buyer confirms delivery.')}
+      `,
+      ctaLabel: 'Ship This Order',
+      ctaUrl: `${BASE_URL}/sell`,
+    }),
   })
 }
 
@@ -117,13 +244,22 @@ export async function sendShippingReminder({
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `Reminder: ship your order – ${listingTitle}`,
-    html: `
-      <p>Hi ${sellerName},</p>
-      <p>This is a reminder that your order for <strong>${listingTitle}</strong> is still waiting to be shipped. Buyers expect prompt shipping — please ship as soon as possible.</p>
-      <p><a href="https://pedigreecoins.com/sell">Go to your seller dashboard</a></p>
-      <p>— Pedigree Coins</p>
-    `,
+    subject: `Reminder: ship your order - ${listingTitle}`,
+    html: emailHtml({
+      preheader: 'Your buyer is waiting please ship as soon as possible.',
+      body: `
+        ${greeting(sellerName)}
+        ${bodyText(`This is a reminder that your order for <strong>${listingTitle}</strong> is still waiting to be shipped.`)}
+        ${bodyText('Buyers expect prompt shipping. Please ship as soon as possible and add a tracking number in your dashboard.')}
+        ${divider()}
+        ${metaTable(
+          metaRow('Item', listingTitle) +
+          metaRow('Order', `#${orderId.slice(0, 8).toUpperCase()}`)
+        )}
+      `,
+      ctaLabel: 'Go to Seller Dashboard',
+      ctaUrl: `${BASE_URL}/sell`,
+    }),
   })
 }
 
@@ -145,14 +281,22 @@ export async function sendShippingUpdate({
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `Your order has shipped – ${listingTitle}`,
-    html: `
-      <p>Hi ${buyerName},</p>
-      <p>Your order for <strong>${listingTitle}</strong> has shipped via <strong>${carrier}</strong>.</p>
-      <p>Tracking number: <strong>${trackingNumber}</strong></p>
-      <p><a href="${trackingUrl}">Track your package</a></p>
-      <p>— Pedigree Coins</p>
-    `,
+    subject: `Your order has shipped - ${listingTitle}`,
+    html: emailHtml({
+      preheader: `${carrier} has your package track it here.`,
+      body: `
+        ${greeting(buyerName)}
+        ${bodyText(`Your order for <strong>${listingTitle}</strong> is on its way.`)}
+        ${divider()}
+        ${metaTable(
+          metaRow('Item', listingTitle) +
+          metaRow('Carrier', carrier) +
+          metaRow('Tracking', trackingNumber)
+        )}
+      `,
+      ctaLabel: 'Track Package',
+      ctaUrl: trackingUrl,
+    }),
   })
 }
 
@@ -168,13 +312,19 @@ export async function sendPackageDelivered({
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `Your order has been delivered – ${listingTitle}`,
-    html: `
-      <p>Hi ${buyerName},</p>
-      <p>Your order for <strong>${listingTitle}</strong> has been marked as delivered. If everything looks good, no action is needed — the seller's funds will be released automatically in 48 hours.</p>
-      <p>If there's an issue with your order, contact us before the 48-hour window closes.</p>
-      <p>— Pedigree Coins</p>
-    `,
+    subject: `Your order has been delivered - ${listingTitle}`,
+    html: emailHtml({
+      preheader: 'Package delivered confirm receipt to release funds.',
+      body: `
+        ${greeting(buyerName)}
+        ${bodyText(`Your order for <strong>${listingTitle}</strong> has been marked as delivered.`)}
+        ${bodyText("If everything looks good, no action is needed the seller's funds release automatically in 48 hours.")}
+        ${divider()}
+        ${bodyText('<strong>Issue with your order?</strong> Open a dispute before the 48-hour window closes.')}
+      `,
+      ctaLabel: 'View Order',
+      ctaUrl: `${BASE_URL}/orders`,
+    }),
   })
 }
 
@@ -189,18 +339,23 @@ export async function sendDisputeOpened({
   listingTitle: string
   role: 'buyer' | 'seller'
 }) {
-  const message = role === 'buyer'
-    ? 'A dispute has been opened on your order. Our team and Stripe will review the case. Funds remain frozen until resolved.'
-    : 'A dispute has been opened on your sale. Your payout is frozen until the dispute is resolved. Stripe will review the case and notify you.'
+  const detail = role === 'buyer'
+    ? 'Our team and Stripe will review the case. Funds remain frozen until the dispute is resolved.'
+    : 'Your payout is frozen until the dispute is resolved. Stripe will review the case and contact you directly.'
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `Dispute opened – ${listingTitle}`,
-    html: `
-      <p>Hi ${name},</p>
-      <p>${message}</p>
-      <p>— Pedigree Coins</p>
-    `,
+    subject: `Dispute opened - ${listingTitle}`,
+    html: emailHtml({
+      preheader: `A dispute has been opened on ${listingTitle}.`,
+      body: `
+        ${greeting(name)}
+        ${bodyText(`A dispute has been opened on your ${role === 'buyer' ? 'order' : 'sale'} for <strong>${listingTitle}</strong>.`)}
+        ${divider()}
+        ${bodyText(detail)}
+        ${bodyText('If you have additional information or documentation, reply to this email.')}
+      `,
+    }),
   })
 }
 
@@ -217,25 +372,31 @@ export async function sendDisputeResolved({
   role: 'buyer' | 'seller'
   outcome: 'won' | 'lost'
 }) {
-  let message = ''
+  let detail = ''
   if (role === 'seller' && outcome === 'won') {
-    message = 'The dispute on your sale was resolved in your favor. Your payout will be released shortly.'
+    detail = 'The dispute was resolved in your favor. Your payout will be released shortly.'
   } else if (role === 'seller' && outcome === 'lost') {
-    message = 'The dispute on your sale was resolved in the buyer\'s favor. The buyer has been refunded.'
+    detail = "The dispute was resolved in the buyer's favor. The buyer has been refunded."
   } else if (role === 'buyer' && outcome === 'won') {
-    message = 'The dispute on your order was resolved in your favor. You have been refunded by Stripe.'
+    detail = 'The dispute was resolved in your favor. You have been refunded by Stripe.'
   } else {
-    message = 'The dispute on your order was resolved in the seller\'s favor. The seller\'s payout has been released.'
+    detail = "The dispute was resolved in the seller's favor. The seller's payout has been released."
   }
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `Dispute resolved – ${listingTitle}`,
-    html: `
-      <p>Hi ${name},</p>
-      <p>${message}</p>
-      <p>— Pedigree Coins</p>
-    `,
+    subject: `Dispute resolved - ${listingTitle}`,
+    html: emailHtml({
+      preheader: `The dispute on ${listingTitle} has been resolved.`,
+      body: `
+        ${greeting(name)}
+        ${bodyText(`The dispute on <strong>${listingTitle}</strong> has been resolved.`)}
+        ${divider()}
+        ${bodyText(detail)}
+      `,
+      ctaLabel: 'View Dashboard',
+      ctaUrl: `${BASE_URL}/listings`,
+    }),
   })
 }
 
@@ -259,13 +420,23 @@ export async function sendOfferReceived({
     from: FROM,
     to,
     subject: `New offer on ${listingTitle}`,
-    html: `
-      <p>Hi ${sellerName},</p>
-      <p><strong>${buyerName}</strong> made an offer of <strong>${fmt(amountCents)}</strong> on your listing <strong>${listingTitle}</strong>${pct !== null ? ` (${pct}% of asking price)` : ''}.</p>
-      <p>Log in to accept, decline, or counter the offer. Offers expire in 48 hours.</p>
-      <p><a href="https://pedigreecoins.com/dashboard">View offers</a></p>
-      <p>— Pedigree Coins</p>
-    `,
+    html: emailHtml({
+      preheader: `${buyerName} made an offer respond within 48 hours.`,
+      body: `
+        ${greeting(sellerName)}
+        ${bodyText(`You received a new offer on <strong>${listingTitle}</strong>.`)}
+        ${divider()}
+        ${metaTable(
+          metaRow('From', buyerName) +
+          metaRow('Offer', fmt(amountCents)) +
+          metaRow('Asking price', fmt(askingPriceCents)) +
+          (pct !== null ? metaRow('Offer %', `${pct}% of asking`) : '')
+        )}
+        ${bodyText('Log in to accept, decline, or counter the offer. <strong>Offers expire in 48 hours.</strong>')}
+      `,
+      ctaLabel: 'Respond to Offer',
+      ctaUrl: `${BASE_URL}/sell`,
+    }),
   })
 }
 
@@ -291,21 +462,30 @@ export async function sendOfferResponded({
     cancel: `Your offer of <strong>${fmt(originalAmountCents)}</strong> on <strong>${listingTitle}</strong> has been cancelled.`,
   }
   const subjects: Record<string, string> = {
-    accept: `Offer accepted – ${listingTitle}`,
-    decline: `Offer declined – ${listingTitle}`,
-    counter: `Counter-offer received – ${listingTitle}`,
-    cancel: `Offer cancelled – ${listingTitle}`,
+    accept: `Offer accepted - ${listingTitle}`,
+    decline: `Offer declined - ${listingTitle}`,
+    counter: `Counter-offer received - ${listingTitle}`,
+    cancel: `Offer cancelled - ${listingTitle}`,
+  }
+  const ctaLabels: Record<string, string> = {
+    accept: 'Complete Purchase',
+    decline: 'Browse Listings',
+    counter: 'View Counter-Offer',
+    cancel: 'Browse Listings',
   }
   return resend.emails.send({
     from: FROM,
     to,
     subject: subjects[action],
-    html: `
-      <p>Hi ${name},</p>
-      <p>${messages[action]}</p>
-      <p><a href="https://pedigreecoins.com/dashboard">View your offers</a></p>
-      <p>— Pedigree Coins</p>
-    `,
+    html: emailHtml({
+      preheader: subjects[action],
+      body: `
+        ${greeting(name)}
+        ${bodyText(messages[action])}
+      `,
+      ctaLabel: ctaLabels[action],
+      ctaUrl: `${BASE_URL}/listings`,
+    }),
   })
 }
 
@@ -323,13 +503,22 @@ export async function sendPayoutReleased({
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `Payout released – ${listingTitle}`,
-    html: `
-      <p>Hi ${sellerName},</p>
-      <p>Your payout of <strong>${fmt(payoutCents)}</strong> for <strong>${listingTitle}</strong> has been released to your connected Stripe account.</p>
-      <p>Funds typically arrive within 2–5 business days depending on your bank.</p>
-      <p>— Pedigree Coins</p>
-    `,
+    subject: `Payout released - ${listingTitle}`,
+    html: emailHtml({
+      preheader: `${fmt(payoutCents)} is on its way to your bank account.`,
+      body: `
+        ${greeting(sellerName)}
+        ${bodyText(`Your payout for <strong>${listingTitle}</strong> has been released to your connected Stripe account.`)}
+        ${divider()}
+        ${metaTable(
+          metaRow('Item', listingTitle) +
+          metaRow('Payout amount', fmt(payoutCents)) +
+          metaRow('Arrival', '2 to 5 business days')
+        )}
+      `,
+      ctaLabel: 'View Seller Dashboard',
+      ctaUrl: `${BASE_URL}/sell`,
+    }),
   })
 }
 
@@ -348,12 +537,16 @@ export async function sendTeamInvite({
     from: FROM,
     to,
     subject: `You've been invited to join ${dealerName} on Pedigree Coins`,
-    html: `
-      <p>You've been invited to join <strong>${dealerName}</strong>'s team on Pedigree Coins as a <strong>${role}</strong>.</p>
-      <p>Click the link below to accept your invitation. It expires in 7 days.</p>
-      <p><a href="${inviteUrl}">Accept Invitation</a></p>
-      <p>If you don't have an account yet, you'll be able to create one after clicking the link.</p>
-      <p>— Pedigree Coins</p>
-    `,
+    html: emailHtml({
+      preheader: `${dealerName} invited you to their team expires in 7 days.`,
+      body: `
+        ${bodyText(`You've been invited to join <strong>${dealerName}</strong>'s team on Pedigree Coins as a <strong>${role}</strong>.`)}
+        ${divider()}
+        ${bodyText("Click the button below to accept your invitation. It expires in <strong>7 days</strong>.")}
+        ${bodyText("If you don't have an account yet, you'll be able to create one after clicking the link.")}
+      `,
+      ctaLabel: 'Accept Invitation',
+      ctaUrl: inviteUrl,
+    }),
   })
 }
