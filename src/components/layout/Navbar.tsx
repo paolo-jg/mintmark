@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -12,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Coins, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
@@ -63,9 +64,8 @@ export default function Navbar() {
         <div className="flex items-center h-18">
           {/* Logo — far left, flex-1 so nav stays centered */}
           <div className="flex-1">
-            <Link href="/" className="flex items-center gap-2 font-bold text-lg tracking-tight w-fit">
-              <Coins className="h-5 w-5" />
-              Pedigree Coins
+            <Link href="/" className="flex items-center w-fit">
+              <Image src="/logo-horizontal.png" alt="Pedigree Coins" height={36} width={180} className="object-contain" priority />
             </Link>
           </div>
 
