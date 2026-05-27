@@ -65,9 +65,10 @@ export async function GET(req: NextRequest) {
         db.auth.admin.getUserById(profile.id).then(({ data }) => {
           const email = data.user?.email
           if (email) {
-            sendWelcomeSeller({ to: email, name: email.split('@')[0] }).catch(() => null)
+            sendWelcomeSeller({ to: email, name: email.split('@')[0] })
+              .catch(err => console.error('[resend] seller welcome email failed:', err))
           }
-        }).catch(() => null)
+        }).catch(err => console.error('[stripe/connect/return] getUserById failed:', err))
       }
     }
 

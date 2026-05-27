@@ -61,6 +61,7 @@ export default function RegisterPage() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=/dashboard&new=1`,
+        queryParams: { prompt: 'select_account' },
       },
     })
     if (error) {

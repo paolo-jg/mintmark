@@ -22,12 +22,12 @@ export async function GET(request: Request) {
         .single()
 
       if (!profile?.onboarding_completed) {
-        // First-time user: send welcome email if flagged as new, then onboard
-        if (isNewUser && data.user.email) {
+        // New user: send welcome email (fire-and-forget, log errors)
+        if (data.user.email) {
           sendWelcomeBuyer({
             to: data.user.email,
             name: data.user.email.split('@')[0],
-          }).catch(() => null)
+          }).catch(err => console.error('[resend] welcome email failed:', err))
         }
         return NextResponse.redirect(`${appUrl}/onboarding`)
       }
