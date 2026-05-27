@@ -8,10 +8,11 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
-import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload, MessageCircle } from 'lucide-react'
+import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload, MessageCircle, Gavel } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { SellerOnboardingModal } from '@/components/sell/seller-onboarding-modal'
 import { MessagesPanel } from './messages-panel'
+import { AuctionCountdown } from '@/components/ui/auction-countdown'
 
 // ── Tier config ───────────────────────────────────────────────────────────────
 type Tier =
@@ -41,6 +42,15 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
 
 type TabId = 'all' | 'active' | 'draft' | 'sold' | 'expired' | 'messages'
 
+interface AuctionInfo {
+  id: string
+  current_bid: number | null
+  start_price: number
+  end_time: string
+  bid_count: number
+  reserve_price: number | null
+}
+
 interface Listing {
   id: string
   title: string
@@ -54,6 +64,8 @@ interface Listing {
   created_at: string
   year: number | null
   mint_mark: string | null
+  accept_offers: boolean | null
+  auction?: AuctionInfo | null
 }
 
 interface PayoutOrder {
@@ -117,7 +129,7 @@ export async function fetchSellData(): Promise<SellData | null> {
   ] = await Promise.all([
     supabase
       .from('listings')
-      .select('id, title, price, listing_type, status, grade, grading_service, verification_status, images, created_at, year, mint_mark')
+      .select('id, title, price, listing_type, status, grade, grading_service, verification_status, images, created_at, year, mint_mark, accept_offers')
       .eq('seller_id', sellerId)
       .order('created_at', { ascending: false }),
     supabase.from('orders').select('amount, status').eq('seller_id', sellerId),
@@ -142,8 +154,36 @@ export async function fetchSellData(): Promise<SellData | null> {
       .gte('created_at', monthStart),
   ])
 
+  // Fetch auction rows for auction listings
+  const auctionListingIds = (allListings ?? [])
+    .filter(l => l.listing_type === 'auction')
+    .map(l => l.id)
+
+  let auctionMap = new Map<string, AuctionInfo>()
+  if (auctionListingIds.length > 0) {
+    const { data: auctionRows } = await supabase
+      .from('auctions')
+      .select('id, listing_id, current_bid, start_price, end_time, bid_count, reserve_price')
+      .in('listing_id', auctionListingIds)
+    for (const row of auctionRows ?? []) {
+      auctionMap.set(row.listing_id, {
+        id: row.id,
+        current_bid: row.current_bid,
+        start_price: row.start_price,
+        end_time: row.end_time,
+        bid_count: row.bid_count,
+        reserve_price: row.reserve_price ?? null,
+      })
+    }
+  }
+
+  const mergedListings: Listing[] = (allListings ?? []).map(l => ({
+    ...(l as Listing),
+    auction: auctionMap.get(l.id) ?? null,
+  }))
+
   return {
-    allListings: (allListings ?? []) as Listing[],
+    allListings: mergedListings,
     orders: (orders ?? []) as { amount: number; status: string }[],
     payoutOrders: (payoutOrders ?? []) as PayoutOrder[],
     tier: ((profile?.subscription_tier ?? 'collector_basic') as Tier),
@@ -338,9 +378,9 @@ export function SellClient() {
               Import CSV
             </Button>
           )}
-          <Button disabled={atLimit} onClick={() => router.push('/listings/new')}>
+          <Button onClick={() => atLimit ? router.push('/pricing') : router.push('/listings/new')}>
             <Plus className="h-4 w-4 mr-1.5" />
-            Create Listing
+            {atLimit ? 'Upgrade to List More' : 'Create Listing'}
           </Button>
         </div>
       </div>
@@ -421,12 +461,17 @@ export function SellClient() {
               )}
             </div>
             {atLimit && (
-              <p className="text-xs text-muted-foreground mt-2">
-                Upgrade your plan to list more coins this month.{' '}
-                <Link href="/#pricing" className="underline underline-offset-2 hover:text-foreground transition-colors">
-                  View plans
-                </Link>
-              </p>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-muted-foreground">
+                  Upgrade to list more coins this month.
+                </p>
+                <button
+                  onClick={() => router.push('/pricing')}
+                  className="text-xs font-semibold text-foreground underline underline-offset-2 hover:opacity-70 transition-opacity whitespace-nowrap"
+                >
+                  View plans →
+                </button>
+              </div>
             )}
           </>
         ) : (
@@ -564,23 +609,34 @@ export function SellClient() {
             {tab === 'all' ? 'No listings yet' : `No ${tab} listings`}
           </p>
 
-          {tab === 'all' && !atLimit && (
-            <Button size="lg" className="h-11 px-4" render={<Link href="/listings/new" />}>
+          {tab === 'all' && (
+            <Button
+              size="lg"
+              className="h-11 px-4"
+              onClick={() => atLimit ? router.push('/pricing') : router.push('/listings/new')}
+            >
               <Plus className="h-4 w-4 mr-1.5" />
-              Create Listing
+              {atLimit ? 'Upgrade to List More' : 'Create Listing'}
             </Button>
           )}
         </div>
       ) : (
         <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
-          {listings.map(listing => (
+          {listings.map(listing => {
+            const isAuction = listing.listing_type === 'auction'
+            const auc = listing.auction
+            const currentBid = auc?.current_bid ?? null
+            const startPrice = auc?.start_price ?? null
+            const reservePrice = auc?.reserve_price ?? null
+            const reserveMet = reservePrice !== null && currentBid !== null && currentBid >= reservePrice
+            return (
             <Link
               key={listing.id}
               href={`/listings/${listing.id}`}
-              className="flex items-center gap-4 px-4 py-3.5 bg-card hover:bg-muted/40 transition-colors"
+              className="flex items-start gap-4 px-4 py-3.5 bg-card hover:bg-muted/40 transition-colors"
             >
               {/* Thumbnail */}
-              <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0 relative">
+              <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0 relative mt-0.5">
                 {listing.images?.[0] ? (
                   <Image src={listing.images[0]} alt={listing.title} fill sizes="48px" className="object-cover" />
                 ) : (
@@ -603,38 +659,66 @@ export function SellClient() {
                     return parts.join(' · ')
                   })()}
                 </p>
+
+                {/* Auction detail row */}
+                {isAuction && auc && (
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Gavel className="h-3 w-3" />
+                      {currentBid != null
+                        ? <><span className="font-semibold text-foreground">{formatCents(currentBid)}</span> current bid ({auc.bid_count} bid{auc.bid_count !== 1 ? 's' : ''})</>
+                        : <><span className="font-medium">No bids</span> · start {formatCents(auc.start_price)}</>
+                      }
+                    </span>
+                    {reservePrice !== null && (
+                      <span className={`text-xs font-medium ${reserveMet ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        Reserve {reserveMet ? 'met' : 'not met'}
+                      </span>
+                    )}
+                    {listing.price && (
+                      <span className="text-xs text-muted-foreground">
+                        BIN: <span className="font-medium text-foreground">{formatCents(listing.price)}</span>
+                      </span>
+                    )}
+                    {listing.accept_offers && (
+                      <span className="text-xs text-muted-foreground">· Offers accepted</span>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      Ends: <AuctionCountdown endTime={auc.end_time} className="text-xs" />
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Type */}
-              <p className="text-xs text-muted-foreground hidden sm:block flex-shrink-0">
+              <p className="text-xs text-muted-foreground hidden sm:block flex-shrink-0 mt-0.5">
                 {listing.listing_type === 'fixed' ? 'Buy It Now' : 'Auction'}
               </p>
 
-              {/* Price */}
-              <p className="text-sm font-semibold tabular-nums flex-shrink-0 w-24 text-right">
-                {listing.listing_type === 'fixed' && listing.price
-                  ? formatCents(listing.price)
-                  : listing.listing_type === 'auction'
-                  ? 'Auction'
-                  : '—'}
+              {/* Price (fixed only) */}
+              <p className="text-sm font-semibold tabular-nums flex-shrink-0 w-24 text-right mt-0.5">
+                {!isAuction && listing.price ? formatCents(listing.price) : isAuction ? '' : '—'}
               </p>
 
               {/* Status / draft CTA */}
-              {listing.status === 'draft' ? (
-                <Link
-                  href={`/listings/${listing.id}/edit`}
-                  onClick={e => e.stopPropagation()}
-                  className="flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-lg border border-border bg-muted hover:bg-muted/60 transition-colors whitespace-nowrap"
-                >
-                  Add Images &amp; Publish
-                </Link>
-              ) : (
-                <Badge variant={STATUS_VARIANT[listing.status]} className="text-xs flex-shrink-0">
-                  {STATUS_LABEL[listing.status]}
-                </Badge>
-              )}
+              <div className="flex-shrink-0 mt-0.5">
+                {listing.status === 'draft' ? (
+                  <Link
+                    href={`/listings/${listing.id}/edit`}
+                    onClick={e => e.stopPropagation()}
+                    className="text-xs font-medium px-2.5 py-1 rounded-lg border border-border bg-muted hover:bg-muted/60 transition-colors whitespace-nowrap"
+                  >
+                    Add Images &amp; Publish
+                  </Link>
+                ) : (
+                  <Badge variant={STATUS_VARIANT[listing.status]} className="text-xs">
+                    {STATUS_LABEL[listing.status]}
+                  </Badge>
+                )}
+              </div>
             </Link>
-          ))}
+            )
+          })}
         </div>
       ))}
     </div>

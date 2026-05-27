@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { formatCents } from '@/lib/utils'
 import { ChevronLeft, Clock } from 'lucide-react'
 import { SeriesSidebar } from '../../_components/series-sidebar'
+import { AuctionCountdown } from '@/components/ui/auction-countdown'
 
 type SearchParams = {
   year?: string
@@ -36,9 +37,11 @@ export default async function SeriesPage({
   // Fallback: coin_name prefix match — handles listings where series_slug is null
   //   AND listings whose coin_name includes the year/mint (e.g. "Draped Bust Half Cent 1803")
   //   which wouldn't match an exact .in() against coinNames.
+  const auctionSelect = '*, auctions(id, current_bid, start_price, end_time, bid_count, reserve_price)'
+
   const { data: bySlug } = await supabase
     .from('listings')
-    .select('*')
+    .select(auctionSelect)
     .eq('status', 'active')
     .eq('series_slug', slug)
 
@@ -49,7 +52,7 @@ export default async function SeriesPage({
 
   const { data: byName } = await supabase
     .from('listings')
-    .select('*')
+    .select(auctionSelect)
     .eq('status', 'active')
     .is('series_slug', null)
     .or(nameFilter)
@@ -217,11 +220,31 @@ export default async function SeriesPage({
                       <p className="text-sm font-medium leading-snug line-clamp-2 mb-2">
                         {listing.title}
                       </p>
-                      <p className="text-sm font-bold">
-                        {listing.listing_type === 'auction'
-                          ? `Bid from ${formatCents(listing.start_price ?? listing.price)}`
-                          : formatCents(listing.price)}
-                      </p>
+                      {listing.listing_type === 'auction' ? (() => {
+                        const auc = Array.isArray(listing.auctions) ? listing.auctions[0] : null
+                        const currentBid = auc?.current_bid ?? null
+                        const startPrice = auc?.start_price ?? listing.start_price ?? listing.price
+                        const endTime = auc?.end_time ?? null
+                        const bidCount = auc?.bid_count ?? 0
+                        return (
+                          <div className="space-y-1">
+                            <p className="text-sm font-bold">
+                              {currentBid != null
+                                ? <>{formatCents(currentBid)} <span className="text-xs font-normal text-muted-foreground">({bidCount} bid{bidCount !== 1 ? 's' : ''})</span></>
+                                : <>Starts at {formatCents(startPrice)}</>
+                              }
+                            </p>
+                            {endTime && (
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                <AuctionCountdown endTime={endTime} />
+                              </p>
+                            )}
+                          </div>
+                        )
+                      })() : (
+                        <p className="text-sm font-bold">{formatCents(listing.price)}</p>
+                      )}
                     </CardContent>
                   </Card>
                 </Link>
