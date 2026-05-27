@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
-import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload, MessageCircle, Gavel, RotateCcw } from 'lucide-react'
+import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload, MessageCircle, Gavel, RotateCcw, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { SellerOnboardingModal } from '@/components/sell/seller-onboarding-modal'
@@ -166,7 +166,8 @@ export async function fetchSellData(): Promise<SellData | null> {
       .from('listings')
       .select('id', { count: 'exact', head: true })
       .eq('seller_id', sellerId)
-      .gte('created_at', monthStart),
+      .gte('created_at', monthStart)
+      .in('status', ['active', 'sold', 'expired']),
   ])
 
   // Fetch auction rows for auction listings
@@ -217,6 +218,24 @@ export function SellClient() {
   const [connectLoading, setConnectLoading] = useState(false)
   const [dismissedOnboarded, setDismissedOnboarded] = useState(false)
   const [relistingId, setRelistingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  async function handleDeleteDraft(e: React.MouseEvent, listingId: string) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDeletingId(listingId)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from('listings').delete().eq('id', listingId)
+      if (error) { toast.error(error.message); return }
+      toast.success('Draft deleted')
+      mutate()
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   async function handleRelist(e: React.MouseEvent, listingId: string) {
     e.preventDefault()
@@ -706,7 +725,7 @@ export function SellClient() {
             return (
             <Link
               key={listing.id}
-              href={`/listings/${listing.id}`}
+              href={listing.status === 'draft' ? `/listings/${listing.id}/edit` : `/listings/${listing.id}`}
               className="flex items-start gap-4 px-4 py-3.5 bg-card hover:bg-muted/40 transition-colors"
             >
               {/* Thumbnail */}
@@ -777,13 +796,22 @@ export function SellClient() {
               {/* Status / CTA */}
               <div className="flex-shrink-0 mt-0.5">
                 {listing.status === 'draft' ? (
-                  <Link
-                    href={`/listings/${listing.id}/edit`}
-                    onClick={e => e.stopPropagation()}
-                    className="text-xs font-medium px-2.5 py-1 rounded-lg border border-border bg-muted hover:bg-muted/60 transition-colors whitespace-nowrap"
-                  >
-                    Add Images &amp; Publish
-                  </Link>
+                  <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                    <span className="text-xs font-medium px-2.5 py-1 rounded-lg border border-border bg-muted whitespace-nowrap">
+                      Continue editing
+                    </span>
+                    <button
+                      onClick={e => handleDeleteDraft(e, listing.id)}
+                      disabled={deletingId === listing.id}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                      title="Delete draft"
+                    >
+                      {deletingId === listing.id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <Trash2 className="h-3.5 w-3.5" />
+                      }
+                    </button>
+                  </div>
                 ) : (listing.status === 'expired' || listing.status === 'sold') ? (
                   <div className="flex items-center gap-2">
                     <Badge variant={STATUS_VARIANT[listing.status]} className="text-xs">
