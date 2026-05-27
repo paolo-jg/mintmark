@@ -21,9 +21,12 @@ export async function GET(req: NextRequest) {
     // Retrieve the account from Stripe to check onboarding status
     const account = await stripe.accounts.retrieve(accountId)
 
-    // details_submitted is the reliable signal — currently_due can remain
-    // non-empty in test mode even after completing the dummy onboarding flow.
-    const isComplete = account.details_submitted === true
+    // In live mode also require payouts_enabled (full KYC cleared).
+    // In test mode only check details_submitted — currently_due stays non-empty
+    // after dummy onboarding so payouts_enabled is never set.
+    const isLiveMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ?? false
+    const isComplete = account.details_submitted === true &&
+      (isLiveMode ? account.payouts_enabled === true : true)
 
     if (isComplete) {
       const db = getServiceDb()
