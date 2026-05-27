@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Coins } from 'lucide-react'
+import { LOGO_HORIZONTAL } from '@/lib/brand'
 import { toast } from 'sonner'
 
 function GoogleIcon() {
@@ -23,9 +23,8 @@ function GoogleIcon() {
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
-  const [username, setUsername] = useState('')
-  const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const supabase = createClient()
@@ -36,24 +35,23 @@ export default function RegisterPage() {
       toast.error('Password must be at least 8 characters')
       return
     }
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match')
+      return
+    }
     setLoading(true)
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard&new=1`,
-        data: {
-          username,
-          ...(displayName.trim() ? { display_name: displayName.trim() } : {}),
-        },
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding&new=1`,
       },
     })
     if (error) {
       toast.error(error.message)
     } else {
       toast.success('Account created! Check your email to confirm.')
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL
-      window.location.href = appUrl ? `${appUrl}/dashboard` : '/dashboard'
+      window.location.href = '/onboarding'
     }
     setLoading(false)
   }
@@ -63,7 +61,7 @@ export default function RegisterPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard&new=1`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/onboarding&new=1`,
       },
     })
     if (error) {
@@ -76,9 +74,8 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center px-4 bg-muted/20">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
-            <Coins className="h-5 w-5" />
-            Pedigree Coins
+          <Link href="/">
+            <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="h-9 w-auto object-contain" />
           </Link>
         </div>
         <Card>
@@ -110,32 +107,6 @@ export default function RegisterPage() {
 
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    type="text"
-                    value={username}
-                    onChange={e => setUsername(e.target.value)}
-                    placeholder="coinlover42"
-                    required
-                    autoComplete="username"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="displayName">
-                    Business Name <span className="text-muted-foreground font-normal">(optional)</span>
-                  </Label>
-                  <Input
-                    id="displayName"
-                    type="text"
-                    value={displayName}
-                    onChange={e => setDisplayName(e.target.value)}
-                    placeholder="Your business or display name"
-                    autoComplete="organization"
-                    maxLength={80}
-                  />
-                </div>
-                <div className="space-y-1.5">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
@@ -155,6 +126,18 @@ export default function RegisterPage() {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     placeholder="Min. 8 characters"
+                    required
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter your password"
                     required
                     autoComplete="new-password"
                   />

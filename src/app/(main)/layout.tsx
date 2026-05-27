@@ -4,6 +4,7 @@ import { InactivityGuard } from '@/components/layout/inactivity-guard'
 import { SWRProvider } from '@/components/providers/swr-provider'
 import { PageDataPrefetcher } from '@/components/layout/page-data-prefetcher'
 import { NavProvider } from '@/components/layout/nav-context'
+import { ChatWidget } from '@/components/chat/chat-widget'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +14,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-1">{children}</main>
+        <ChatWidget />
         <footer className="border-t border-border py-8 mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-muted-foreground">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3">

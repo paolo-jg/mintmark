@@ -114,6 +114,9 @@ export default function Navbar() {
                     <DropdownMenuItem onClick={() => router.push('/settings')}>
                       Settings
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/leaderboard')}>
+                      Leaderboard
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="text-destructive">
                       Sign Out
@@ -171,6 +174,13 @@ export default function Navbar() {
           })}
           {user ? (
             <>
+              <Link
+                href="/leaderboard"
+                onClick={() => setMobileOpen(false)}
+                className="block px-3 py-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Leaderboard
+              </Link>
               <Link
                 href="/settings"
                 onClick={() => setMobileOpen(false)}
