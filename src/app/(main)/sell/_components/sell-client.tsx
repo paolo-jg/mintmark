@@ -8,9 +8,10 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
-import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload } from 'lucide-react'
+import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { SellerOnboardingModal } from '@/components/sell/seller-onboarding-modal'
+import { MessagesPanel } from './messages-panel'
 
 // ── Tier config ───────────────────────────────────────────────────────────────
 type Tier =
@@ -38,7 +39,7 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
   draft: 'secondary',
 }
 
-type TabId = 'all' | 'active' | 'draft' | 'sold' | 'expired'
+type TabId = 'all' | 'active' | 'draft' | 'sold' | 'expired' | 'messages'
 
 interface Listing {
   id: string
@@ -289,12 +290,13 @@ export function SellClient() {
 
   const draftCount = allListings.filter(l => l.status === 'draft').length
 
-  const tabs: { id: TabId; label: string; count?: number }[] = [
-    { id: 'all',     label: 'All' },
-    { id: 'active',  label: 'Active' },
+  const tabs: { id: TabId; label: string; count?: number; icon?: React.ReactNode }[] = [
+    { id: 'all',      label: 'All' },
+    { id: 'active',   label: 'Active' },
     ...(draftCount > 0 ? [{ id: 'draft' as TabId, label: 'Drafts', count: draftCount }] : []),
-    { id: 'sold',    label: 'Sold' },
-    { id: 'expired', label: 'Expired' },
+    { id: 'sold',     label: 'Sold' },
+    { id: 'expired',  label: 'Expired' },
+    { id: 'messages', label: 'Messages', icon: <MessageCircle className="h-3.5 w-3.5" /> },
   ]
 
   return (
@@ -536,6 +538,7 @@ export function SellClient() {
             }`}
           >
             <span className="flex items-center gap-1.5">
+              {t.icon}
               {t.label}
               {t.count != null && (
                 <span className="text-[10px] font-semibold bg-muted px-1.5 py-0.5 rounded-full tabular-nums">
@@ -550,8 +553,11 @@ export function SellClient() {
         ))}
       </div>
 
+      {/* Messages tab */}
+      {tab === 'messages' && <MessagesPanel />}
+
       {/* Listings */}
-      {!listings?.length ? (
+      {tab !== 'messages' && (!listings?.length ? (
         <div className="text-center py-24 border border-dashed border-border rounded-2xl">
           <Package className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
           <p className="text-sm font-medium text-muted-foreground mb-1">
@@ -630,7 +636,7 @@ export function SellClient() {
             </Link>
           ))}
         </div>
-      )}
+      ))}
     </div>
   )
 }

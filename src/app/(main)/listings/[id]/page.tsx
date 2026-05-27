@@ -6,9 +6,12 @@ import { formatCents } from '@/lib/utils'
 import { Shield, ExternalLink, ChevronLeft, Copy, Star } from 'lucide-react'
 import Link from 'next/link'
 import { getVerifyUrl } from '@/lib/grading/index'
+import { COIN_EDUCATION } from '@/lib/coins/coin-education'
 import { ListingGallery } from './_components/listing-gallery'
 import { ListingActions, type AuctionData } from './_components/listing-actions'
 import { SetNavSection } from '@/components/layout/nav-context'
+import { ReportListingButton } from './_components/report-listing-button'
+import { MessageSellerButton } from './_components/message-seller-button'
 
 function formatGrade(grade: string | null): string {
   if (!grade) return ''
@@ -39,7 +42,7 @@ export default async function ListingPage({
   const [{ data: listing }, { data: auctionRow }] = await Promise.all([
     supabase
       .from('listings')
-      .select('*, profiles(username, dealer_verified, display_name, dealer_logo_url, average_rating, rating_count, subscription_tier)')
+      .select('*, profiles(username, dealer_verified, display_name, dealer_logo_url, average_rating, rating_count, subscription_tier, public_key)')
       .eq('id', id)
       .single(),
     supabase
@@ -98,8 +101,15 @@ export default async function ListingPage({
 
           {/* Actions */}
           {(() => {
-            const sellerProfile = listing.profiles as { subscription_tier?: string | null } | null
+            const sellerProfile = listing.profiles as { subscription_tier?: string | null; public_key?: string | null } | null
             const sellerTier = sellerProfile?.subscription_tier ?? 'collector_basic'
+            const sellerPublicKeyJwk: JsonWebKey | null = (() => {
+              try {
+                return sellerProfile?.public_key ? JSON.parse(sellerProfile.public_key) as JsonWebKey : null
+              } catch {
+                return null
+              }
+            })()
             const auction: AuctionData | null = auctionRow
               ? {
                   id:            auctionRow.id,
@@ -111,22 +121,31 @@ export default async function ListingPage({
                 }
               : null
             return (
-              <ListingActions
-                listing={{
-                  id: listing.id,
-                  price: listing.price,
-                  coin_name: listing.coin_name,
-                  seller_id: listing.seller_id,
-                  status: listing.status,
-                  listing_type: listing.listing_type,
-                  pass_convenience_fee: listing.pass_convenience_fee ?? false,
-                  accept_offers: listing.accept_offers ?? false,
-                  collection_item_id: listing.collection_item_id ?? null,
-                }}
-                isOwner={isOwner}
-                sellerTier={sellerTier}
-                auction={auction}
-              />
+              <>
+                <ListingActions
+                  listing={{
+                    id: listing.id,
+                    price: listing.price,
+                    coin_name: listing.coin_name,
+                    seller_id: listing.seller_id,
+                    status: listing.status,
+                    listing_type: listing.listing_type,
+                    pass_convenience_fee: listing.pass_convenience_fee ?? false,
+                    accept_offers: listing.accept_offers ?? false,
+                    collection_item_id: listing.collection_item_id ?? null,
+                  }}
+                  isOwner={isOwner}
+                  sellerTier={sellerTier}
+                  auction={auction}
+                />
+                {!isOwner && listing.status === 'active' && (
+                  <MessageSellerButton
+                    listingId={listing.id}
+                    sellerId={listing.seller_id}
+                    sellerPublicKeyJwk={sellerPublicKeyJwk}
+                  />
+                )}
+              </>
             )
           })()}
 
@@ -143,7 +162,15 @@ export default async function ListingPage({
               } | null
             } | null
 
-            const specs = profile?.specs
+            // Fall back to COIN_EDUCATION data when coin_profile.specs is missing
+            const eduSpecs = listing.series_slug ? COIN_EDUCATION[listing.series_slug] : null
+            const specs = {
+              composition: profile?.specs?.composition ?? eduSpecs?.composition ?? null,
+              diameter:    profile?.specs?.diameter    ?? eduSpecs?.diameter    ?? null,
+              weight:      profile?.specs?.weight      ?? eduSpecs?.weight      ?? null,
+              designer:    profile?.specs?.designer    ?? eduSpecs?.designer    ?? null,
+            }
+
             const mintName = listing.mint_mark
               ? (MINT_NAMES[listing.mint_mark.toUpperCase()] ?? listing.mint_mark)
               : null
@@ -153,10 +180,10 @@ export default async function ListingPage({
             if (listing.year) rows.push({ label: 'Year', value: String(listing.year) })
             if (mintName) rows.push({ label: 'Mint', value: mintName })
             if (listing.denomination) rows.push({ label: 'Denomination', value: listing.denomination })
-            if (specs?.composition) rows.push({ label: 'Composition', value: specs.composition })
-            if (specs?.diameter) rows.push({ label: 'Diameter', value: specs.diameter })
-            if (specs?.weight) rows.push({ label: 'Weight', value: specs.weight })
-            if (specs?.designer) rows.push({ label: 'Designer', value: specs.designer })
+            if (specs.composition) rows.push({ label: 'Composition', value: specs.composition })
+            if (specs.diameter) rows.push({ label: 'Diameter', value: specs.diameter })
+            if (specs.weight) rows.push({ label: 'Weight', value: specs.weight })
+            if (specs.designer) rows.push({ label: 'Designer', value: specs.designer })
             if (listing.population_at_grade != null) rows.push({ label: 'Pop at grade', value: listing.population_at_grade.toLocaleString() })
             if (listing.population_above != null) rows.push({ label: 'Pop above', value: listing.population_above.toLocaleString() })
 
@@ -174,54 +201,57 @@ export default async function ListingPage({
             )
           })()}
 
-          {/* Cert section */}
-          {listing.cert_number ? (
-            <div className="rounded-xl border border-border px-4 py-3.5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <Shield className={`h-4 w-4 shrink-0 ${isVerified ? 'text-emerald-600' : 'text-muted-foreground'}`} />
+          {/* Verify Authenticity */}
+          {listing.grading_service && (
+            <div className="rounded-xl border border-border overflow-hidden">
+              <div className="px-4 pt-3 pb-2 border-b border-border/60 flex items-center gap-2">
+                <Shield className={`h-3.5 w-3.5 shrink-0 ${isVerified ? 'text-emerald-600' : 'text-muted-foreground'}`} />
+                <p className="text-[11px] font-semibold tracking-[0.15em] uppercase text-muted-foreground">
+                  Verify Authenticity
+                </p>
+              </div>
+              <div className="px-4 py-3.5 flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium">
-                    {isVerified ? 'Verified by Pedigree Coins' : `Unverified (${listing.grading_service})`}
+                  <p className="text-sm font-semibold">
+                    {listing.grading_service}
+                    {isVerified && <span className="ml-1.5 text-[11px] font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">Verified</span>}
                   </p>
-                  {isPcgs ? (
-                    <a
-                      href={`https://www.pcgs.com/cert/${listing.cert_number}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
-                    >
-                      Cert #{listing.cert_number} <ExternalLink className="h-2.5 w-2.5" />
-                    </a>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">Cert #{listing.cert_number}</p>
+                  {listing.cert_number && (
+                    <p className="text-xs text-muted-foreground mt-0.5">Cert #{listing.cert_number}</p>
+                  )}
+                  {!listing.cert_number && (
+                    <p className="text-xs text-muted-foreground mt-0.5">No cert number provided</p>
                   )}
                 </div>
+                {(isPcgs && listing.cert_number) ? (
+                  <a
+                    href={`https://www.pcgs.com/cert/${listing.cert_number}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 hover:bg-muted px-3 py-1.5 text-xs font-semibold text-foreground transition-colors"
+                  >
+                    Verify on PCGS <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : verifyUrl ? (
+                  <a
+                    href={verifyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 hover:bg-muted px-3 py-1.5 text-xs font-semibold text-foreground transition-colors"
+                  >
+                    Verify on {listing.grading_service} <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : listing.cert_number ? (
+                  <button
+                    onClick={() => navigator.clipboard.writeText(listing.cert_number!).then(() => {})}
+                    className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 hover:bg-muted px-3 py-1.5 text-xs font-semibold text-foreground transition-colors"
+                  >
+                    <Copy className="h-3 w-3" /> Copy Cert #
+                  </button>
+                ) : null}
               </div>
-              {verifyUrl && (
-                <a
-                  href={verifyUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors shrink-0"
-                >
-                  Verify <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
-              {!isPcgs && listing.cert_number && !verifyUrl && (
-                <span className="text-xs text-muted-foreground shrink-0">
-                  <Copy className="h-3 w-3 inline mr-1" />
-                  {listing.cert_number}
-                </span>
-              )}
             </div>
-          ) : listing.grading_service ? (
-            <div className="rounded-xl border border-border px-4 py-3.5 flex items-center gap-2.5">
-              <Shield className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                {listing.grading_service} graded, no cert number provided
-              </p>
-            </div>
-          ) : null}
+          )}
 
           {/* Description */}
           {listing.description && (
@@ -232,6 +262,13 @@ export default async function ListingPage({
                 <p className="text-sm text-muted-foreground leading-relaxed">{listing.description}</p>
               </div>
             </>
+          )}
+
+          {/* Report listing */}
+          {!isOwner && listing.status === 'active' && (
+            <div className="flex justify-end">
+              <ReportListingButton listingId={listing.id} />
+            </div>
           )}
 
           {/* Seller */}

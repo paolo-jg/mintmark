@@ -7,11 +7,12 @@ interface Props {
   image: string
   imageReverse?: string
   name: string
+  priority?: boolean
 }
 
 type Phase = 'idle' | 'flipping' | 'showing' | 'fading'
 
-export function CoinCardImage({ image, imageReverse, name }: Props) {
+export function CoinCardImage({ image, imageReverse, name, priority = false }: Props) {
   const [phase, setPhase] = useState<Phase>('idle')
   const phaseRef = useRef<Phase>('idle')
   const wantsHover = useRef(false)
@@ -67,7 +68,7 @@ export function CoinCardImage({ image, imageReverse, name }: Props) {
   if (!imageReverse) {
     return (
       <div className="aspect-square overflow-hidden bg-white dark:bg-zinc-50 relative">
-        <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority unoptimized />
+        <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} unoptimized />
       </div>
     )
   }
@@ -93,14 +94,14 @@ export function CoinCardImage({ image, imageReverse, name }: Props) {
       >
         {/* Obverse */}
         <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden' }}>
-          <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority unoptimized />
+          <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} unoptimized />
         </div>
         {/* Reverse */}
         <div
           className="absolute inset-0"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
-          <Image src={imageReverse} alt={`${name} reverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority unoptimized />
+          <Image src={imageReverse} alt={`${name} reverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} unoptimized />
         </div>
       </div>
 
@@ -112,7 +113,7 @@ export function CoinCardImage({ image, imageReverse, name }: Props) {
           transition: phase === 'fading' ? 'opacity 0.4s ease-in-out' : 'none',
         }}
       >
-        <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority unoptimized />
+        <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} unoptimized />
       </div>
     </div>
   )

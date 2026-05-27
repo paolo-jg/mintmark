@@ -360,7 +360,7 @@ export function ListingsPageClient() {
                     )}
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {cat.series.map(series => {
+                      {cat.series.map((series, idx) => {
                         const { count, minPrice } = seriesStats(series)
                         const hasListings = count > 0
                         const showImage = series.image && !series.dualSide
@@ -375,6 +375,7 @@ export function ListingsPageClient() {
                                 image={series.image!}
                                 imageReverse={series.imageReverse ?? undefined}
                                 name={series.name}
+                                priority={idx < 4}
                               />
                             ) : (
                               <div

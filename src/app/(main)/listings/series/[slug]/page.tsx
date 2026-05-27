@@ -160,7 +160,7 @@ export default async function SeriesPage({
         <main className="flex-1 min-w-0">
           {listings.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-              {listings.map(listing => {
+              {listings.map((listing, idx) => {
                 const obverse = listing.images?.[0] ?? null
                 const reverse = listing.images?.[1] ?? null
                 return (
@@ -175,8 +175,9 @@ export default async function SeriesPage({
                             <img
                               src={obverse}
                               alt={listing.title}
+                              loading={idx < 4 ? 'eager' : 'lazy'}
                               // @ts-ignore — fetchpriority valid HTML, not yet in React typedefs
-                              fetchpriority="high"
+                              fetchpriority={idx < 4 ? 'high' : 'auto'}
                               className="absolute inset-0 w-full h-full object-contain p-3"
                             />
                           </div>

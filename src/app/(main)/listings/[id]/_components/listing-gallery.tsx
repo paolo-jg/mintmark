@@ -40,6 +40,7 @@ export function ListingGallery({ images, title }: Props) {
               <img
                 src={src}
                 alt=""
+                loading="lazy"
                 className="w-full h-full object-cover"
               />
             </button>
