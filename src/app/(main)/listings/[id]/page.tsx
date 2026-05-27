@@ -97,7 +97,14 @@ export default async function ListingPage({
 
           {/* Price — fixed-price listings only; auctions render live inside ListingActions */}
           {listing.listing_type !== 'auction' && (
-            <p className="text-3xl font-bold">{formatCents(listing.price)}</p>
+            <div>
+              <p className="text-3xl font-bold">{formatCents(listing.price)}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                {(listing as any).shipping_type === 'flat' && (listing as any).shipping_price_cents
+                  ? `+ ${formatCents((listing as any).shipping_price_cents)} shipping`
+                  : 'Free shipping'}
+              </p>
+            </div>
           )}
 
           {/* Actions */}

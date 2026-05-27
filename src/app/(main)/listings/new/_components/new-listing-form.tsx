@@ -486,6 +486,8 @@ export default function NewListingPage() {
   const [returnsPolicy, setReturnsPolicy] = useState<'final_sale' | 'standard' | 'custom'>('final_sale')
   const [standardReturnDays, setStandardReturnDays] = useState('14')
   const [customReturnPolicy, setCustomReturnPolicy] = useState('')
+  const [shippingType, setShippingType] = useState<'free' | 'flat'>('free')
+  const [shippingPrice, setShippingPrice] = useState('')
 
   const [submitting, setSubmitting] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
@@ -767,6 +769,8 @@ export default function NewListingPage() {
         returns_policy_type: returnsPolicy === 'final_sale' ? null : returnsPolicy,
         returns_policy_days: returnsPolicy === 'standard' ? parseInt(standardReturnDays) : null,
         returns_policy_custom: returnsPolicy === 'custom' ? customReturnPolicy.trim() || null : null,
+        shipping_type: shippingType,
+        shipping_price_cents: shippingType === 'flat' && shippingPrice ? parsePriceCents(shippingPrice) : null,
       }
 
       const { error } = await supabase.from('listings').insert(draftData)
@@ -938,6 +942,8 @@ export default function NewListingPage() {
       returns_policy_type: returnsPolicy === 'final_sale' ? null : returnsPolicy,
       returns_policy_days: returnsPolicy === 'standard' ? parseInt(standardReturnDays) : null,
       returns_policy_custom: returnsPolicy === 'custom' ? customReturnPolicy.trim() || null : null,
+      shipping_type: shippingType,
+      shipping_price_cents: shippingType === 'flat' && shippingPrice ? parsePriceCents(shippingPrice) : null,
     }
 
     const { data: listing, error } = await supabase
@@ -1712,6 +1718,58 @@ export default function NewListingPage() {
                         })()}
                       </div>
                     </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Shipping */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Shipping</CardTitle>
+                <CardDescription>How much will the buyer pay for shipping?</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShippingType('free')}
+                    className={`flex flex-col items-start rounded-xl border-2 px-4 py-3.5 text-left transition-all ${
+                      shippingType === 'free' ? 'border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'
+                    }`}
+                  >
+                    <span className={`text-sm font-semibold ${shippingType === 'free' ? 'text-foreground' : 'text-muted-foreground'}`}>Free Shipping</span>
+                    <span className="text-xs text-muted-foreground mt-0.5">You cover the label cost</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShippingType('flat')}
+                    className={`flex flex-col items-start rounded-xl border-2 px-4 py-3.5 text-left transition-all ${
+                      shippingType === 'flat' ? 'border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'
+                    }`}
+                  >
+                    <span className={`text-sm font-semibold ${shippingType === 'flat' ? 'text-foreground' : 'text-muted-foreground'}`}>Flat Rate</span>
+                    <span className="text-xs text-muted-foreground mt-0.5">Buyer pays a fixed amount</span>
+                  </button>
+                </div>
+
+                {shippingType === 'flat' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="shippingPrice" className="text-sm font-medium">Shipping Price</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                      <Input
+                        id="shippingPrice"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        value={shippingPrice}
+                        onChange={e => setShippingPrice(e.target.value)}
+                        placeholder="8.00"
+                        className="h-11 pl-7 text-base"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">This amount is added to the buyer&apos;s total at checkout.</p>
                   </div>
                 )}
               </CardContent>

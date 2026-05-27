@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       listing_id, buyer_id, seller_id, amount,
       ship_to_name, ship_to_street1, ship_to_street2,
       ship_to_city, ship_to_state, ship_to_zip,
-      seller_payout_cents, platform_fee_cents,
+      seller_payout_cents, platform_fee_cents, shipping_price_cents,
     } = meta
 
     if (!listing_id || !buyer_id) return NextResponse.json({ received: true })
@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
           amount: Number(amount ?? 0),
           seller_payout_cents: seller_payout_cents ? Number(seller_payout_cents) : null,
           platform_fee_cents: platform_fee_cents ? Number(platform_fee_cents) : null,
+          shipping_price_cents: shipping_price_cents ? Number(shipping_price_cents) : 0,
           ship_to_name,
           ship_to_street1,
           ship_to_street2: ship_to_street2 || null,

@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
   // ── Fetch listing ─────────────────────────────────────────────────────────
   const { data: listing } = await db
     .from('listings')
-    .select('id, title, coin_name, price, seller_id, status, pass_convenience_fee, grading_service, grade, cert_number')
+    .select('id, title, coin_name, price, seller_id, status, pass_convenience_fee, grading_service, grade, cert_number, shipping_type, shipping_price_cents')
     .eq('id', listing_id)
     .single()
 
@@ -111,6 +111,15 @@ export async function POST(req: NextRequest) {
     ? Math.round(calcConvenienceFee(priceUsd) * 100)
     : 0
 
+  const shippingCents = listing.shipping_type === 'flat' && listing.shipping_price_cents
+    ? (listing.shipping_price_cents as number)
+    : 0
+
+  // White glove delivery: orders over $500,000 require Pedigree Coins personal delivery ($5,000)
+  const WHITE_GLOVE_THRESHOLD = 50_000_000 // $500,000 in cents
+  const WHITE_GLOVE_FEE = 500_000          // $5,000 in cents
+  const requiresWhiteGlove = listing.price >= WHITE_GLOVE_THRESHOLD
+
   // ── Build line items ──────────────────────────────────────────────────────
   type LineItem = { price_data: { currency: string; product_data: { name: string; description?: string }; unit_amount: number }; quantity: number }
   const lineItems: LineItem[] = [
@@ -137,6 +146,31 @@ export async function POST(req: NextRequest) {
     },
   ]
 
+  if (shippingCents > 0) {
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: { name: 'Shipping' },
+        unit_amount: shippingCents,
+      },
+      quantity: 1,
+    })
+  }
+
+  if (requiresWhiteGlove) {
+    lineItems.push({
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: 'White Glove Delivery',
+          description: 'Personal in-hand delivery by a Pedigree Coins representative. Required for orders over $500,000.',
+        },
+        unit_amount: WHITE_GLOVE_FEE,
+      },
+      quantity: 1,
+    })
+  }
+
   if (convFeeCents > 0) {
     lineItems.push({
       price_data: {
@@ -149,7 +183,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Build escrow amounts ──────────────────────────────────────────────────
-  const sellerPayoutCents = listing.price - sellerFeeCents
+  const sellerPayoutCents = listing.price - sellerFeeCents + shippingCents
 
   // ── Create Checkout Session ───────────────────────────────────────────────
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
@@ -182,6 +216,7 @@ export async function POST(req: NextRequest) {
       seller_payout_cents: String(sellerPayoutCents),
       platform_fee_cents: String(platformFeeCents),
       seller_stripe_account_id: sellerAccountId ?? '',
+      shipping_price_cents: String(shippingCents),
     },
     success_url: `${baseUrl}/buy/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/listings/${listing_id}`,
