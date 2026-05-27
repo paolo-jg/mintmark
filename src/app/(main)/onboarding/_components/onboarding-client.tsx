@@ -159,8 +159,8 @@ export function OnboardingClient({ initialUsername }: Props) {
         }}
       />
 
-      {/* Modal card */}
-      <div className="relative z-10 w-full max-w-xl bg-background rounded-2xl shadow-2xl overflow-hidden">
+      {/* Modal card — wider on step 3 to fit plan cards */}
+      <div className={`relative z-10 w-full bg-background rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${step === 3 ? 'max-w-3xl' : 'max-w-xl'}`}>
 
         {/* Progress bar */}
         <div className="h-1 bg-muted">
@@ -292,54 +292,47 @@ export function OnboardingClient({ initialUsername }: Props) {
                 <p className="text-muted-foreground mt-2">Start free and upgrade whenever you're ready.</p>
               </div>
 
-              <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-4">
                 {PLANS.map(plan => (
                   <div
                     key={plan.key}
-                    className={`relative rounded-xl border px-5 py-4 flex items-center gap-4 ${
+                    className={`relative rounded-xl border p-6 flex flex-col gap-5 ${
                       plan.highlight
                         ? 'border-foreground bg-foreground text-background'
-                        : 'border-border bg-muted/20'
+                        : 'border-border bg-muted/30'
                     }`}
                   >
                     {plan.badge && (
-                      <span className="absolute -top-2.5 left-5 text-[10px] font-bold tracking-wider uppercase bg-foreground text-background px-2.5 py-0.5 rounded-full">
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-foreground text-background px-3 py-0.5 rounded-full whitespace-nowrap">
                         {plan.badge}
                       </span>
                     )}
-
-                    {/* Price */}
-                    <div className="w-28 shrink-0">
-                      <p className={`text-[11px] font-semibold uppercase tracking-widest mb-0.5 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
+                    <div>
+                      <p className={`text-xs font-semibold uppercase tracking-widest mb-2 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
                         {plan.name}
                       </p>
-                      <p className="text-xl font-bold leading-none">
+                      <p className="text-3xl font-bold">
                         {plan.price}
-                        <span className={`text-xs font-normal ml-0.5 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
+                        <span className={`text-sm font-normal ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
                           {plan.per}
                         </span>
                       </p>
                     </div>
-
-                    {/* Features */}
-                    <ul className="flex-1 flex flex-wrap gap-x-4 gap-y-1">
+                    <ul className="space-y-2 flex-1">
                       {plan.features.map(f => (
-                        <li key={f} className="flex items-center gap-1 text-sm">
-                          <Check className={`h-3.5 w-3.5 shrink-0 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`} />
-                          <span className={plan.highlight ? 'text-background/80' : 'text-muted-foreground'}>
+                        <li key={f} className="flex items-start gap-2 text-sm">
+                          <Check className={`h-4 w-4 mt-0.5 shrink-0 ${plan.highlight ? 'text-background/70' : 'text-muted-foreground'}`} />
+                          <span className={plan.highlight ? 'text-background/80' : ''}>
                             {f}
                           </span>
                         </li>
                       ))}
                     </ul>
-
-                    {/* CTA */}
                     <Button
-                      variant="outline"
-                      className={`shrink-0 h-10 px-5 text-sm font-medium ${
+                      className={`w-full h-11 text-sm font-medium ${
                         plan.highlight
-                          ? 'border-background/50 bg-transparent text-background hover:bg-background hover:text-foreground'
-                          : 'border-border bg-background text-foreground hover:bg-muted'
+                          ? 'bg-white text-zinc-900 hover:bg-white/90 border-0'
+                          : 'bg-foreground text-background hover:bg-foreground/90'
                       }`}
                       onClick={() => saveAndRedirect(plan.key === 'collector_basic' ? '/listings' : '/pricing')}
                       disabled={saving}
