@@ -488,6 +488,7 @@ export default function NewListingPage() {
   const [customReturnPolicy, setCustomReturnPolicy] = useState('')
   const [disclaimerAgreed, setDisclaimerAgreed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [savingDraft, setSavingDraft] = useState(false)
 
   // Fetch seller's subscription tier + remaining listing slots
   useEffect(() => {
@@ -714,6 +715,68 @@ export default function NewListingPage() {
     setManualGrade(g)
     if (pickedCoin) {
       setTitle(buildTitle(pickedCoin.coinName, service, g))
+    }
+  }
+
+  const saveDraft = async () => {
+    if (!pickedCoin) {
+      toast.error('Select a coin first')
+      return
+    }
+    setSavingDraft(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { toast.error('You must be signed in'); setSavingDraft(false); return }
+
+      // Resolve team context — team member saves draft on behalf of dealer
+      const { data: membership } = await supabase
+        .from('team_members')
+        .select('dealer_id')
+        .eq('user_id', user.id)
+        .single()
+      const sellerId = membership?.dealer_id ?? user.id
+
+      const draftData = {
+        seller_id: sellerId,
+        status: 'draft' as const,
+        images: [] as string[],
+        title: title.trim() || pickedCoin.coinName,
+        description: description.trim() || null,
+        listing_type: listingType,
+        price: listingType === 'fixed' && price.trim() ? parsePriceCents(price) : null,
+        listing_duration_days: listingType === 'fixed' ? (listingDuration === 'gtc' ? null : parseInt(listingDuration)) : null,
+        grading_service: service !== 'Ungraded' ? service : null,
+        cert_number: certNumber.trim() || null,
+        grade: service === 'PCGS' ? (coinGrade?.grade ?? null) : manualGrade || null,
+        verification_status: coinGrade?.verificationStatus ?? 'unverified',
+        cac_designation: cacDesignation,
+        coin_name: coinGrade?.coinName ?? pickedCoin.coinName,
+        year: coinGrade?.year ?? pickedCoin.year,
+        mint_mark: coinGrade?.mintMark ?? pickedCoin.mintMark,
+        denomination: coinGrade?.denomination ?? pickedCoin.denomination,
+        population_at_grade: coinGrade?.populationAtGrade,
+        population_above: coinGrade?.populationAbove,
+        grading_service_image_url: coinGrade?.pcgsImageUrl ?? pickedCoin.pcgsImageUrl,
+        series_slug: pickedCoin.seriesSlug,
+        price_row_label: pickedCoin.priceRowLabel,
+        pass_convenience_fee: passConvenienceFee,
+        accept_offers: acceptOffers,
+        min_offer_amount: acceptOffers && minOfferAmount ? parsePriceCents(minOfferAmount) : null,
+        auction_bin_price: listingType === 'auction' && auctionBinPrice ? parsePriceCents(auctionBinPrice) : null,
+        returns_accepted: returnsPolicy !== 'final_sale',
+        returns_policy_type: returnsPolicy === 'final_sale' ? null : returnsPolicy,
+        returns_policy_days: returnsPolicy === 'standard' ? parseInt(standardReturnDays) : null,
+        returns_policy_custom: returnsPolicy === 'custom' ? customReturnPolicy.trim() || null : null,
+      }
+
+      const { error } = await supabase.from('listings').insert(draftData)
+      if (error) { toast.error(error.message); setSavingDraft(false); return }
+
+      toast.success('Draft saved')
+      router.push('/sell?tab=draft')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save draft')
+      setSavingDraft(false)
     }
   }
 
@@ -1225,20 +1288,34 @@ export default function NewListingPage() {
 
               <div className="flex justify-between pt-2">
                 <Button type="button" variant="outline" onClick={() => { resetStep2(); setStep(1) }}>Back</Button>
-                <Button
-                  type="button"
-                  onClick={() => setStep(3)}
-                  disabled={
-                    mismatchError?.startsWith('Coin type') ||
-                    (service === 'PCGS'
-                      ? !coinGrade
-                      : service !== 'Ungraded'
-                      ? !certNumber.trim()
-                      : false)
-                  }
-                >
-                  {mismatchError && !mismatchError.startsWith('Coin type') ? 'Proceed Anyway' : 'Next'}
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={savingDraft}
+                    onClick={saveDraft}
+                  >
+                    {savingDraft
+                      ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving…</>
+                      : 'Save as Draft'
+                    }
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setStep(3)}
+                    disabled={
+                      savingDraft ||
+                      mismatchError?.startsWith('Coin type') ||
+                      (service === 'PCGS'
+                        ? !coinGrade
+                        : service !== 'Ungraded'
+                        ? !certNumber.trim()
+                        : false)
+                    }
+                  >
+                    {mismatchError && !mismatchError.startsWith('Coin type') ? 'Proceed Anyway' : 'Next'}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -1816,18 +1893,31 @@ export default function NewListingPage() {
 
             <div className="flex justify-between">
               <Button type="button" variant="outline" onClick={() => setStep(2)}>Back</Button>
-              <div className="flex flex-col items-end gap-1.5">
-                <Button type="submit" size="lg" disabled={submitting || !disclaimerAgreed}>
-                  {uploadingImages
-                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading photos...</>
-                    : submitting
-                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Publishing...</>
-                    : 'List Coin'
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={savingDraft || submitting}
+                  onClick={saveDraft}
+                >
+                  {savingDraft
+                    ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving…</>
+                    : 'Save as Draft'
                   }
                 </Button>
-                {submitting && (
-                  <p className="text-xs text-muted-foreground">This may take a few seconds…</p>
-                )}
+                <div className="flex flex-col items-end gap-1.5">
+                  <Button type="submit" size="lg" disabled={submitting || savingDraft || !disclaimerAgreed}>
+                    {uploadingImages
+                      ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading photos...</>
+                      : submitting
+                      ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Publishing...</>
+                      : 'List Coin'
+                    }
+                  </Button>
+                  {submitting && (
+                    <p className="text-xs text-muted-foreground">This may take a few seconds…</p>
+                  )}
+                </div>
               </div>
             </div>
           </>

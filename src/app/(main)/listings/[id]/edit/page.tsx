@@ -26,17 +26,28 @@ export default async function EditListingPage({
   ])
 
   if (!listing) notFound()
-  if (listing.seller_id !== user.id) notFound()
+
+  // Allow access if user is the seller or a team member of the seller
+  if (listing.seller_id !== user.id) {
+    const { data: membership } = await supabase
+      .from('team_members')
+      .select('dealer_id')
+      .eq('user_id', user.id)
+      .eq('dealer_id', listing.seller_id)
+      .maybeSingle()
+    if (!membership) notFound()
+  }
 
   const sellerTier = (profile?.subscription_tier ?? 'collector_basic') as string
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
       <Link
-        href={`/listings/${id}`}
+        href={listing.status === 'draft' ? '/sell?tab=draft' : `/listings/${id}`}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
       >
-        <ChevronLeft className="h-3.5 w-3.5" /> Back to listing
+        <ChevronLeft className="h-3.5 w-3.5" />
+        {listing.status === 'draft' ? 'Back to Drafts' : 'Back to listing'}
       </Link>
 
       <div className="mb-8">

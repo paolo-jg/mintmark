@@ -116,6 +116,7 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
   const supabase = createClient()
 
   const listingType: string = listing.listing_type ?? 'fixed'
+  const isDraft: boolean = listing.status === 'draft'
 
   // ── Lock rules ────────────────────────────────────────────────────────────
   // Duration is always locked once the listing is created.
@@ -190,6 +191,7 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
 
   // ── Submit state ──────────────────────────────────────────────────────────
   const [submitting, setSubmitting] = useState(false)
+  const [publishing, setPublishing] = useState(false)
 
   // ── Photo handlers ────────────────────────────────────────────────────────
 
@@ -238,10 +240,9 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
 
   // ── Validation ────────────────────────────────────────────────────────────
 
-  const validate = (): boolean => {
+  const validate = (requirePhotos = true): boolean => {
     if (!title.trim()) { toast.error('Title is required'); return false }
-    if (!description.trim()) { toast.error('Description is required'); return false }
-    if (photos.length === 0) { toast.error('At least one photo is required'); return false }
+    if (requirePhotos && photos.length === 0) { toast.error('At least one photo is required'); return false }
 
     if (listingType === 'fixed') {
       if (!price || parsePriceCents(price) <= 0) {
@@ -269,9 +270,32 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
 
   // ── Submit ────────────────────────────────────────────────────────────────
 
+  const handlePublish = async () => {
+    if (!validate(true)) return
+    if (photos.length === 0) { toast.error('Add at least one photo before publishing'); return }
+    setPublishing(true)
+    try {
+      let uploadedUrls: string[] = []
+      try { uploadedUrls = await uploadNewPhotos() } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to upload photos')
+        setPublishing(false); return
+      }
+      let uploadIdx = 0
+      const finalImages = photos.map(p => p.type === 'existing' ? p.url : uploadedUrls[uploadIdx++])
+      const { error } = await supabase.from('listings').update({ status: 'active', images: finalImages }).eq('id', listing.id)
+      if (error) { toast.error(error.message); setPublishing(false); return }
+      toast.success('Listing published!')
+      router.push(`/listings/${listing.id}`)
+      router.refresh()
+    } catch {
+      toast.error('Something went wrong. Please try again.')
+      setPublishing(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!validate()) return
+    if (!validate(isDraft ? false : true)) return
     setSubmitting(true)
 
     try {
@@ -348,8 +372,8 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
         }
       }
 
-      toast.success('Listing updated')
-      router.push(`/listings/${listing.id}`)
+      toast.success(isDraft ? 'Draft saved' : 'Listing updated')
+      router.push(isDraft ? '/sell?tab=draft' : `/listings/${listing.id}`)
       router.refresh()
     } catch {
       toast.error('Something went wrong. Please try again.')
@@ -364,6 +388,12 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
+
+      {isDraft && (
+        <div className="rounded-xl border border-amber-400/40 bg-amber-50/60 dark:bg-amber-950/20 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+          This listing is a <strong>draft</strong> — it won&apos;t be visible to buyers until you publish it. Add photos and complete any missing fields, then click <strong>Publish Listing</strong>.
+        </div>
+      )}
 
       {/* ── Listing Details ── */}
       <Card>
@@ -928,20 +958,35 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push(`/listings/${listing.id}`)}
+          onClick={() => router.push(isDraft ? '/sell?tab=draft' : `/listings/${listing.id}`)}
         >
           Cancel
         </Button>
-        <div className="flex flex-col items-end gap-1.5">
-          <Button type="submit" size="lg" disabled={submitting}>
-            {submitting
-              ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
-              : 'Save Changes'
-            }
-          </Button>
-          {submitting && (
-            <p className="text-xs text-muted-foreground">This may take a few seconds…</p>
+        <div className="flex items-center gap-3">
+          {isDraft && (
+            <Button
+              type="button"
+              size="lg"
+              disabled={publishing || submitting}
+              onClick={handlePublish}
+            >
+              {publishing
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Publishing...</>
+                : 'Publish Listing'
+              }
+            </Button>
           )}
+          <div className="flex flex-col items-end gap-1.5">
+            <Button type="submit" size="lg" variant={isDraft ? 'outline' : 'default'} disabled={submitting || publishing}>
+              {submitting
+                ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
+                : isDraft ? 'Save Draft' : 'Save Changes'
+              }
+            </Button>
+            {submitting && (
+              <p className="text-xs text-muted-foreground">This may take a few seconds…</p>
+            )}
+          </div>
         </div>
       </div>
     </form>
