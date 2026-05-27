@@ -33,14 +33,33 @@ export async function GET(req: NextRequest) {
 
     if (isComplete) {
       const db = getServiceDb()
-      const { data: profile, error: dbError } = await db
+
+      // Try to find profile by stripe_account_id first
+      let { data: profile, error: dbError } = await db
         .from('profiles')
         .update({ stripe_onboarding_complete: true })
         .eq('stripe_account_id', accountId)
         .select('id')
         .single()
 
-      if (dbError) console.error('[stripe/connect/return] db update failed:', dbError.message)
+      // Fallback: if no row matched (stripe_account_id not saved yet), look up via
+      // Stripe account metadata which stores the user_id at account creation time
+      if (!profile?.id) {
+        const account = await stripe.accounts.retrieve(accountId)
+        const userId = account.metadata?.user_id
+        if (userId) {
+          const fallback = await db
+            .from('profiles')
+            .update({ stripe_account_id: accountId, stripe_onboarding_complete: true })
+            .eq('id', userId)
+            .select('id')
+            .single()
+          if (fallback.error) console.error('[stripe/connect/return] fallback update failed:', fallback.error.message)
+          else profile = fallback.data
+        } else {
+          if (dbError) console.error('[stripe/connect/return] db update failed:', dbError.message)
+        }
+      }
 
       if (profile?.id) {
         db.auth.admin.getUserById(profile.id).then(({ data }) => {
