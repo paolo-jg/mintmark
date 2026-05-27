@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -12,7 +14,7 @@ export default function TermsPage() {
       <h1 className="text-3xl font-bold mb-2">Terms of Service</h1>
       <p className="text-muted-foreground mb-1">Terms of Service, Sellers Agreement, and Buyers Agreement</p>
       <p className="text-sm text-muted-foreground mb-6">
-        Effective Date: May 26, 2026 · Last Updated: May 27, 2026
+        Effective Date: May 26, 2026 · Last Updated: May 28, 2026
       </p>
 
       <div className="bg-muted/40 border border-border rounded-xl p-5 mb-10 text-sm leading-relaxed">
@@ -66,16 +68,17 @@ export default function TermsPage() {
         <dl className="mt-3 space-y-2">
           {[
             ['"Account"', 'a registered user profile on the Platform.'],
+            ['"Auction Hold"', 'a Stripe payment authorization hold placed on a Bidder\'s saved payment method at the time a bid is placed in a live auction, as described in Section 6.16.'],
             ['"Buyer"', 'a User who purchases or offers to purchase a Listing from a Seller.'],
             ['"Buyer Fee"', 'the per-transaction fee charged to a Buyer as published at pedigreecoins.com/pricing.'],
             ['"Coin"', 'a physical, government-issued or historically circulated numismatic coin offered or sold through the Platform.'],
+            ['"Confirmation Window"', 'the 48-hour period following a Buyer\'s in-app confirmation of receipt, during which a Dispute may be filed and after which Escrowed Funds are released to the Seller.'],
             ['"Dispute"', 'a formal complaint filed by a Buyer through the Platform\'s in-app dispute system asserting a problem with a Transaction, as described in Section 7.5.'],
             ['"Escrowed Funds"', 'amounts collected by Pedigree Coins (through Stripe) from a Buyer in respect of a Transaction and held in the platform\'s Stripe account pending release pursuant to Section 6.8.'],
             ['"Listing"', 'an offer to sell a Coin posted to the Platform by a Seller.'],
             ['"Plan"', 'a paid subscription tier selected by a Seller during onboarding as published at pedigreecoins.com/pricing.'],
             ['"Seller"', 'a User who lists Coins for sale through the Platform.'],
             ['"Seller Fee"', 'the per-transaction fee charged to a Seller as published at pedigreecoins.com/pricing.'],
-            ['"Shippo"', 'the shipping software-as-a-service provider integrated into the Platform.'],
             ['"Stripe"', 'Stripe, Inc. and its affiliates, including Stripe Connect.'],
             ['"Transaction"', 'a sale of a Listing through the Platform.'],
             ['"User"', 'any person who creates an Account or otherwise uses the Platform, including Buyers and Sellers.'],
@@ -109,7 +112,8 @@ export default function TermsPage() {
         <Subsection title="3.3 Onboarding Steps">
           <p>Before you may list, sell, or purchase through the Platform, you must complete onboarding, which consists of:</p>
           <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>electronic acceptance of these Terms, the Privacy Policy, the Sellers Agreement (Section 6), and the Buyers Agreement (Section 7);</li>
+            <li>electronic acceptance of these Terms and the Privacy Policy;</li>
+            <li>selection of a username and display name;</li>
             <li>for Sellers, selection of a Plan published at pedigreecoins.com/pricing;</li>
             <li>for Sellers, successful completion of KYC verification (for individuals) or KYB verification (for entities), conducted by Stripe as part of Stripe Connect account onboarding; and</li>
             <li>for Sellers, creation of a Stripe Connect account and linkage of a valid bank account capable of receiving payouts.</li>
@@ -144,7 +148,15 @@ export default function TermsPage() {
           </ul>
           <p className="mt-2">Pedigree Coins may change Plan pricing or features at any time on notice as described in Section 17.</p>
         </Subsection>
-        <Subsection title="4.2 Transaction Fees">
+        <Subsection title="4.2 Monthly Listing Quota">
+          <p>
+            Each Plan carries a monthly active-listing quota as described in Section 4.1. Listings count
+            toward the quota in the calendar month in which they are created, regardless of their current
+            status. Relisted items (see Section 6.6(h)) count as new listings in the month of relisting.
+            Unused slots do not roll over.
+          </p>
+        </Subsection>
+        <Subsection title="4.3 Transaction Fees">
           <p>
             For each completed Transaction, Pedigree Coins charges a Buyer Fee to the Buyer and a Seller
             Fee to the Seller at the rate published at pedigreecoins.com/pricing for the applicable Plan
@@ -152,7 +164,7 @@ export default function TermsPage() {
             the fee in effect at the time a Listing is created governs that Listing.
           </p>
         </Subsection>
-        <Subsection title="4.3 Payment Processing Fees">
+        <Subsection title="4.4 Payment Processing Fees">
           <p>
             Payments are processed by Stripe. Stripe charges its own processing fees (approximately
             2.9% + $0.30 per card transaction in the U.S., with separate rates for ACH, international
@@ -160,7 +172,7 @@ export default function TermsPage() {
             from the Buyer and are not absorbed by Pedigree Coins.
           </p>
         </Subsection>
-        <Subsection title="4.4 Billing and Auto-Renewal">
+        <Subsection title="4.5 Billing and Auto-Renewal">
           <p>
             Subscription Plans are billed in advance on a monthly or annual cycle and automatically
             renew until cancelled. You may cancel auto-renewal at any time through your Account settings;
@@ -168,13 +180,13 @@ export default function TermsPage() {
             for partial periods, unused listings, or unused features.
           </p>
         </Subsection>
-        <Subsection title="4.5 Failed Payments and Suspension">
+        <Subsection title="4.6 Failed Payments and Suspension">
           <p>
             If a subscription charge fails, we may suspend Plan benefits until the charge is successfully
             processed. Repeated failed payments may result in termination of the Account.
           </p>
         </Subsection>
-        <Subsection title="4.6 Taxes">
+        <Subsection title="4.7 Taxes">
           <p><strong>(a) Income Taxes.</strong> Each Seller is solely responsible for determining, reporting, and paying all income, self-employment, business, and similar taxes that arise from their use of the Platform.</p>
           <p className="mt-2"><strong>(b) Information Reporting (1099-K).</strong> Stripe will issue IRS Form 1099-K to U.S. Sellers at the thresholds set by U.S. federal law. Non-U.S. Sellers must provide a valid IRS Form W-8BEN, W-8BEN-E, or other applicable certification during onboarding.</p>
           <p className="mt-2"><strong>(c) Sales Tax, VAT, and GST.</strong> Pedigree Coins acts as the marketplace facilitator for transaction taxes in every jurisdiction where the law obligates a marketplace facilitator to do so. In those jurisdictions, Pedigree Coins (through Stripe Tax) calculates, collects, and remits the applicable tax at checkout.</p>
@@ -274,27 +286,37 @@ export default function TermsPage() {
           </p>
         </Subsection>
         <Subsection title="6.6 Shipping Requirements">
-          <p><strong>(a) Mandatory Use of Shippo.</strong> Every shipping label must be purchased through the Platform&rsquo;s Shippo integration.</p>
-          <p className="mt-2"><strong>(b) Tracked Shipping on All Orders.</strong> All shipments must carry a valid carrier tracking number.</p>
+          <p><strong>(a) Seller-Arranged Shipping.</strong> Sellers are responsible for arranging and paying for their own shipping labels through any carrier of their choice. Pedigree Coins does not provide, require, or endorse any specific shipping carrier or label service.</p>
+          <p className="mt-2"><strong>(b) Tracked Shipping Required.</strong> All shipments must carry a valid carrier tracking number. The Seller must enter the tracking number and carrier into the Platform within the dispatch window. Pedigree Coins will not release Escrowed Funds to a Seller until a tracking number has been recorded in the Platform.</p>
           <p className="mt-2"><strong>(c) Signature Confirmation on Orders of US $250 or More.</strong> The Seller must select a shipping service requiring carrier signature confirmation at delivery.</p>
-          <p className="mt-2"><strong>(d) USPS Registered Mail for Orders of US $500 or More.</strong> The Seller must ship via USPS Registered Mail with declared-value insurance for the full sale price, or via an equivalent insured secured-carrier service.</p>
+          <p className="mt-2"><strong>(d) Insured Shipping for Orders of US $500 or More.</strong> The Seller must ship with declared-value carrier insurance covering the full sale price, or via an equivalent insured secured-carrier service such as USPS Registered Mail.</p>
           <p className="mt-2"><strong>(e) Pedigree Coins Hand-Delivery for Orders over US $500,000.</strong> Seller and Buyer may elect hand-delivery by a Pedigree Coins representative at a flat fee of US $5,000 for delivery within the fifty United States.</p>
-          <p className="mt-2"><strong>(f) Handling Time.</strong> Sellers must dispatch the Coin within three (3) business days of payment authorization.</p>
-          <p className="mt-2"><strong>(g) Consequences of Non-Compliance.</strong> If a Seller ships in violation of any requirement of this Section 6.6 and the Coin is lost, stolen, damaged, or not delivered, the Seller bears 100% of the resulting loss.</p>
+          <p className="mt-2"><strong>(f) Dispatch Window.</strong> Sellers must dispatch the Coin and enter a tracking number into the Platform within <strong>five (5) calendar days</strong> of payment authorization.</p>
+          <p className="mt-2"><strong>(g) Auto-Cancellation for Non-Dispatch.</strong> If a Seller has not entered a valid tracking number within five (5) calendar days of payment authorization, the Platform will automatically cancel the order and issue a full refund to the Buyer. Upon auto-cancellation: (i) the Transaction is voided; (ii) the Listing moves to &ldquo;Expired&rdquo; status; (iii) the Listing continues to count toward the Seller&rsquo;s monthly quota; and (iv) the Listing is not automatically relisted. The Seller bears any Stripe processing or currency-conversion costs associated with the refund.</p>
+          <p className="mt-2"><strong>(h) Relisting Expired Listings.</strong> A Seller may choose to relist any Listing in &ldquo;Expired&rdquo; or &ldquo;Sold&rdquo; status by creating a new draft copy through the Platform. Each relist creates a new Listing and counts as a new listing against the Seller&rsquo;s monthly quota in the calendar month of relisting.</p>
+          <p className="mt-2"><strong>(i) No Cancellation After Dispatch.</strong> Once a Seller has entered a tracking number, the Transaction is final and cannot be cancelled by either party except through the in-platform Dispute process. All sales are final once shipped.</p>
+          <p className="mt-2"><strong>(j) Consequences of Non-Compliance.</strong> If a Seller ships in violation of any requirement of this Section 6.6 and the Coin is lost, stolen, damaged, or not delivered, the Seller bears 100% of the resulting loss.</p>
         </Subsection>
-        <Subsection title="6.7 Returns">
-          <p><strong>(a) Seller-Set Return Policy.</strong> Each Seller must publish a return policy stating whether returns are accepted, the return window, required condition of the returned Coin, who pays return shipping, and any restocking fee.</p>
-          <p className="mt-2"><strong>(b) Honor Your Policy.</strong> Sellers must honor their published return policy in full.</p>
-          <p className="mt-2"><strong>(c) No Pedigree Coins Mediation.</strong> Pedigree Coins will not mediate returns disputes.</p>
-          <p className="mt-2"><strong>(d) Counterfeits.</strong> A Coin that is counterfeit, replica, or materially misattributed (and was not disclosed as such) is returnable for a full refund of the purchase price, original shipping, return shipping, and any associated fees.</p>
+        <Subsection title="6.7 All Sales Final — No Returns">
+          <p>
+            <strong>All sales on the Platform are final. Pedigree Coins operates a strict no-return, no-exchange policy platform-wide.</strong> Sellers are not required to accept returns, and Buyers may not demand them. This policy applies to all Listings regardless of condition, grade, or price.
+          </p>
+          <p className="mt-2">
+            The sole exception is a Coin that is counterfeit, a replica, or materially misattributed and was not disclosed as such in the Listing. Such a Coin is returnable for a full refund of the purchase price, original shipping, return shipping, and any associated fees, subject to the Dispute process in Section 7.5.
+          </p>
+          <p className="mt-2">
+            Buyers are encouraged to review Listing photographs, grading service certification records, and population reports carefully before purchasing. The no-return policy is a core condition of every Transaction on the Platform.
+          </p>
         </Subsection>
         <Subsection title="6.8 Payouts and Escrow">
-          <p><strong>(a) Platform Escrow.</strong> Upon successful payment, gross Transaction proceeds are held in Pedigree Coins&rsquo; Stripe account (&ldquo;Escrow&rdquo;). Funds are not transferred to the Seller&rsquo;s Stripe Connect balance until the release conditions in Section 6.8(b) are met.</p>
-          <p className="mt-2"><strong>(b) Auto-Release.</strong> Escrowed funds are released to the Seller automatically 48 hours after Shippo records a &ldquo;Delivered&rdquo; event. Funds will not be released until delivery is confirmed by the shipping carrier.</p>
-          <p className="mt-2"><strong>(c) Early Release on Buyer Confirmation.</strong> A Buyer may manually confirm receipt through the Platform, releasing escrowed funds immediately.</p>
-          <p className="mt-2"><strong>(d) Hold Extensions.</strong> Pedigree Coins may extend the hold where a complaint is under active investigation, where the Transaction is being reviewed for suspected fraud, or as required by applicable law.</p>
-          <p className="mt-2"><strong>(e) In-Platform Disputes.</strong> If a Buyer files a Dispute through the Platform before the 48-hour auto-release window closes, Escrowed Funds are immediately frozen and will not be released to the Seller pending resolution. Pedigree Coins will review the Dispute and, at its sole discretion, either (i) release Escrowed Funds to the Seller or (ii) issue a refund to the Buyer. Pedigree Coins aims to resolve Disputes within two (2) business days of receipt but makes no guarantee as to timing. The Seller will be notified of the Dispute and the outcome by email.</p>
-          <p className="mt-2"><strong>(f) Chargebacks.</strong> If a Buyer initiates a chargeback through their payment provider or card issuer, Escrowed Funds are frozen pending resolution by Stripe and the card network. If the chargeback is resolved in the Seller&rsquo;s favor, funds are released. If resolved against the Seller, Stripe issues the refund from Escrowed Funds. Buyers are strongly encouraged to file an in-platform Dispute before initiating a chargeback, as doing so allows Pedigree Coins to facilitate resolution without card-network involvement.</p>
+          <p><strong>(a) Platform Escrow.</strong> Upon successful payment, gross Transaction proceeds are held in Pedigree Coins&rsquo; Stripe account (&ldquo;Escrow&rdquo;). Funds are not transferred to the Seller&rsquo;s Stripe Connect balance until the release conditions in Section 6.8(b) or (c) are met.</p>
+          <p className="mt-2"><strong>(b) Payout Requires Tracking Number.</strong> No payout will be released to a Seller until a valid carrier tracking number has been entered in the Platform. This is a hard prerequisite and cannot be waived.</p>
+          <p className="mt-2"><strong>(c) Auto-Release.</strong> Fourteen (14) calendar days after the Seller enters a tracking number, Escrowed Funds are released to the Seller automatically, provided no Dispute is open. This auto-release date is displayed on the order detail page and serves as the outer boundary of the Buyer&rsquo;s dispute window.</p>
+          <p className="mt-2"><strong>(d) Early Release on Buyer Confirmation.</strong> A Buyer may confirm receipt through the Platform at any time after a tracking number is entered. Upon confirmation, a <strong>48-hour Confirmation Window</strong> begins. If no Dispute is filed within that window, Escrowed Funds are released to the Seller at the end of the 48-hour period. Confirming receipt acknowledges that the Coin has arrived; Buyers should inspect the Coin before confirming.</p>
+          <p className="mt-2"><strong>(e) Dispute Window Summary.</strong> A Buyer&rsquo;s right to file an in-platform Dispute expires at the earlier of: (i) 48 hours after the Buyer confirms receipt, or (ii) 14 calendar days after the Seller enters a tracking number. After either deadline, Escrowed Funds are released and Disputes are not eligible for in-platform resolution.</p>
+          <p className="mt-2"><strong>(f) Hold Extensions.</strong> Pedigree Coins may extend the hold where a Dispute is under active investigation, where the Transaction is being reviewed for suspected fraud, or as required by applicable law.</p>
+          <p className="mt-2"><strong>(g) In-Platform Disputes.</strong> If a Buyer files a Dispute before the dispute window closes, Escrowed Funds are immediately frozen and will not be released to the Seller pending resolution. Pedigree Coins will review the Dispute and, at its sole discretion, either (i) release Escrowed Funds to the Seller or (ii) issue a refund to the Buyer. Pedigree Coins aims to resolve Disputes within two (2) business days of receipt but makes no guarantee as to timing.</p>
+          <p className="mt-2"><strong>(h) Chargebacks.</strong> If a Buyer initiates a chargeback through their payment provider or card issuer, Escrowed Funds are frozen pending resolution by Stripe and the card network. Buyers are strongly encouraged to use the in-platform Dispute process before initiating a chargeback.</p>
         </Subsection>
         <Subsection title="6.9 Chargebacks and Reversals">
           <p>
@@ -347,6 +369,23 @@ export default function TermsPage() {
             intellectual property, publicity, or privacy rights by Seller Content.
           </p>
         </Subsection>
+        <Subsection title="6.15 Referral Program">
+          <p>
+            Pedigree Coins may offer a referral program under which a Seller earns a credit or reward
+            when a referred user completes account registration and, where applicable, their first
+            Transaction. Referral terms, credit amounts, expiry dates, and eligibility criteria are
+            published on the Platform and may be changed or discontinued at any time. Credits have no
+            cash value and are not transferable.
+          </p>
+        </Subsection>
+        <Subsection title="6.16 Auction Payment Holds">
+          <p><strong>(a) Authorization Hold at Bid Time.</strong> When a User places a bid in a live auction, Pedigree Coins places a Stripe payment authorization hold (&ldquo;Auction Hold&rdquo;) on the Bidder&rsquo;s saved payment method in the amount of the bid. The Bidder must have a saved payment method on file; bids without a valid payment method will be rejected.</p>
+          <p className="mt-2"><strong>(b) Release on Outbid.</strong> If the Bidder is outbid, the Auction Hold is released automatically and no charge is made.</p>
+          <p className="mt-2"><strong>(c) Capture on Win.</strong> If the Bidder wins the auction, the Auction Hold is captured (i.e., converted to a charge) and the Transaction proceeds as an ordinary fixed-price sale subject to all terms in this Section 6 and Section 7.</p>
+          <p className="mt-2"><strong>(d) Reserve Not Met.</strong> If the auction ends without the reserve price being met, all Auction Holds are released and no Transaction occurs.</p>
+          <p className="mt-2"><strong>(e) Anti-Sniping.</strong> If a bid is placed within the final 15 seconds of an auction, the auction end time is automatically extended by 15 seconds. This process may repeat until no bid is placed in the final 15-second window.</p>
+          <p className="mt-2"><strong>(f) Bid Binding.</strong> Every bid is a binding commitment to purchase the Coin at the bid price, plus applicable fees and shipping, if that bid wins the auction. Bids may not be retracted.</p>
+        </Subsection>
       </Section>
 
       <Section title="7. Buyers Agreement">
@@ -364,45 +403,62 @@ export default function TermsPage() {
         </Subsection>
         <Subsection title="7.2 Purchases Are Binding">
           <p>
-            Every purchase order or accepted offer you place is a binding agreement to purchase the
-            Coin from the Seller at the listed price, plus the Buyer Fee, applicable shipping charges,
-            applicable taxes, and (if applicable) the Hand-Delivery Service fee.
+            Every purchase order, accepted offer, or winning auction bid is a binding agreement to
+            purchase the Coin from the Seller at the listed or winning price, plus the Buyer Fee,
+            applicable shipping charges, and applicable taxes. Once a Seller has entered a tracking
+            number, the Transaction is final and cannot be cancelled by the Buyer except through the
+            in-platform Dispute process.
           </p>
         </Subsection>
         <Subsection title="7.3 Payment">
           <p>
-            Buyers must pay through Stripe using a payment method supported on the Platform. Upon
-            successful authorization, the Transaction proceeds are held as Escrowed Funds in the
-            platform&rsquo;s Stripe account pending release pursuant to Section 6.8.
+            Buyers must pay through Stripe using a payment method supported on the Platform. For
+            auction purchases, Buyers must have a saved payment method on file before placing any bid
+            (see Section 6.16). Upon successful authorization or capture, the Transaction proceeds are
+            held as Escrowed Funds in the platform&rsquo;s Stripe account pending release pursuant to Section 6.8.
           </p>
         </Subsection>
         <Subsection title="7.4 Inspection and Receipt Confirmation">
           <p>
             Upon delivery, the Buyer should promptly inspect the Coin. If satisfied, the Buyer may
-            confirm receipt through the Platform, which immediately releases Escrowed Funds to the
-            Seller. If the Buyer does not confirm receipt and does not file a Dispute within 48 hours
-            of the carrier&rsquo;s recorded delivery event, Escrowed Funds will release automatically to
-            the Seller as set out in Section 6.8(b).
+            confirm receipt through the Platform. Upon confirmation, a <strong>48-hour Confirmation Window</strong> begins,
+            during which the Buyer may still file a Dispute. After the Confirmation Window closes,
+            Escrowed Funds are released to the Seller and no in-platform Dispute may be filed.
+          </p>
+          <p className="mt-2">
+            If the Buyer does not confirm receipt, Escrowed Funds will release automatically to the
+            Seller <strong>14 calendar days after the Seller entered the tracking number</strong>, provided no Dispute
+            is open. This auto-release date is displayed on the order detail page.
+          </p>
+          <p className="mt-2">
+            <strong>Buyers should not confirm receipt before inspecting the Coin.</strong> Confirming receipt
+            starts the 48-hour dispute clock. Filing a Dispute is the correct action if the Coin
+            has not arrived, arrived damaged, or does not match the Listing.
           </p>
         </Subsection>
         <Subsection title="7.5 In-Platform Dispute Process">
-          <p><strong>(a) How to File.</strong> If you have a problem with a Transaction (including non-delivery, item not as described, suspected counterfeit, or unauthorized purchase), you must file a Dispute through the Platform before the 48-hour auto-release window closes. To file, navigate to the order detail page and click &ldquo;File a Dispute.&rdquo;</p>
-          <p className="mt-2"><strong>(b) Required Information.</strong> You must select a dispute reason and provide a written description of the problem. Pedigree Coins may request additional evidence, such as photographs or carrier documentation.</p>
-          <p className="mt-2"><strong>(c) Fund Freeze.</strong> Upon submission of a Dispute, Escrowed Funds are immediately frozen. Funds will not be released to the Seller while the Dispute is under review.</p>
-          <p className="mt-2"><strong>(d) Review and Decision.</strong> Pedigree Coins will review the Dispute and aims to issue a determination within two (2) business days. Pedigree Coins may, at its sole discretion, (i) release Escrowed Funds to the Seller or (ii) refund the Buyer. Both parties will be notified of the outcome by email.</p>
-          <p className="mt-2"><strong>(e) Finality.</strong> Pedigree Coins&rsquo;s determination governs the disposition of Escrowed Funds and is not subject to appeal within the Platform. Either party may pursue other remedies, including arbitration under Section 15, independently of Pedigree Coins&rsquo;s determination.</p>
-          <p className="mt-2"><strong>(f) Limitation.</strong> The in-platform Dispute process is available only for Transactions where delivery was recorded by the carrier within the preceding 30 days and where Escrowed Funds have not yet been released. Disputes filed after Escrowed Funds have been released are not eligible for in-platform resolution.</p>
+          <p><strong>(a) How to File.</strong> If you have a problem with a Transaction (including non-delivery, item not as described, suspected counterfeit, or damage in transit), you must file a Dispute through the Platform before your dispute window closes. To file, navigate to the order detail page and click &ldquo;File a Dispute.&rdquo;</p>
+          <p className="mt-2"><strong>(b) Dispute Window.</strong> The dispute window closes at the earlier of: (i) 48 hours after you confirm receipt, or (ii) 14 calendar days after the Seller entered the tracking number. The deadline is shown on your order detail page. Disputes filed after the window closes are not eligible for in-platform resolution.</p>
+          <p className="mt-2"><strong>(c) Required Information.</strong> You must select a dispute reason and provide a written description of the problem. Pedigree Coins may request additional evidence, such as photographs or carrier documentation.</p>
+          <p className="mt-2"><strong>(d) Fund Freeze.</strong> Upon submission of a Dispute, Escrowed Funds are immediately frozen and will not be released to the Seller while the Dispute is under review.</p>
+          <p className="mt-2"><strong>(e) Review and Decision.</strong> Pedigree Coins will review the Dispute and aims to issue a determination within two (2) business days. Pedigree Coins may, at its sole discretion, (i) release Escrowed Funds to the Seller or (ii) refund the Buyer. Both parties will be notified of the outcome by email.</p>
+          <p className="mt-2"><strong>(f) Finality.</strong> Pedigree Coins&rsquo;s determination governs the disposition of Escrowed Funds and is not subject to appeal within the Platform. Either party may pursue other remedies, including arbitration under Section 15.</p>
         </Subsection>
-        <Subsection title="7.6 No Guarantee of Authenticity, Quality, or Delivery">
+        <Subsection title="7.6 All Sales Final">
+          <p>
+            <strong>All purchases on the Platform are final.</strong> Pedigree Coins does not permit returns or exchanges
+            except as expressly provided in Section 6.7 (counterfeit or materially misattributed Coins).
+            By completing a purchase, the Buyer acknowledges this policy and waives any right to demand
+            a return, exchange, or refund on any other grounds.
+          </p>
+        </Subsection>
+        <Subsection title="7.7 No Guarantee of Authenticity, Quality, or Delivery">
           <p>
             The Buyer expressly acknowledges that Pedigree Coins does not authenticate, grade, appraise,
             certify, inspect, possess, or guarantee any Coin; that Pedigree Coins is not a carrier and
             does not guarantee delivery; and that all risk rests on the Buyer&rsquo;s diligence in evaluating
             the Listing and on the Seller&rsquo;s representations and warranties.
           </p>
-        </Subsection>
-        <Subsection title="7.7 Returns">
-          <p>Returns are governed by the Seller&rsquo;s published return policy and by the counterfeit remedy in Section 6.7(d). For disputes about item condition, authenticity, or non-delivery, Buyers are directed to the in-platform Dispute process in Section 7.5 before seeking other remedies.</p>
         </Subsection>
         <Subsection title="7.8 Chargebacks">
           <p>
@@ -433,7 +489,7 @@ export default function TermsPage() {
           <li>reverse-engineer, decompile, or scrape the Platform other than as expressly permitted in writing;</li>
           <li>circumvent any fee, including by communicating off-Platform to consummate a Transaction that originated on the Platform;</li>
           <li>post content that is unlawful, defamatory, harassing, threatening, obscene, infringing, or designed to deceive;</li>
-          <li>shill-bid, manipulate Listings, post fake reviews, or otherwise manipulate the marketplace; or</li>
+          <li>shill-bid, manipulate auction end times (other than through legitimate bids triggering anti-sniping extension), post fake reviews, or otherwise manipulate the marketplace; or</li>
           <li>use the Platform on behalf of any person or entity prohibited from using the Platform under Section 3.1.</li>
         </ul>
       </Section>
@@ -464,12 +520,25 @@ export default function TermsPage() {
         </Subsection>
       </Section>
 
-      <Section title="10. Privacy">
-        <p>
-          Our collection and use of personal data is described in our{' '}
-          <Link href="/privacy" className="underline underline-offset-2 hover:text-foreground">Privacy Policy</Link>
-          , which is incorporated by reference.
-        </p>
+      <Section title="10. Privacy and Messaging">
+        <Subsection title="10.1 Privacy Policy">
+          <p>
+            Our collection and use of personal data is described in our{' '}
+            <Link href="/privacy" className="underline underline-offset-2 hover:text-foreground">Privacy Policy</Link>
+            , which is incorporated by reference.
+          </p>
+        </Subsection>
+        <Subsection title="10.2 End-to-End Encrypted Messaging">
+          <p>
+            The Platform provides an in-app messaging feature between Buyers and Sellers. Messages are
+            end-to-end encrypted using RSA-OAEP public-key cryptography. Encryption keys are generated
+            on your device and your private key is never transmitted to or stored by Pedigree Coins.
+            Pedigree Coins cannot read the content of encrypted messages. By using the messaging feature,
+            you agree that Pedigree Coins is not responsible for the content of messages, cannot mediate
+            message-based disputes, and may not be able to produce message content in response to legal
+            process. Users are solely responsible for the content of messages they send.
+          </p>
+        </Subsection>
       </Section>
 
       <Section title="11. Disclaimers">
@@ -516,7 +585,7 @@ export default function TermsPage() {
         <Subsection title="12.3 No Liability for Third-Party Acts">
           <p className="uppercase text-sm">
             Pedigree Coins has no liability for the acts, omissions, or performance of any Seller,
-            Buyer, carrier, insurer, grading service, bank, Stripe, Shippo, or other third party.
+            Buyer, carrier, insurer, grading service, bank, Stripe, or other third party.
           </p>
         </Subsection>
         <Subsection title="12.4 Mandatory Carve-Outs">
@@ -560,7 +629,7 @@ export default function TermsPage() {
         </Subsection>
         <Subsection title="14.4 Effect of Termination">
           <p>
-            Upon termination, your right to access the Platform ceases. Sections 4.6, 5, 6.9, 6.12,
+            Upon termination, your right to access the Platform ceases. Sections 4.7, 5, 6.9, 6.12,
             6.14, 9, 11, 12, 13, 14, 15, 16, and 18 survive termination.
           </p>
         </Subsection>

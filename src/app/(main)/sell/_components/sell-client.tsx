@@ -8,8 +8,9 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
-import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload, MessageCircle, Gavel } from 'lucide-react'
+import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload, MessageCircle, Gavel, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import { SellerOnboardingModal } from '@/components/sell/seller-onboarding-modal'
 import { MessagesPanel } from './messages-panel'
 import { AuctionCountdown } from '@/components/ui/auction-countdown'
@@ -79,10 +80,19 @@ interface PayoutOrder {
   created_at: string
 }
 
+interface AwaitingTrackingOrder {
+  id: string
+  amount: number
+  seller_payout_cents: number | null
+  created_at: string
+  listing: { coin_name: string | null; title: string | null } | null
+}
+
 interface SellData {
   allListings: Listing[]
   orders: { amount: number; status: string }[]
   payoutOrders: PayoutOrder[]
+  awaitingTracking: AwaitingTrackingOrder[]
   tier: Tier
   carryOver: number
   createdThisMonth: number
@@ -123,6 +133,7 @@ export async function fetchSellData(): Promise<SellData | null> {
     { data: allListings },
     { data: orders },
     { data: payoutOrders },
+    { data: awaitingTracking },
     { data: profile },
     { count: carryOver },
     { count: createdThisMonth },
@@ -140,6 +151,12 @@ export async function fetchSellData(): Promise<SellData | null> {
       .in('status', ['label_purchased', 'shipped', 'delivered', 'complete', 'disputed'])
       .order('created_at', { ascending: false })
       .limit(20),
+    supabase
+      .from('orders')
+      .select('id, amount, seller_payout_cents, created_at, listing:listings!orders_listing_id_fkey(coin_name, title)')
+      .eq('seller_id', sellerId)
+      .eq('status', 'awaiting_shipment')
+      .order('created_at', { ascending: true }),
     supabase.from('profiles').select('subscription_tier, stripe_account_id, stripe_onboarding_complete, seller_tos_agreed, privacy_policy_agreed').eq('id', sellerId).single(),
     supabase
       .from('listings')
@@ -186,6 +203,7 @@ export async function fetchSellData(): Promise<SellData | null> {
     allListings: mergedListings,
     orders: (orders ?? []) as { amount: number; status: string }[],
     payoutOrders: (payoutOrders ?? []) as PayoutOrder[],
+    awaitingTracking: (awaitingTracking ?? []) as unknown as AwaitingTrackingOrder[],
     tier: ((profile?.subscription_tier ?? 'collector_basic') as Tier),
     carryOver: carryOver ?? 0,
     createdThisMonth: createdThisMonth ?? 0,
@@ -202,6 +220,26 @@ export function SellClient() {
   const [tab, setTab] = useState<TabId>('all')
   const [connectLoading, setConnectLoading] = useState(false)
   const [dismissedOnboarded, setDismissedOnboarded] = useState(false)
+  const [relistingId, setRelistingId] = useState<string | null>(null)
+
+  async function handleRelist(e: React.MouseEvent, listingId: string) {
+    e.preventDefault()
+    e.stopPropagation()
+    setRelistingId(listingId)
+    try {
+      const res = await fetch(`/api/listings/${listingId}/relist`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error ?? 'Failed to relist')
+        return
+      }
+      router.push(`/listings/${data.id}/edit`)
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setRelistingId(null)
+    }
+  }
 
   // Check for ?onboarded=1, ?onboarding=incomplete, ?tab=draft from URL
   const [stripeReturn, setStripeReturn] = useState<'success' | 'incomplete' | null>(null)
@@ -304,7 +342,7 @@ export function SellClient() {
     return null
   }
 
-  const { allListings, orders, payoutOrders, tier, carryOver, createdThisMonth, stripeOnboardingComplete, sellerTosAgreed, privacyPolicyAgreed, teamContext } = data
+  const { allListings, orders, payoutOrders, awaitingTracking, tier, carryOver, createdThisMonth, stripeOnboardingComplete, sellerTosAgreed, privacyPolicyAgreed, teamContext } = data
   // needsOnboarding: true until both agreements signed AND Stripe connected
   const needsOnboarding = !sellerTosAgreed || !privacyPolicyAgreed || !stripeOnboardingComplete
   const tierConfig = TIER_CONFIG[tier]
@@ -504,14 +542,57 @@ export function SellClient() {
           </div>
           <p className="text-2xl font-bold tabular-nums">{formatCents(revenue)}</p>
         </div>
-        <div className="rounded-xl border border-border bg-card px-4 py-4">
+        <div className={`rounded-xl border px-4 py-4 ${pendingShipments > 0 ? 'border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/20' : 'border-border bg-card'}`}>
           <div className="flex items-center gap-2 mb-1">
-            <Clock className="h-3.5 w-3.5 text-muted-foreground/60" />
-            <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground/60">To Ship</p>
+            {pendingShipments > 0
+              ? <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+              : <Clock className="h-3.5 w-3.5 text-muted-foreground/60" />
+            }
+            <p className={`text-xs font-semibold tracking-widest uppercase ${pendingShipments > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-muted-foreground/60'}`}>
+              {pendingShipments > 0 ? 'Need Tracking' : 'To Ship'}
+            </p>
           </div>
-          <p className="text-2xl font-bold tabular-nums">{pendingShipments}</p>
+          <p className={`text-2xl font-bold tabular-nums ${pendingShipments > 0 ? 'text-amber-700 dark:text-amber-400' : ''}`}>{pendingShipments}</p>
+          {pendingShipments > 0 && (
+            <p className="text-xs text-amber-600 dark:text-amber-500 mt-1">Payout on hold</p>
+          )}
         </div>
       </div>
+
+      {/* Needs tracking — payout blocked */}
+      {awaitingTracking.length > 0 && (
+        <div className="rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/20 overflow-hidden mb-8">
+          <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-amber-200 dark:border-amber-800">
+            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">Tracking required — payout on hold</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 ml-auto hidden sm:block">Add a tracking number to release your payout</p>
+          </div>
+          <div className="divide-y divide-amber-200 dark:divide-amber-800">
+            {awaitingTracking.map(order => {
+              const coinName = (order.listing as { coin_name: string | null; title: string | null } | null)?.coin_name
+                ?? (order.listing as { coin_name: string | null; title: string | null } | null)?.title
+                ?? `Order #${order.id.slice(0, 8)}`
+              return (
+                <div key={order.id} className="flex items-center justify-between px-5 py-3.5 gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{coinName}</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                      {order.seller_payout_cents !== null ? formatCents(order.seller_payout_cents) : formatCents(order.amount)} held until tracking added
+                    </p>
+                  </div>
+                  <Link
+                    href={`/dashboard/orders/${order.id}/ship`}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/50 hover:bg-amber-200 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-1.5 transition-colors whitespace-nowrap flex-shrink-0"
+                  >
+                    <Package className="h-3.5 w-3.5" />
+                    Add Tracking
+                  </Link>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Payouts */}
       {payoutOrders.length > 0 && (
@@ -700,7 +781,7 @@ export function SellClient() {
                 {!isAuction && listing.price ? formatCents(listing.price) : isAuction ? '' : '—'}
               </p>
 
-              {/* Status / draft CTA */}
+              {/* Status / CTA */}
               <div className="flex-shrink-0 mt-0.5">
                 {listing.status === 'draft' ? (
                   <Link
@@ -710,6 +791,23 @@ export function SellClient() {
                   >
                     Add Images &amp; Publish
                   </Link>
+                ) : (listing.status === 'expired' || listing.status === 'sold') ? (
+                  <div className="flex items-center gap-2">
+                    <Badge variant={STATUS_VARIANT[listing.status]} className="text-xs">
+                      {STATUS_LABEL[listing.status]}
+                    </Badge>
+                    <button
+                      onClick={e => handleRelist(e, listing.id)}
+                      disabled={relistingId === listing.id}
+                      className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg border border-border bg-muted hover:bg-muted/60 transition-colors whitespace-nowrap disabled:opacity-50"
+                    >
+                      {relistingId === listing.id
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <RotateCcw className="h-3 w-3" />
+                      }
+                      Relist
+                    </button>
+                  </div>
                 ) : (
                   <Badge variant={STATUS_VARIANT[listing.status]} className="text-xs">
                     {STATUS_LABEL[listing.status]}

@@ -1,15 +1,27 @@
 'use client'
 
-import { useState } from 'react'
-import { X, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, Loader2, MapPin, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { formatCents } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 function calcConvenienceFee(priceUsd: number): number {
   return (priceUsd * 0.029 + 0.30) / (1 - 0.029) + 0.30
+}
+
+interface SavedAddress {
+  id: string
+  name: string
+  street1: string
+  street2: string | null
+  city: string
+  state: string
+  zip: string
+  is_default: boolean
 }
 
 interface Props {
@@ -24,6 +36,8 @@ interface Props {
 
 export function BuyNowModal({ listing, onClose }: Props) {
   const [submitting, setSubmitting] = useState(false)
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([])
+  const [showAddressForm, setShowAddressForm] = useState(false)
 
   const [shipToName, setShipToName] = useState('')
   const [shipToStreet1, setShipToStreet1] = useState('')
@@ -31,6 +45,31 @@ export function BuyNowModal({ listing, onClose }: Props) {
   const [shipToCity, setShipToCity] = useState('')
   const [shipToState, setShipToState] = useState('')
   const [shipToZip, setShipToZip] = useState('')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('addresses').select('*').order('is_default', { ascending: false }).then(({ data }) => {
+      if (!data?.length) { setShowAddressForm(true); return }
+      setSavedAddresses(data as SavedAddress[])
+      const def = data.find((a: SavedAddress) => a.is_default) ?? data[0]
+      setShipToName(def.name)
+      setShipToStreet1(def.street1)
+      setShipToStreet2(def.street2 ?? '')
+      setShipToCity(def.city)
+      setShipToState(def.state)
+      setShipToZip(def.zip)
+    })
+  }, [])
+
+  function applyAddress(addr: SavedAddress) {
+    setShipToName(addr.name)
+    setShipToStreet1(addr.street1)
+    setShipToStreet2(addr.street2 ?? '')
+    setShipToCity(addr.city)
+    setShipToState(addr.state)
+    setShipToZip(addr.zip)
+    setShowAddressForm(false)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -128,73 +167,120 @@ export function BuyNowModal({ listing, onClose }: Props) {
           </div>
 
           <form id="buy-now-form" onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="shipToName">Full Name</Label>
-              <Input
-                id="shipToName"
-                value={shipToName}
-                onChange={e => setShipToName(e.target.value)}
-                placeholder="Jane Smith"
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="shipToStreet1">Street Address</Label>
-              <Input
-                id="shipToStreet1"
-                value={shipToStreet1}
-                onChange={e => setShipToStreet1(e.target.value)}
-                placeholder="123 Main St"
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="shipToStreet2">
-                Apt / Suite <span className="text-muted-foreground font-normal">(optional)</span>
-              </Label>
-              <Input
-                id="shipToStreet2"
-                value={shipToStreet2}
-                onChange={e => setShipToStreet2(e.target.value)}
-                placeholder="Apt 4B"
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-1 space-y-1.5">
-                <Label htmlFor="shipToCity">City</Label>
-                <Input
-                  id="shipToCity"
-                  value={shipToCity}
-                  onChange={e => setShipToCity(e.target.value)}
-                  placeholder="Austin"
-                  required
-                />
+            {/* Saved address card */}
+            {savedAddresses.length > 0 && !showAddressForm && shipToName && (
+              <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2.5 min-w-0">
+                  <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold">{shipToName}</p>
+                    <p className="text-xs text-muted-foreground">{shipToStreet1}{shipToStreet2 ? `, ${shipToStreet2}` : ''}</p>
+                    <p className="text-xs text-muted-foreground">{shipToCity}, {shipToState} {shipToZip}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAddressForm(true)}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 flex items-center gap-1"
+                >
+                  Change <ChevronDown className="h-3 w-3" />
+                </button>
               </div>
-              <div className="col-span-1 space-y-1.5">
-                <Label htmlFor="shipToState">State</Label>
-                <Input
-                  id="shipToState"
-                  value={shipToState}
-                  onChange={e => setShipToState(e.target.value)}
-                  placeholder="TX"
-                  maxLength={2}
-                  required
-                />
+            )}
+
+            {/* Address picker when multiple saved */}
+            {savedAddresses.length > 1 && showAddressForm && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Saved Addresses</p>
+                {savedAddresses.map(addr => (
+                  <button
+                    key={addr.id}
+                    type="button"
+                    onClick={() => applyAddress(addr)}
+                    className="w-full text-left rounded-xl border border-border hover:border-foreground/40 px-4 py-3 transition-colors"
+                  >
+                    <p className="text-sm font-semibold">{addr.name}{addr.is_default && <span className="ml-2 text-[10px] font-bold tracking-wider uppercase bg-foreground text-background px-2 py-0.5 rounded-full">Default</span>}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{addr.street1}{addr.street2 ? `, ${addr.street2}` : ''}, {addr.city}, {addr.state} {addr.zip}</p>
+                  </button>
+                ))}
+                <button type="button" onClick={() => setShowAddressForm(false)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  Cancel
+                </button>
               </div>
-              <div className="col-span-1 space-y-1.5">
-                <Label htmlFor="shipToZip">ZIP Code</Label>
-                <Input
-                  id="shipToZip"
-                  value={shipToZip}
-                  onChange={e => setShipToZip(e.target.value)}
-                  placeholder="78701"
-                  required
-                />
-              </div>
-            </div>
+            )}
+
+            {/* Manual entry form (shown when no saved address, or adding new) */}
+            {(showAddressForm && savedAddresses.length <= 1) || savedAddresses.length === 0 ? (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="shipToName">Full Name</Label>
+                  <Input
+                    id="shipToName"
+                    value={shipToName}
+                    onChange={e => setShipToName(e.target.value)}
+                    placeholder="Jane Smith"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="shipToStreet1">Street Address</Label>
+                  <Input
+                    id="shipToStreet1"
+                    value={shipToStreet1}
+                    onChange={e => setShipToStreet1(e.target.value)}
+                    placeholder="123 Main St"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="shipToStreet2">
+                    Apt / Suite <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Input
+                    id="shipToStreet2"
+                    value={shipToStreet2}
+                    onChange={e => setShipToStreet2(e.target.value)}
+                    placeholder="Apt 4B"
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-1 space-y-1.5">
+                    <Label htmlFor="shipToCity">City</Label>
+                    <Input
+                      id="shipToCity"
+                      value={shipToCity}
+                      onChange={e => setShipToCity(e.target.value)}
+                      placeholder="Austin"
+                      required
+                    />
+                  </div>
+                  <div className="col-span-1 space-y-1.5">
+                    <Label htmlFor="shipToState">State</Label>
+                    <Input
+                      id="shipToState"
+                      value={shipToState}
+                      onChange={e => setShipToState(e.target.value)}
+                      placeholder="TX"
+                      maxLength={2}
+                      required
+                    />
+                  </div>
+                  <div className="col-span-1 space-y-1.5">
+                    <Label htmlFor="shipToZip">ZIP Code</Label>
+                    <Input
+                      id="shipToZip"
+                      value={shipToZip}
+                      onChange={e => setShipToZip(e.target.value)}
+                      placeholder="78701"
+                      required
+                    />
+                  </div>
+                </div>
+              </>
+            ) : null}
           </form>
         </div>
 

@@ -112,6 +112,7 @@ export type OrderStatus =
   | 'delivered'
   | 'disputed'
   | 'complete'
+  | 'cancelled'
 
 export type TrackingStatus =
   | 'pre_transit'
@@ -147,18 +148,14 @@ export interface Order {
 export interface Shipment {
   id: string
   orderId: string
-  shippoShipmentId?: string
-  shippoTransactionId?: string
   carrier: string
   serviceLevel: string
   trackingNumber?: string
   trackingUrl?: string
   trackingStatus: TrackingStatus
-  labelUrl?: string
   labelPurchasedAt?: string
   insured: boolean
   insuredValue?: number // cents
-  insuranceCost?: number // cents
   weightOz?: number
   lengthIn?: number
   widthIn?: number

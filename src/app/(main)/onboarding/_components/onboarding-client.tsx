@@ -69,6 +69,7 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
   const [username, setUsername] = useState(initialUsername)
   const [shopName, setShopName] = useState('')
   const [usernameError, setUsernameError] = useState<string | null>(null)
+  const [tosAccepted, setTosAccepted] = useState(false)
   const [saving, setSaving] = useState(false)
 
   function validateUsernameFormat(value: string): string | null {
@@ -226,10 +227,30 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
                 </div>
               </div>
 
+              <div className="flex items-start gap-3">
+                <input
+                  id="tosAccept"
+                  type="checkbox"
+                  checked={tosAccepted}
+                  onChange={e => setTosAccepted(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-border accent-foreground cursor-pointer flex-shrink-0"
+                />
+                <label htmlFor="tosAccept" className="text-sm text-muted-foreground leading-snug cursor-pointer">
+                  I agree to the{' '}
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 text-foreground hover:opacity-70 transition-opacity">
+                    Terms of Service
+                  </a>{' '}
+                  and{' '}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 text-foreground hover:opacity-70 transition-opacity">
+                    Privacy Policy
+                  </a>
+                </label>
+              </div>
+
               <Button
                 className="w-full h-12 text-base"
                 onClick={() => setStep(2)}
-                disabled={!firstName.trim() || !lastName.trim()}
+                disabled={!firstName.trim() || !lastName.trim() || !tosAccepted}
               >
                 Continue →
               </Button>

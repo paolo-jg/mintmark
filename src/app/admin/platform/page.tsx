@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { getServiceDb } from '@/lib/admin'
 import PlatformControls from '../_components/platform-controls'
 

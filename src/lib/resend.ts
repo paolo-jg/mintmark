@@ -1,6 +1,11 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+let _resend: Resend | null = null
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
+  return _resend
+}
+
 const FROM = 'Pedigree Coins <no-reply@pedigreecoins.com>'
 const BASE_URL = 'https://pedigreecoins.com'
 
@@ -114,7 +119,7 @@ function metaTable(rows: string) {
 // ─── Email functions ──────────────────────────────────────────────────────────
 
 export async function sendWelcomeBuyer({ to, name }: { to: string; name: string }) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: 'Welcome to Pedigree Coins',
@@ -134,7 +139,7 @@ export async function sendWelcomeBuyer({ to, name }: { to: string; name: string 
 }
 
 export async function sendWelcomeSeller({ to, name }: { to: string; name: string }) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: "You're ready to sell on Pedigree Coins",
@@ -170,7 +175,7 @@ export async function sendOrderConfirmationBuyer({
   listingTitle: string
   amountCents: number
 }) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `Order confirmed - ${listingTitle}`,
@@ -207,7 +212,7 @@ export async function sendNewOrderSeller({
   listingTitle: string
   payoutCents: number
 }) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `You made a sale - ${listingTitle}`,
@@ -242,7 +247,7 @@ export async function sendShippingReminder({
   listingTitle: string
   orderId: string
 }) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `Reminder: ship your order - ${listingTitle}`,
@@ -279,7 +284,7 @@ export async function sendShippingUpdate({
   trackingUrl: string
   carrier: string
 }) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `Your order has shipped - ${listingTitle}`,
@@ -310,7 +315,7 @@ export async function sendPackageDelivered({
   buyerName: string
   listingTitle: string
 }) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `Your order has been delivered - ${listingTitle}`,
@@ -343,7 +348,7 @@ export async function sendDisputeOpened({
   const detail = role === 'buyer'
     ? 'Our team and Stripe will review the case. Funds remain frozen until the dispute is resolved.'
     : 'Your payout is frozen until the dispute is resolved. Stripe will review the case and contact you directly.'
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `Dispute opened - ${listingTitle}`,
@@ -383,7 +388,7 @@ export async function sendDisputeResolved({
   } else {
     detail = "The dispute was resolved in the seller's favor. The seller's payout has been released."
   }
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `Dispute resolved - ${listingTitle}`,
@@ -417,7 +422,7 @@ export async function sendOfferReceived({
   askingPriceCents: number
 }) {
   const pct = askingPriceCents > 0 ? Math.round((amountCents / askingPriceCents) * 100) : null
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `New offer on ${listingTitle}`,
@@ -474,7 +479,7 @@ export async function sendOfferResponded({
     counter: 'View Counter-Offer',
     cancel: 'Browse Listings',
   }
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: subjects[action],
@@ -501,7 +506,7 @@ export async function sendPayoutReleased({
   listingTitle: string
   payoutCents: number
 }) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `Payout released - ${listingTitle}`,
@@ -534,7 +539,7 @@ export async function sendTeamInvite({
   role: string
   inviteUrl: string
 }) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: FROM,
     to,
     subject: `You've been invited to join ${dealerName} on Pedigree Coins`,

@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { LandingPage } from './_components/landing-page'

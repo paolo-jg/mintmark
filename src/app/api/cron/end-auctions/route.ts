@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { createClient as createServiceClient, SupabaseClient } from '@supabase/supabase-js'
 import stripe from '@/lib/stripe'
 
 function getServiceDb() {
@@ -100,7 +100,6 @@ export async function GET(req: NextRequest) {
         shipping_price_cents: shippingCents,
         status: 'awaiting_shipment',
         stripe_payment_intent_id: winBid.stripe_payment_intent_id,
-        auto_confirm_at: new Date(Date.now() + 14 * 86400_000).toISOString(), // 14 days
       }).select('id').single()
 
       // Mark listing sold, mark auction settled
@@ -111,7 +110,7 @@ export async function GET(req: NextRequest) {
 
       // Record price history
       if (listing.coin_name && listing.grade && listing.grading_service) {
-        void db.from('price_history').insert({
+        await db.from('price_history').insert({
           coin_name: listing.coin_name,
           year: listing.year,
           mint_mark: listing.mint_mark,
@@ -122,7 +121,7 @@ export async function GET(req: NextRequest) {
           sale_price: auction.current_bid,
           sale_date: new Date().toISOString(),
           listing_id: listing.id,
-        }).catch(() => null)
+        }).then(() => null, () => null)
       }
 
       // Cancel all other holds
@@ -134,15 +133,16 @@ export async function GET(req: NextRequest) {
       const msg = err instanceof Error ? err.message : String(err)
       errors.push(`Auction ${auction.id}: ${msg}`)
       // Try to reset to ended so we can retry
-      await db.from('auctions').update({ status: 'ended' }).eq('id', auction.id).catch(() => null)
+      await db.from('auctions').update({ status: 'ended' }).eq('id', auction.id).then(() => null, () => null)
     }
   }
 
   return NextResponse.json({ settled, errors })
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function cancelAllHolds(
-  db: ReturnType<typeof createServiceClient>,
+  db: SupabaseClient<any>,
   auctionId: string,
   exceptBidId?: string
 ) {
@@ -152,12 +152,12 @@ async function cancelAllHolds(
     .eq('auction_id', auctionId)
     .eq('hold_status', 'held')
 
-  const { data: bids } = exceptBidId ? query.neq('id', exceptBidId) : query
+  const { data: bids } = await (exceptBidId ? query.neq('id', exceptBidId) : query)
 
   for (const bid of bids ?? []) {
     if (bid.stripe_payment_intent_id) {
       await stripe.paymentIntents.cancel(bid.stripe_payment_intent_id).catch(() => null)
     }
-    await db.from('bids').update({ hold_status: 'cancelled' }).eq('id', bid.id).catch(() => null)
+    await db.from('bids').update({ hold_status: 'cancelled' }).eq('id', bid.id).then(() => null, () => null)
   }
 }

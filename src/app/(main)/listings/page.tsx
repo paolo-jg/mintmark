@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { Suspense } from 'react'
 import { ListingsPageClient } from './_components/listings-page-client'
 

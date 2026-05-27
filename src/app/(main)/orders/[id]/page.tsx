@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
@@ -5,10 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { formatCents } from '@/lib/utils'
-import { Package, Shield, ExternalLink } from 'lucide-react'
+import { Package, Shield, ExternalLink, Lock } from 'lucide-react'
 import type { OrderStatus, TrackingStatus } from '@/types'
 import FileDisputeButton from './_components/file-dispute-button'
-import RequestReturnButton from './_components/request-return-button'
+import { ConfirmReceiptButton } from './_components/confirm-receipt-button'
 
 const TRACKING_STEPS: TrackingStatus[] = ['pre_transit', 'transit', 'delivered']
 
@@ -28,6 +30,7 @@ const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   delivered: 'Delivered',
   disputed: 'Disputed',
   complete: 'Complete',
+  cancelled: 'Cancelled',
 }
 
 export default async function OrderTrackingPage({ params }: { params: Promise<{ id: string }> }) {
@@ -50,6 +53,11 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
   const currentTrackingStatus: TrackingStatus = shipment?.tracking_status ?? 'pre_transit'
   const currentStepIndex = TRACKING_STEPS.indexOf(currentTrackingStatus)
 
+  const autoConfirmAt = order.auto_confirm_at ? new Date(order.auto_confirm_at) : null
+  const isComplete = order.status === 'complete' || order.transfer_released
+  const isShipped = ['shipped', 'delivered', 'complete'].includes(order.status)
+  const canDispute = isBuyer && !isComplete && ['shipped', 'delivered', 'awaiting_shipment'].includes(order.status)
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
       <div className="flex items-center justify-between mb-8">
@@ -57,7 +65,7 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
           <h1 className="text-2xl font-bold tracking-tight">Order #{order.id.slice(0, 8).toUpperCase()}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{formatCents(order.amount)}</p>
         </div>
-        <Badge>{ORDER_STATUS_LABELS[order.status as OrderStatus]}</Badge>
+        <Badge>{ORDER_STATUS_LABELS[(order.status as OrderStatus)] ?? order.status}</Badge>
       </div>
 
       {/* Tracking progress */}
@@ -70,7 +78,6 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Step progress */}
             <div className="flex items-center gap-0">
               {TRACKING_STEPS.map((step, i) => {
                 const isComplete = i <= currentStepIndex
@@ -97,11 +104,10 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
 
             <Separator />
 
-            {/* Tracking details */}
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Carrier</span>
-                <span>{shipment.carrier} · {shipment.service_level}</span>
+                <span>{shipment.carrier}{shipment.service_level ? ` · ${shipment.service_level}` : ''}</span>
               </div>
               {shipment.tracking_number && (
                 <div className="flex justify-between">
@@ -127,7 +133,7 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
             </div>
 
             {shipment.tracking_url && (
-              <Button variant="outline" className="w-full" onClick={() => window.open(shipment.tracking_url, '_blank')}>
+              <Button variant="outline" className="w-full" render={<a href={shipment.tracking_url} target="_blank" rel="noopener noreferrer" />}>
                 <ExternalLink className="h-4 w-4 mr-2" />
                 Track on Carrier Site
               </Button>
@@ -140,13 +146,11 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
             <Package className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">
               {isBuyer
-                ? 'The seller is preparing your shipment. You\'ll get an update when the label is purchased.'
-                : 'Purchase a label to ship this order.'}
+                ? "The seller is preparing your shipment. You'll receive an email with tracking once it ships."
+                : 'Enter a tracking number to ship this order and release your payout.'}
             </p>
-            {!isBuyer && (
-              <Button className="mt-4" render={
-                <a href={`/dashboard/orders/${order.id}/ship`} />
-              }>
+            {!isBuyer && order.status === 'awaiting_shipment' && (
+              <Button className="mt-4" render={<a href={`/dashboard/orders/${order.id}/ship`} />}>
                 Ship This Order
               </Button>
             )}
@@ -169,32 +173,47 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
         </CardContent>
       </Card>
 
-      {/* Confirm receipt */}
-      {isBuyer && order.status === 'delivered' && (
-        <Card className="border-green-200 bg-green-50 dark:bg-green-950/20">
-          <CardContent className="py-4 flex items-center justify-between">
+      {/* Buyer: confirm receipt (once shipped, not yet complete) */}
+      {isBuyer && isShipped && !isComplete && order.status !== 'disputed' && (
+        <div className="mb-6">
+          <ConfirmReceiptButton
+            orderId={order.id}
+            autoConfirmAt={order.auto_confirm_at}
+            onConfirmed={() => {}}
+          />
+        </div>
+      )}
+
+      {/* Order complete */}
+      {isComplete && (
+        <Card className="mb-6 border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-950/20">
+          <CardContent className="py-4 flex items-center gap-3">
+            <Lock className="h-4 w-4 text-emerald-600 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium">Did you receive your coin?</p>
-              <p className="text-xs text-muted-foreground">
-                Confirming releases payment to the seller.
-                {order.auto_confirm_at && ` Auto-confirms ${new Date(order.auto_confirm_at).toLocaleDateString()}.`}
-              </p>
+              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">Order complete</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Payment has been released. All sales are final.</p>
             </div>
-            <Button size="sm">Confirm Receipt</Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Dispute / Return */}
-      {isBuyer && ['delivered', 'shipped', 'label_purchased', 'awaiting_shipment'].includes(order.status) && (
+      {/* Dispute window — only while order is active and not yet complete */}
+      {canDispute && (
         <div className="text-center pt-2 space-y-1">
-          <p className="text-xs text-muted-foreground">Problem with this order?</p>
-          <div className="flex items-center justify-center gap-3">
-            <FileDisputeButton orderId={order.id} />
-            <span className="text-xs text-muted-foreground/40">·</span>
-            <RequestReturnButton orderId={order.id} />
-          </div>
+          <p className="text-xs text-muted-foreground">
+            {autoConfirmAt
+              ? <>Dispute deadline: <strong>{autoConfirmAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong> — 48 hours after confirmation or 14 days from ship date, whichever comes first.</>
+              : 'You have 48 hours after confirming receipt, or 14 days from the ship date, to file a dispute.'}
+          </p>
+          <FileDisputeButton orderId={order.id} />
         </div>
+      )}
+
+      {/* All Sales Final notice — once shipped */}
+      {isShipped && !canDispute && !isComplete && order.status !== 'disputed' && (
+        <p className="text-center text-xs text-muted-foreground pt-2">
+          All sales are final. Contact support if you have not received your package.
+        </p>
       )}
 
       {order.status === 'disputed' && (
@@ -202,6 +221,15 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
           <CardContent className="py-4">
             <p className="text-sm font-medium text-red-700 dark:text-red-400">Dispute in progress</p>
             <p className="text-xs text-muted-foreground mt-0.5">Our team is reviewing this order. You will be notified of the outcome.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {order.status === 'cancelled' && (
+        <Card className="border-muted">
+          <CardContent className="py-4">
+            <p className="text-sm font-medium">Order cancelled</p>
+            <p className="text-xs text-muted-foreground mt-0.5">This order was cancelled and the buyer has been refunded.</p>
           </CardContent>
         </Card>
       )}

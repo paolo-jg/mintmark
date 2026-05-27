@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { CollectClient } from './_components/collect-client'
 import { DevBanner } from '@/components/dev/dev-banner'
 

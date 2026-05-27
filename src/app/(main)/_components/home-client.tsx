@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Heart, ShoppingBag, Tag, Package, CheckCircle2, X, ArrowLeftRight, Loader2, Wallet, Users, Gavel, Copy, Check as CheckIcon, Gift, Info } from 'lucide-react'
+import { Heart, ShoppingBag, Tag, Package, CheckCircle2, X, ArrowLeftRight, Loader2, Wallet, Users, Gavel, Copy, Check as CheckIcon, Gift, Info, AlertTriangle } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 import type { OrderStatus } from '@/types'
 import { createClient } from '@/lib/supabase/client'
@@ -19,6 +19,7 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   delivered: 'Delivered',
   disputed: 'Disputed',
   complete: 'Complete',
+  cancelled: 'Cancelled',
 }
 
 const STATUS_VARIANTS: Record<OrderStatus, 'default' | 'secondary' | 'outline' | 'destructive'> = {
@@ -28,6 +29,7 @@ const STATUS_VARIANTS: Record<OrderStatus, 'default' | 'secondary' | 'outline' |
   delivered: 'default',
   disputed: 'destructive',
   complete: 'outline',
+  cancelled: 'secondary',
 }
 
 interface Offer {
@@ -485,14 +487,22 @@ export function HomeClient() {
       </div>
 
       {pendingShipments.length > 0 && (
-        <div className="mb-6 rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm flex items-center justify-between">
-          <span>
-            <strong>{pendingShipments.length}</strong>{' '}
-            {pendingShipments.length === 1 ? 'order needs' : 'orders need'} to be shipped
-          </span>
-          <Button size="sm" variant="destructive" render={<Link href="/dashboard/orders" />}>
-            Ship Now
-          </Button>
+        <div className="mb-6 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/20 px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                {pendingShipments.length === 1 ? '1 order needs a tracking number' : `${pendingShipments.length} orders need tracking numbers`}
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400">Your payout is on hold until you add a tracking number</p>
+            </div>
+          </div>
+          <Link
+            href="/sell"
+            className="flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/50 hover:bg-amber-200 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-700 rounded-lg px-3 py-1.5 transition-colors whitespace-nowrap flex-shrink-0"
+          >
+            Add Tracking →
+          </Link>
         </div>
       )}
 
