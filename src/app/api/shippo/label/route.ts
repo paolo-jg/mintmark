@@ -84,11 +84,29 @@ export async function POST(request: NextRequest) {
 
     if (shipmentError) throw new Error(shipmentError.message)
 
-    // Update order status
+    // ── Shipping markup + payout adjustment ──────────────────────────────────
+    // If buyer paid shipping and there's a spread over the Shippo rate, apply
+    // a 1.2x markup on the label cost. Seller nets the remaining spread.
+    // If no spread (or free shipping), deduct the raw Shippo rate only.
+    const MARKUP = 1.2
+    const shippingCollected: number = (order as { shipping_price_cents?: number }).shipping_price_cents ?? 0
+    const labelCost = rateAmountCents
+    const hasSpread = shippingCollected > labelCost
+    const labelDeduction = hasSpread
+      ? Math.min(Math.round(labelCost * MARKUP), shippingCollected) // markup, capped at what was collected
+      : labelCost
+
+    // Recalculate seller payout: original payout already includes shipping collected,
+    // so subtract the label deduction to get the final amount
+    const currentPayout: number = (order as { seller_payout_cents?: number }).seller_payout_cents ?? 0
+    const adjustedPayout = Math.max(0, currentPayout - labelDeduction)
+
+    // Update order status + adjusted payout
     await supabase
       .from('orders')
       .update({
         status: 'label_purchased',
+        seller_payout_cents: adjustedPayout,
         updated_at: new Date().toISOString(),
       })
       .eq('id', orderId)

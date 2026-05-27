@@ -193,6 +193,9 @@ function calcConvenienceFee(priceUsd: number): number {
   return (priceUsd * 0.029 + 0.30) / (1 - 0.029) + 0.30
 }
 
+const FREE_SHIPPING_MIN_CENTS = 25_000 // $250 — below this, minimum $3.99 flat rate required
+const FLAT_RATE_MINIMUM_CENTS = 499    // $4.99
+
 // Price input helpers
 // Format with commas while preserving partial input (e.g. "1,234." stays as-is)
 function formatPriceWhileTyping(v: string): string {
@@ -809,6 +812,20 @@ export default function NewListingPage() {
     if (listingType === 'fixed' && !price.trim()) {
       toast.error('Ask price is required for Buy It Now listings')
       return
+    }
+    if (shippingType === 'flat') {
+      const shippingCents = shippingPrice ? parsePriceCents(shippingPrice) : 0
+      if (shippingCents < FLAT_RATE_MINIMUM_CENTS) {
+        toast.error('Minimum shipping rate is $4.99')
+        return
+      }
+    }
+    if (shippingType === 'free' && listingType === 'fixed' && price) {
+      if (parsePriceCents(price) < FREE_SHIPPING_MIN_CENTS) {
+        toast.error('Free shipping is only available for listings priced at $250 or more')
+        setShippingType('flat')
+        return
+      }
     }
     if (listingType === 'auction' && !startPrice.trim()) {
       toast.error('Starting bid is required for auction listings')
@@ -1730,48 +1747,63 @@ export default function NewListingPage() {
                 <CardDescription>How much will the buyer pay for shipping?</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShippingType('free')}
-                    className={`flex flex-col items-start rounded-xl border-2 px-4 py-3.5 text-left transition-all ${
-                      shippingType === 'free' ? 'border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'
-                    }`}
-                  >
-                    <span className={`text-sm font-semibold ${shippingType === 'free' ? 'text-foreground' : 'text-muted-foreground'}`}>Free Shipping</span>
-                    <span className="text-xs text-muted-foreground mt-0.5">You cover the label cost</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShippingType('flat')}
-                    className={`flex flex-col items-start rounded-xl border-2 px-4 py-3.5 text-left transition-all ${
-                      shippingType === 'flat' ? 'border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'
-                    }`}
-                  >
-                    <span className={`text-sm font-semibold ${shippingType === 'flat' ? 'text-foreground' : 'text-muted-foreground'}`}>Flat Rate</span>
-                    <span className="text-xs text-muted-foreground mt-0.5">Buyer pays a fixed amount</span>
-                  </button>
-                </div>
+                {(() => {
+                  const priceCents = listingType === 'fixed' && price ? parsePriceCents(price) : 0
+                  const freeAllowed = priceCents >= FREE_SHIPPING_MIN_CENTS
+                  return (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => { if (freeAllowed) setShippingType('free') }}
+                          disabled={!freeAllowed}
+                          className={`flex flex-col items-start rounded-xl border-2 px-4 py-3.5 text-left transition-all ${
+                            !freeAllowed
+                              ? 'border-border opacity-40 cursor-not-allowed'
+                              : shippingType === 'free'
+                                ? 'border-foreground bg-foreground/5'
+                                : 'border-border hover:border-foreground/30'
+                          }`}
+                        >
+                          <span className={`text-sm font-semibold ${shippingType === 'free' && freeAllowed ? 'text-foreground' : 'text-muted-foreground'}`}>Free Shipping</span>
+                          <span className="text-xs text-muted-foreground mt-0.5">
+                            {freeAllowed ? 'You cover the label cost' : 'Available for listings $250+'}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShippingType('flat')}
+                          className={`flex flex-col items-start rounded-xl border-2 px-4 py-3.5 text-left transition-all ${
+                            shippingType === 'flat' ? 'border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'
+                          }`}
+                        >
+                          <span className={`text-sm font-semibold ${shippingType === 'flat' ? 'text-foreground' : 'text-muted-foreground'}`}>Flat Rate</span>
+                          <span className="text-xs text-muted-foreground mt-0.5">Buyer pays a fixed amount</span>
+                        </button>
+                      </div>
 
-                {shippingType === 'flat' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="shippingPrice" className="text-sm font-medium">Shipping Price</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                      <Input
-                        id="shippingPrice"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        value={shippingPrice}
-                        onChange={e => setShippingPrice(e.target.value)}
-                        placeholder="8.00"
-                        className="h-11 pl-7 text-base"
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">This amount is added to the buyer&apos;s total at checkout.</p>
-                  </div>
-                )}
+                      {shippingType === 'flat' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="shippingPrice" className="text-sm font-medium">Shipping Price</Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                            <Input
+                              id="shippingPrice"
+                              type="number"
+                              min="4.99"
+                              step="0.01"
+                              value={shippingPrice}
+                              onChange={e => setShippingPrice(e.target.value)}
+                              placeholder="3.99"
+                              className="h-11 pl-7 text-base"
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">Minimum $4.99. Added to the buyer&apos;s total at checkout.</p>
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
               </CardContent>
             </Card>
 
