@@ -486,7 +486,7 @@ export default function NewListingPage() {
   const [returnsPolicy, setReturnsPolicy] = useState<'final_sale' | 'standard' | 'custom'>('final_sale')
   const [standardReturnDays, setStandardReturnDays] = useState('14')
   const [customReturnPolicy, setCustomReturnPolicy] = useState('')
-  const [disclaimerAgreed, setDisclaimerAgreed] = useState(false)
+
   const [submitting, setSubmitting] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
 
@@ -660,7 +660,7 @@ export default function NewListingPage() {
     setReturnsPolicy('final_sale')
     setStandardReturnDays('14')
     setCustomReturnPolicy('')
-    setDisclaimerAgreed(false)
+
   }
 
   function buildTitle(coinName: string, svc: GradingService, grade: string | null | undefined): string {
@@ -834,6 +834,14 @@ export default function NewListingPage() {
       return
     }
 
+    // Resolve seller: team members list on behalf of their dealer
+    const { data: membership } = await supabase
+      .from('team_members')
+      .select('dealer_id')
+      .eq('user_id', user.id)
+      .single()
+    const sellerId = membership?.dealer_id ?? user.id
+
     setUploadingImages(imageFiles.length > 0)
 
     // Run image upload and cert check in parallel — don't block on collection item creation
@@ -897,7 +905,7 @@ export default function NewListingPage() {
 
     // Step 2: insert listing
     const listingData = {
-      seller_id: user.id,
+      seller_id: sellerId,
       title: title.trim(),
       description: description.trim(),
       listing_type: listingType,
@@ -1875,20 +1883,6 @@ export default function NewListingPage() {
               </CardContent>
             </Card>
 
-            {/* Legal disclaimer */}
-            <div className="rounded-xl border border-border bg-muted/20 px-5 py-4 flex items-start gap-3">
-              <input
-                type="checkbox"
-                id="disclaimer"
-                checked={disclaimerAgreed}
-                onChange={e => setDisclaimerAgreed(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-border cursor-pointer flex-shrink-0"
-              />
-              <label htmlFor="disclaimer" className="text-sm text-muted-foreground cursor-pointer leading-relaxed">
-                I confirm that I am the legal owner of this coin and that all information provided is accurate to the best of my knowledge. I accept full legal liability for the authenticity and legitimacy of this listing. Misrepresentation may result in account suspension and legal consequences.
-              </label>
-            </div>
-
             <Separator />
 
             <div className="flex justify-between">
@@ -1906,7 +1900,7 @@ export default function NewListingPage() {
                   }
                 </Button>
                 <div className="flex flex-col items-end gap-1.5">
-                  <Button type="submit" size="lg" disabled={submitting || savingDraft || !disclaimerAgreed}>
+                  <Button type="submit" size="lg" disabled={submitting || savingDraft}>
                     {uploadingImages
                       ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading photos...</>
                       : submitting
