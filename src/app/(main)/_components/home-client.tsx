@@ -1,15 +1,17 @@
 'use client'
 
 import useSWR from 'swr'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Shield, TrendingUp, Clock, List, Heart, ShoppingBag, Tag, Package } from 'lucide-react'
+import { Shield, TrendingUp, Clock, List, Heart, ShoppingBag, Tag, Package, CheckCircle2, X, ArrowLeftRight, Loader2, BarChart2, Wallet, Users } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 import type { OrderStatus } from '@/types'
 import { PricingSection } from '@/components/layout/pricing-section'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   awaiting_shipment: 'Awaiting Shipment',
@@ -29,12 +31,39 @@ const STATUS_VARIANTS: Record<OrderStatus, 'default' | 'secondary' | 'outline' |
   complete: 'outline',
 }
 
+interface Offer {
+  id: string
+  listing_id: string
+  buyer_id: string
+  seller_id: string
+  amount_cents: number
+  status: string
+  counter_amount_cents: number | null
+  message: string | null
+  expires_at: string
+  created_at: string
+  listings: { coin_name: string | null; price: number | null } | null
+}
+
+interface RepeatBuyer {
+  buyer_id: string
+  username: string | null
+  display_name: string | null
+  purchase_count: number
+  total_spent: number
+  last_purchase_at: string
+}
+
 interface HomeData {
   isLoggedIn: boolean
+  userId: string
   allSellingOrders: { amount: number; status: string; created_at: string }[]
   allBuyingOrders: { amount: number; status: string; created_at: string }[]
   activeListingsData: { id: string; price: number | null }[]
   subscriptionTier: string | null
+  incomingOffers: Offer[]
+  outgoingOffers: Offer[]
+  repeatBuyers: RepeatBuyer[]
 }
 
 export async function fetchHomeData(): Promise<HomeData> {
@@ -43,22 +72,83 @@ export async function fetchHomeData(): Promise<HomeData> {
   const user = session?.user
 
   if (!user) {
-    return { isLoggedIn: false, allSellingOrders: [], allBuyingOrders: [], activeListingsData: [], subscriptionTier: null }
+    return { isLoggedIn: false, userId: '', allSellingOrders: [], allBuyingOrders: [], activeListingsData: [], subscriptionTier: null, incomingOffers: [], outgoingOffers: [], repeatBuyers: [] }
   }
 
-  const [{ data: allSellingOrders }, { data: allBuyingOrders }, { data: activeListingsData }, { data: profile }] = await Promise.all([
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('subscription_tier')
+    .eq('id', user.id)
+    .single()
+
+  const isDealer = profile?.subscription_tier === 'dealer'
+
+  const [
+    { data: allSellingOrders },
+    { data: allBuyingOrders },
+    { data: activeListingsData },
+    { data: incomingOffers },
+    { data: outgoingOffers },
+    { data: sellerOrders },
+  ] = await Promise.all([
     supabase.from('orders').select('amount, status, created_at').eq('seller_id', user.id),
     supabase.from('orders').select('amount, status, created_at').eq('buyer_id', user.id),
     supabase.from('listings').select('id, price').eq('seller_id', user.id).eq('status', 'active'),
-    supabase.from('profiles').select('subscription_tier').eq('id', user.id).single(),
+    supabase.from('offers').select('*, listings(coin_name, price)').eq('seller_id', user.id).in('status', ['pending']).order('created_at', { ascending: false }).limit(10),
+    supabase.from('offers').select('*, listings(coin_name, price)').eq('buyer_id', user.id).in('status', ['pending', 'countered']).order('created_at', { ascending: false }).limit(10),
+    isDealer
+      ? supabase.from('orders').select('buyer_id, amount, created_at').eq('seller_id', user.id).neq('status', 'disputed')
+      : Promise.resolve({ data: null }),
   ])
+
+  // Build repeat buyer list for dealers
+  let repeatBuyers: RepeatBuyer[] = []
+  if (isDealer && sellerOrders?.length) {
+    const byBuyer = new Map<string, { total: number; count: number; last: string }>()
+    for (const o of sellerOrders as { buyer_id: string; amount: number; created_at: string }[]) {
+      const existing = byBuyer.get(o.buyer_id)
+      if (existing) {
+        existing.total += o.amount
+        existing.count += 1
+        if (o.created_at > existing.last) existing.last = o.created_at
+      } else {
+        byBuyer.set(o.buyer_id, { total: o.amount, count: 1, last: o.created_at })
+      }
+    }
+    const repeatIds = [...byBuyer.entries()].filter(([, v]) => v.count >= 3).map(([id]) => id)
+    if (repeatIds.length) {
+      const { data: buyerProfiles } = await supabase
+        .from('profiles')
+        .select('id, username, display_name')
+        .in('id', repeatIds)
+      repeatBuyers = repeatIds
+        .map(id => {
+          const stats = byBuyer.get(id)!
+          const bp = (buyerProfiles ?? []).find((p: { id: string }) => p.id === id) as { id: string; username: string | null; display_name: string | null } | undefined
+          return {
+            buyer_id: id,
+            username: bp?.username ?? null,
+            display_name: bp?.display_name ?? null,
+            purchase_count: stats.count,
+            total_spent: stats.total,
+            last_purchase_at: stats.last,
+          }
+        })
+        .sort((a, b) => b.purchase_count - a.purchase_count)
+        .slice(0, 10)
+    }
+  }
 
   return {
     isLoggedIn: true,
+    userId: user.id,
     allSellingOrders: (allSellingOrders ?? []) as { amount: number; status: string; created_at: string }[],
     allBuyingOrders: (allBuyingOrders ?? []) as { amount: number; status: string; created_at: string }[],
     activeListingsData: (activeListingsData ?? []) as { id: string; price: number | null }[],
     subscriptionTier: profile?.subscription_tier ?? null,
+    incomingOffers: (incomingOffers ?? []) as Offer[],
+    outgoingOffers: (outgoingOffers ?? []) as Offer[],
+    repeatBuyers,
   }
 }
 
@@ -125,8 +215,126 @@ function DashboardSkeleton() {
   )
 }
 
+function OfferRow({ offer, isSeller, onRespond }: {
+  offer: Offer
+  isSeller: boolean
+  onRespond: () => void
+}) {
+  const [loading, setLoading] = useState<string | null>(null)
+  const [showCounter, setShowCounter] = useState(false)
+  const [counterAmount, setCounterAmount] = useState('')
+
+  const title = offer.listings?.coin_name ?? 'Unknown listing'
+  const isCountered = offer.status === 'countered'
+
+  async function respond(action: 'accept' | 'decline' | 'counter', counterAmountCents?: number) {
+    setLoading(action)
+    try {
+      const res = await fetch(`/api/offers/${offer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, counterAmountCents }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error)
+      toast.success(action === 'accept' ? 'Offer accepted' : action === 'decline' ? 'Offer declined' : 'Counter sent')
+      onRespond()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed')
+    } finally {
+      setLoading(null)
+      setShowCounter(false)
+    }
+  }
+
+  function handleCounter(e: React.FormEvent) {
+    e.preventDefault()
+    const cents = Math.round(parseFloat(counterAmount.replace(/[^0-9.]/g, '')) * 100)
+    if (!cents) { toast.error('Enter a valid counter amount'); return }
+    respond('counter', cents)
+  }
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-3.5 border-b border-border last:border-0">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{title}</p>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          <span className="text-xs text-muted-foreground">
+            {isCountered ? `Counter: ${formatCents(offer.counter_amount_cents ?? 0)}` : `Offer: ${formatCents(offer.amount_cents)}`}
+          </span>
+          {offer.listings?.price && (
+            <span className="text-xs text-muted-foreground">· Ask: {formatCents(offer.listings.price)}</span>
+          )}
+          {offer.message && (
+            <span className="text-xs text-muted-foreground italic">· "{offer.message}"</span>
+          )}
+        </div>
+      </div>
+
+      {isSeller && !showCounter && (
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => respond('accept')}
+            disabled={!!loading}
+            className="flex items-center gap-1 rounded-lg bg-foreground text-background px-3 py-1.5 text-xs font-semibold hover:bg-foreground/90 transition-colors disabled:opacity-50"
+          >
+            {loading === 'accept' ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+            Accept
+          </button>
+          <button
+            onClick={() => setShowCounter(true)}
+            disabled={!!loading}
+            className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            <ArrowLeftRight className="h-3 w-3" />
+            Counter
+          </button>
+          <button
+            onClick={() => respond('decline')}
+            disabled={!!loading}
+            className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            {loading === 'decline' ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+            Decline
+          </button>
+        </div>
+      )}
+
+      {isSeller && showCounter && (
+        <form onSubmit={handleCounter} className="flex items-center gap-2 flex-shrink-0">
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">$</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={counterAmount}
+              onChange={e => setCounterAmount(e.target.value)}
+              placeholder="0.00"
+              className="w-24 rounded-lg border border-border bg-background pl-5 pr-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-foreground/20"
+              autoFocus
+            />
+          </div>
+          <button type="submit" disabled={!!loading} className="rounded-lg bg-foreground text-background px-3 py-1.5 text-xs font-semibold hover:bg-foreground/90 disabled:opacity-50">
+            {loading === 'counter' ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Send'}
+          </button>
+          <button type="button" onClick={() => setShowCounter(false)} className="rounded-lg border border-border px-2 py-1.5 text-xs hover:bg-muted">
+            <X className="h-3 w-3" />
+          </button>
+        </form>
+      )}
+
+      {!isSeller && (
+        <Badge variant={isCountered ? 'default' : 'secondary'} className="text-xs flex-shrink-0">
+          {isCountered ? 'Countered' : 'Pending'}
+        </Badge>
+      )}
+    </div>
+  )
+}
+
 export function HomeClient() {
-  const { data, isLoading } = useSWR('home-dashboard', fetchHomeData, { keepPreviousData: true })
+  const { data, isLoading, mutate } = useSWR('home-dashboard', fetchHomeData, { keepPreviousData: true })
 
   if (isLoading && !data) {
     return <DashboardSkeleton />
@@ -136,7 +344,7 @@ export function HomeClient() {
     return <LandingPage />
   }
 
-  const { allSellingOrders, allBuyingOrders, activeListingsData, subscriptionTier } = data
+  const { allSellingOrders, allBuyingOrders, activeListingsData, subscriptionTier, incomingOffers, outgoingOffers, userId, repeatBuyers } = data
 
   const totalRevenue = allSellingOrders.filter(o => o.status !== 'disputed').reduce((s, o) => s + (o.amount ?? 0), 0)
   const totalSpent = allBuyingOrders.filter(o => o.status !== 'disputed').reduce((s, o) => s + (o.amount ?? 0), 0)
@@ -181,12 +389,15 @@ export function HomeClient() {
       </div>
 
       {/* Quick nav shortcuts */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className={`grid gap-3 mb-6 grid-cols-2 ${isDealer ? 'sm:grid-cols-4 lg:grid-cols-7' : 'sm:grid-cols-3 lg:grid-cols-6'}`}>
         {[
           { href: '/collect', icon: Heart, label: 'Wish List', desc: 'Track coins you want' },
           { href: '/buy-now', icon: ShoppingBag, label: 'Buy Now', desc: 'Browse fixed-price coins' },
           { href: '/listings', icon: Tag, label: 'Marketplace', desc: 'Explore all listings' },
           { href: '/sell', icon: Package, label: 'My Listings', desc: 'Manage your listings' },
+          { href: '/dashboard/analytics', icon: BarChart2, label: 'Analytics', desc: 'Sales & revenue insights' },
+          { href: '/dashboard/portfolio', icon: Wallet, label: 'Portfolio', desc: 'Estimate collection value' },
+          ...(isDealer ? [{ href: '/dashboard/team', icon: Users, label: 'Team', desc: 'Manage your team' }] : []),
         ].map(({ href, icon: Icon, label, desc }) => (
           <Link
             key={href}
@@ -314,6 +525,74 @@ export function HomeClient() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Offers */}
+      {(incomingOffers.length > 0 || outgoingOffers.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {incomingOffers.length > 0 && (
+            <Card>
+              <CardHeader className="pb-0">
+                <CardTitle className="text-base">Incoming Offers</CardTitle>
+                <CardDescription>Offers on your listings</CardDescription>
+              </CardHeader>
+              <CardContent className="px-0 pb-0 mt-4">
+                {incomingOffers.map(offer => (
+                  <OfferRow key={offer.id} offer={offer} isSeller={true} onRespond={() => mutate()} />
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {outgoingOffers.length > 0 && (
+            <Card>
+              <CardHeader className="pb-0">
+                <CardTitle className="text-base">My Offers</CardTitle>
+                <CardDescription>Offers you've made</CardDescription>
+              </CardHeader>
+              <CardContent className="px-0 pb-0 mt-4">
+                {outgoingOffers.map(offer => (
+                  <OfferRow key={offer.id} offer={offer} isSeller={false} onRespond={() => mutate()} />
+                ))}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Dealer-only: Repeat Buyers */}
+      {isDealer && repeatBuyers.length > 0 && (
+        <Card className="mb-8">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Repeat Buyers</CardTitle>
+            <CardDescription>Customers who have purchased from you more than once</CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {repeatBuyers.map((buyer, i) => {
+                const name = buyer.display_name || buyer.username || `Buyer #${i + 1}`
+                const lastDate = new Date(buyer.last_purchase_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                return (
+                  <div key={buyer.buyer_id} className="flex items-center justify-between px-5 py-3.5 gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 text-xs font-semibold text-muted-foreground">
+                        {name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{name}</p>
+                        <p className="text-xs text-muted-foreground">Last purchase {lastDate}</p>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-semibold tabular-nums">{formatCents(buyer.total_spent)}</p>
+                      <p className="text-xs text-muted-foreground">{buyer.purchase_count} purchases</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Dealer-only: Projected Cashflow */}
       {isDealer && (

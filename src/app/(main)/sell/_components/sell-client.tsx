@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
-import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X } from 'lucide-react'
+import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { SellerOnboardingModal } from '@/components/sell/seller-onboarding-modal'
 
@@ -38,7 +38,7 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
   draft: 'secondary',
 }
 
-type TabId = 'all' | 'active' | 'sold' | 'expired'
+type TabId = 'all' | 'active' | 'draft' | 'sold' | 'expired'
 
 interface Listing {
   id: string
@@ -55,15 +55,28 @@ interface Listing {
   mint_mark: string | null
 }
 
+interface PayoutOrder {
+  id: string
+  amount: number
+  status: string
+  seller_payout_cents: number | null
+  transfer_released: boolean
+  transfer_id: string | null
+  auto_confirm_at: string | null
+  created_at: string
+}
+
 interface SellData {
   allListings: Listing[]
   orders: { amount: number; status: string }[]
+  payoutOrders: PayoutOrder[]
   tier: Tier
   carryOver: number
   createdThisMonth: number
   stripeOnboardingComplete: boolean
   sellerTosAgreed: boolean
   privacyPolicyAgreed: boolean
+  teamContext: { dealerId: string; dealerName: string; role: string } | null
 }
 
 export async function fetchSellData(): Promise<SellData | null> {
@@ -72,12 +85,31 @@ export async function fetchSellData(): Promise<SellData | null> {
   const user = session?.user
   if (!user) return null
 
+  // Check if this user is a team member acting on behalf of a dealer
+  const { data: membership } = await supabase
+    .from('team_members')
+    .select('dealer_id, role, profiles!dealer_id(display_name, email)')
+    .eq('user_id', user.id)
+    .single()
+
+  const sellerId = membership?.dealer_id ?? user.id
+  const teamContext = membership
+    ? {
+        dealerId: membership.dealer_id,
+        dealerName: (membership.profiles as unknown as { display_name: string | null; email: string } | null)?.display_name
+          ?? (membership.profiles as unknown as { display_name: string | null; email: string } | null)?.email
+          ?? 'Dealer',
+        role: membership.role,
+      }
+    : null
+
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
   const [
     { data: allListings },
     { data: orders },
+    { data: payoutOrders },
     { data: profile },
     { count: carryOver },
     { count: createdThisMonth },
@@ -85,32 +117,41 @@ export async function fetchSellData(): Promise<SellData | null> {
     supabase
       .from('listings')
       .select('id, title, price, listing_type, status, grade, grading_service, verification_status, images, created_at, year, mint_mark')
-      .eq('seller_id', user.id)
+      .eq('seller_id', sellerId)
       .order('created_at', { ascending: false }),
-    supabase.from('orders').select('amount, status').eq('seller_id', user.id),
-    supabase.from('profiles').select('subscription_tier, stripe_account_id, stripe_onboarding_complete, seller_tos_agreed, privacy_policy_agreed').eq('id', user.id).single(),
+    supabase.from('orders').select('amount, status').eq('seller_id', sellerId),
+    supabase
+      .from('orders')
+      .select('id, amount, status, seller_payout_cents, transfer_released, transfer_id, auto_confirm_at, created_at')
+      .eq('seller_id', sellerId)
+      .in('status', ['label_purchased', 'shipped', 'delivered', 'complete', 'disputed'])
+      .order('created_at', { ascending: false })
+      .limit(20),
+    supabase.from('profiles').select('subscription_tier, stripe_account_id, stripe_onboarding_complete, seller_tos_agreed, privacy_policy_agreed').eq('id', sellerId).single(),
     supabase
       .from('listings')
       .select('id', { count: 'exact', head: true })
-      .eq('seller_id', user.id)
+      .eq('seller_id', sellerId)
       .eq('status', 'active')
       .lt('created_at', monthStart),
     supabase
       .from('listings')
       .select('id', { count: 'exact', head: true })
-      .eq('seller_id', user.id)
+      .eq('seller_id', sellerId)
       .gte('created_at', monthStart),
   ])
 
   return {
     allListings: (allListings ?? []) as Listing[],
     orders: (orders ?? []) as { amount: number; status: string }[],
+    payoutOrders: (payoutOrders ?? []) as PayoutOrder[],
     tier: ((profile?.subscription_tier ?? 'collector_basic') as Tier),
     carryOver: carryOver ?? 0,
     createdThisMonth: createdThisMonth ?? 0,
     stripeOnboardingComplete: profile?.stripe_onboarding_complete ?? false,
     sellerTosAgreed: profile?.seller_tos_agreed ?? false,
     privacyPolicyAgreed: profile?.privacy_policy_agreed ?? false,
+    teamContext,
   }
 }
 
@@ -121,17 +162,18 @@ export function SellClient() {
   const [connectLoading, setConnectLoading] = useState(false)
   const [dismissedOnboarded, setDismissedOnboarded] = useState(false)
 
-  // Check for ?onboarded=1 or ?onboarding=incomplete from Stripe return
+  // Check for ?onboarded=1, ?onboarding=incomplete, ?tab=draft from URL
   const [stripeReturn, setStripeReturn] = useState<'success' | 'incomplete' | null>(null)
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     if (params.get('onboarded') === '1') setStripeReturn('success')
     else if (params.get('onboarding') === 'incomplete') setStripeReturn('incomplete')
+    const tabParam = params.get('tab') as TabId | null
+    if (tabParam && ['all', 'active', 'draft', 'sold', 'expired'].includes(tabParam)) setTab(tabParam)
     // Clean up the URL
-    if (params.has('onboarded') || params.has('onboarding')) {
-      const clean = window.location.pathname
-      window.history.replaceState({}, '', clean)
+    if (params.has('onboarded') || params.has('onboarding') || params.has('tab')) {
+      window.history.replaceState({}, '', window.location.pathname)
     }
   }, [])
 
@@ -217,7 +259,7 @@ export function SellClient() {
     return null
   }
 
-  const { allListings, orders, tier, carryOver, createdThisMonth, stripeOnboardingComplete, sellerTosAgreed, privacyPolicyAgreed } = data
+  const { allListings, orders, payoutOrders, tier, carryOver, createdThisMonth, stripeOnboardingComplete, sellerTosAgreed, privacyPolicyAgreed, teamContext } = data
   // needsOnboarding: true until both agreements signed AND Stripe connected
   const needsOnboarding = !sellerTosAgreed || !privacyPolicyAgreed || !stripeOnboardingComplete
   const tierConfig = TIER_CONFIG[tier]
@@ -241,9 +283,12 @@ export function SellClient() {
   // Client-side tab filtering
   const listings = tab === 'all' ? allListings : allListings.filter(l => l.status === tab)
 
-  const tabs: { id: TabId; label: string }[] = [
+  const draftCount = allListings.filter(l => l.status === 'draft').length
+
+  const tabs: { id: TabId; label: string; count?: number }[] = [
     { id: 'all',     label: 'All' },
     { id: 'active',  label: 'Active' },
+    ...(draftCount > 0 ? [{ id: 'draft' as TabId, label: 'Drafts', count: draftCount }] : []),
     { id: 'sold',    label: 'Sold' },
     { id: 'expired', label: 'Expired' },
   ]
@@ -262,18 +307,36 @@ export function SellClient() {
         />
       )}
 
+      {/* Team context banner */}
+      {teamContext && (
+        <div className="mb-6 flex items-center gap-2.5 rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm">
+          <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <span>
+            Managing listings for <span className="font-semibold">{teamContext.dealerName}</span>
+            <span className="text-muted-foreground ml-1.5 capitalize">({teamContext.role})</span>
+          </span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">My Listings</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {teamContext ? `${teamContext.dealerName}'s Listings` : 'My Listings'}
+          </h1>
         </div>
-        <Button
-          disabled={atLimit}
-          onClick={() => router.push('/listings/new')}
-        >
-          <Plus className="h-4 w-4 mr-1.5" />
-          Create Listing
-        </Button>
+        <div className="flex items-center gap-2">
+          {tier === 'dealer' && (
+            <Button variant="outline" onClick={() => router.push('/dashboard/import')}>
+              <Upload className="h-4 w-4 mr-1.5" />
+              Import CSV
+            </Button>
+          )}
+          <Button disabled={atLimit} onClick={() => router.push('/listings/new')}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Create Listing
+          </Button>
+        </div>
       </div>
 
       {/* Stripe onboarding success toast */}
@@ -399,6 +462,65 @@ export function SellClient() {
         </div>
       </div>
 
+      {/* Payouts */}
+      {payoutOrders.length > 0 && (
+        <div className="rounded-xl border border-border bg-card mb-8">
+          <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
+            <Banknote className="h-4 w-4 text-muted-foreground/60" />
+            <p className="text-sm font-semibold">Payouts</p>
+          </div>
+          <div className="divide-y divide-border">
+            {payoutOrders.map(order => {
+              const payout = order.seller_payout_cents
+              const released = order.transfer_released
+              const disputed = order.status === 'disputed'
+              const autoAt = order.auto_confirm_at ? new Date(order.auto_confirm_at) : null
+              const now = new Date()
+              const hoursLeft = autoAt ? Math.max(0, Math.ceil((autoAt.getTime() - now.getTime()) / 3600000)) : null
+
+              let statusLabel = ''
+              let statusClass = ''
+              let Icon = Lock
+
+              if (disputed) {
+                statusLabel = 'Disputed'
+                statusClass = 'text-destructive'
+                Icon = AlertTriangle
+              } else if (released) {
+                statusLabel = 'Released'
+                statusClass = 'text-emerald-600 dark:text-emerald-400'
+                Icon = CheckCircle2
+              } else if (order.status === 'delivered' && hoursLeft !== null) {
+                statusLabel = `Auto-releases in ${hoursLeft}h`
+                statusClass = 'text-amber-600 dark:text-amber-400'
+                Icon = Clock
+              } else {
+                statusLabel = 'In escrow'
+                statusClass = 'text-muted-foreground'
+                Icon = Lock
+              }
+
+              return (
+                <div key={order.id} className="flex items-center justify-between px-5 py-3.5 gap-4">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${statusClass}`} />
+                    <div className="min-w-0">
+                      <p className={`text-xs font-medium ${statusClass}`}>{statusLabel}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                        Order #{order.id.slice(0, 8)}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm font-semibold tabular-nums flex-shrink-0">
+                    {payout !== null ? formatCents(payout) : '—'}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border mb-6">
         {tabs.map(t => (
@@ -409,7 +531,14 @@ export function SellClient() {
               tab === t.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            {t.label}
+            <span className="flex items-center gap-1.5">
+              {t.label}
+              {t.count != null && (
+                <span className="text-[10px] font-semibold bg-muted px-1.5 py-0.5 rounded-full tabular-nums">
+                  {t.count}
+                </span>
+              )}
+            </span>
             {tab === t.id && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground rounded-full" />
             )}
@@ -480,10 +609,20 @@ export function SellClient() {
                   : '—'}
               </p>
 
-              {/* Status */}
-              <Badge variant={STATUS_VARIANT[listing.status]} className="text-xs flex-shrink-0">
-                {STATUS_LABEL[listing.status]}
-              </Badge>
+              {/* Status / draft CTA */}
+              {listing.status === 'draft' ? (
+                <Link
+                  href={`/listings/${listing.id}/edit`}
+                  onClick={e => e.stopPropagation()}
+                  className="flex-shrink-0 text-xs font-medium px-2.5 py-1 rounded-lg border border-border bg-muted hover:bg-muted/60 transition-colors whitespace-nowrap"
+                >
+                  Add Images &amp; Publish
+                </Link>
+              ) : (
+                <Badge variant={STATUS_VARIANT[listing.status]} className="text-xs flex-shrink-0">
+                  {STATUS_LABEL[listing.status]}
+                </Badge>
+              )}
             </Link>
           ))}
         </div>
