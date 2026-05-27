@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { PricingTabs } from './_components/pricing-tabs'
 
 export const metadata = {

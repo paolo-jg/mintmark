@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { getServiceDb } from '@/lib/admin'
 import { formatCents } from '@/lib/utils'
 import { AlertTriangle, Users, ShoppingCart, Tag, DollarSign, Clock } from 'lucide-react'

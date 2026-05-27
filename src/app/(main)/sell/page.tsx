@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { SellClient } from './_components/sell-client'
 
 export const metadata = {

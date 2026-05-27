@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { getServiceDb } from '@/lib/admin'
 import { Badge } from '@/components/ui/badge'
 

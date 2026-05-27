@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { DealersClient } from './_components/dealers-client'
 
 export const metadata = {
