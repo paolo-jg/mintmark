@@ -48,11 +48,11 @@ export function ListingGallery({ images, title }: Props) {
       )}
 
       {/* Main image */}
-      <div className="relative flex-1 rounded-2xl overflow-hidden bg-muted group min-h-0">
+      <div className="relative flex-1 aspect-square rounded-2xl overflow-hidden bg-muted group min-h-0 max-h-[560px]">
         <img
           src={images[active]}
           alt={title}
-          className="w-full h-full object-cover transition-opacity duration-200"
+          className="w-full h-full object-contain transition-opacity duration-200"
         />
 
         {/* Arrows — only show if multiple images */}
