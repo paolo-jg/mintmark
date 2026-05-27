@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import {
   User, CreditCard, Building2, Loader2, ImagePlus,
   ExternalLink, CheckCircle2, AlertCircle, Star, ShieldCheck,
-  Eye, EyeOff, ChevronRight,
+  Eye, EyeOff, ChevronRight, MapPin, Plus, Trash2,
 } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -625,6 +625,160 @@ function OrganizationTab({
   )
 }
 
+// ── Address Tab ───────────────────────────────────────────────────────────────
+
+interface Address {
+  id: string
+  name: string
+  street1: string
+  street2: string | null
+  city: string
+  state: string
+  zip: string
+  country: string
+  is_default: boolean
+}
+
+function AddressTab({ userId }: { userId: string }) {
+  const supabase = createClient()
+  const [addresses, setAddresses] = useState<Address[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ name: '', street1: '', street2: '', city: '', state: '', zip: '' })
+
+  const load = async () => {
+    const { data } = await supabase.from('addresses').select('*').eq('user_id', userId).order('is_default', { ascending: false })
+    setAddresses((data ?? []) as Address[])
+    setLoading(false)
+  }
+
+  useState(() => { load() })
+
+  async function saveAddress(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.name || !form.street1 || !form.city || !form.state || !form.zip) {
+      toast.error('Fill in all required fields'); return
+    }
+    setSaving(true)
+    const isFirst = addresses.length === 0
+    const { error } = await supabase.from('addresses').insert({
+      user_id: userId,
+      name: form.name.trim(),
+      street1: form.street1.trim(),
+      street2: form.street2.trim() || null,
+      city: form.city.trim(),
+      state: form.state.trim().toUpperCase(),
+      zip: form.zip.trim(),
+      country: 'US',
+      is_default: isFirst,
+    })
+    if (error) { toast.error(error.message); setSaving(false); return }
+    toast.success('Address saved')
+    setForm({ name: '', street1: '', street2: '', city: '', state: '', zip: '' })
+    setShowForm(false)
+    setSaving(false)
+    load()
+  }
+
+  async function setDefault(id: string) {
+    await supabase.from('addresses').update({ is_default: false }).eq('user_id', userId)
+    await supabase.from('addresses').update({ is_default: true }).eq('id', id)
+    load()
+  }
+
+  async function remove(id: string) {
+    await supabase.from('addresses').delete().eq('id', id)
+    load()
+  }
+
+  return (
+    <div className="space-y-6">
+      <SectionCard title="Shipping Addresses">
+        <p className="text-sm text-muted-foreground mb-4">Your default address is used when purchasing shipping labels.</p>
+        {loading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {addresses.length === 0 && !showForm && (
+              <p className="text-sm text-muted-foreground">No addresses saved yet.</p>
+            )}
+            {addresses.map(addr => (
+              <div key={addr.id} className={`flex items-start justify-between gap-4 rounded-xl border p-4 ${addr.is_default ? 'border-foreground bg-foreground/5' : 'border-border'}`}>
+                <div className="flex items-start gap-3 min-w-0">
+                  <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold flex items-center gap-2">
+                      {addr.name}
+                      {addr.is_default && <span className="text-[10px] font-bold tracking-wider uppercase bg-foreground text-background px-2 py-0.5 rounded-full">Default</span>}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{addr.street1}{addr.street2 ? `, ${addr.street2}` : ''}</p>
+                    <p className="text-xs text-muted-foreground">{addr.city}, {addr.state} {addr.zip}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {!addr.is_default && (
+                    <button onClick={() => setDefault(addr.id)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Set default</button>
+                  )}
+                  <button onClick={() => remove(addr.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {showForm ? (
+              <form onSubmit={saveAddress} className="rounded-xl border border-border p-4 space-y-3">
+                <p className="text-sm font-semibold">New Address</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs">Full Name <span className="text-destructive">*</span></Label>
+                    <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="John Smith" className="h-10" />
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs">Street Address <span className="text-destructive">*</span></Label>
+                    <Input value={form.street1} onChange={e => setForm(f => ({ ...f, street1: e.target.value }))} placeholder="123 Main St" className="h-10" />
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-xs">Apt, Suite, etc. (optional)</Label>
+                    <Input value={form.street2} onChange={e => setForm(f => ({ ...f, street2: e.target.value }))} placeholder="Apt 4B" className="h-10" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">City <span className="text-destructive">*</span></Label>
+                    <Input value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} placeholder="New York" className="h-10" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">State <span className="text-destructive">*</span></Label>
+                      <Input value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value }))} placeholder="NY" maxLength={2} className="h-10" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">ZIP <span className="text-destructive">*</span></Label>
+                      <Input value={form.zip} onChange={e => setForm(f => ({ ...f, zip: e.target.value }))} placeholder="10001" className="h-10" />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button type="submit" size="sm" disabled={saving}>
+                    {saving ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Saving…</> : 'Save Address'}
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setShowForm(false)}>Cancel</Button>
+                </div>
+              </form>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => setShowForm(true)} className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Add Address
+              </Button>
+            )}
+          </div>
+        )}
+      </SectionCard>
+    </div>
+  )
+}
+
 // ── Main Settings Client ──────────────────────────────────────────────────────
 
 export function SettingsClient({
@@ -638,6 +792,7 @@ export function SettingsClient({
 
   const tabs = [
     { id: 'account', label: 'Account', icon: User },
+    { id: 'addresses', label: 'Addresses', icon: MapPin },
     { id: 'billing', label: 'Billing', icon: CreditCard },
     ...(isDealer ? [{ id: 'organization', label: 'Organization', icon: Building2 }] : []),
   ]
@@ -710,6 +865,9 @@ export function SettingsClient({
         <main className="flex-1 min-w-0">
           {activeTab === 'account' && (
             <AccountTab email={email} displayName={displayName} userId={userId} />
+          )}
+          {activeTab === 'addresses' && (
+            <AddressTab userId={userId} />
           )}
           {activeTab === 'billing' && (
             <BillingTab

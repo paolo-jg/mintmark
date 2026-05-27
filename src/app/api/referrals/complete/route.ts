@@ -46,14 +46,16 @@ export async function POST(req: NextRequest) {
     subscription_free_until: freeUntil,
   }).eq('id', user.id)
 
-  // Give referrer: 1 credit month (extends free_until if active, otherwise banks it)
-  const referrerFreeUntil = referrer.subscription_free_until
-    ? new Date(Math.max(Date.now(), new Date(referrer.subscription_free_until).getTime()) + 30 * 24 * 60 * 60 * 1000).toISOString()
-    : null
+  // Give referrer: 1 free month — stacks with each successful referral.
+  // Start from the later of now or their current free_until, so months always accumulate.
+  const baseTime = referrer.subscription_free_until
+    ? Math.max(Date.now(), new Date(referrer.subscription_free_until).getTime())
+    : Date.now()
+  const newFreeUntil = new Date(baseTime + 30 * 24 * 60 * 60 * 1000).toISOString()
 
   await db.from('profiles').update({
     subscription_credit_months: (referrer.subscription_credit_months ?? 0) + 1,
-    ...(referrerFreeUntil ? { subscription_free_until: referrerFreeUntil } : {}),
+    subscription_free_until: newFreeUntil,
   }).eq('id', referrer.id)
 
   return NextResponse.json({ ok: true })

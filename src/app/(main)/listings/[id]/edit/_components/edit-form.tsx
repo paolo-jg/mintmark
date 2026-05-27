@@ -177,6 +177,18 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
     listing.returns_policy_custom ?? ''
   )
 
+  // ── Shipping ──────────────────────────────────────────────────────────────
+  const FREE_SHIPPING_MIN_CENTS = 25_000
+  const FLAT_RATE_MINIMUM_CENTS = 499
+  const [shippingType, setShippingType] = useState<'free' | 'flat'>(
+    (listing as { shipping_type?: string }).shipping_type === 'flat' ? 'flat' : 'free'
+  )
+  const [shippingPrice, setShippingPrice] = useState<string>(
+    (listing as { shipping_price_cents?: number | null }).shipping_price_cents
+      ? String(((listing as { shipping_price_cents?: number }).shipping_price_cents! / 100).toFixed(2))
+      : ''
+  )
+
   // ── Photos ────────────────────────────────────────────────────────────────
   const [photos, setPhotos] = useState<PhotoItem[]>(
     (listing.images as string[] ?? []).map((url: string, i: number) => ({
@@ -325,6 +337,10 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
         returns_policy_type: returnsPolicy === 'final_sale' ? null : returnsPolicy,
         returns_policy_days: returnsPolicy === 'standard' ? parseInt(standardReturnDays) : null,
         returns_policy_custom: returnsPolicy === 'custom' ? customReturnPolicy.trim() || null : null,
+        shipping_type: shippingType,
+        shipping_price_cents: shippingType === 'flat' && shippingPrice
+          ? Math.round(parseFloat(shippingPrice.replace(/[^0-9.]/g, '')) * 100)
+          : null,
       }
 
       // Offers — only update when no bidder has locked them
@@ -788,6 +804,69 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* ── Shipping ── */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Shipping</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {(() => {
+            const priceCents = listingType === 'fixed' && price ? Math.round(parseFloat(price.replace(/[^0-9.]/g, '')) * 100) : 0
+            const freeAllowed = priceCents >= FREE_SHIPPING_MIN_CENTS
+            return (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { if (freeAllowed) setShippingType('free') }}
+                    disabled={!freeAllowed}
+                    className={`flex flex-col items-start rounded-xl border-2 px-4 py-3.5 text-left transition-all ${
+                      !freeAllowed
+                        ? 'border-border opacity-40 cursor-not-allowed'
+                        : shippingType === 'free'
+                          ? 'border-foreground bg-foreground/5'
+                          : 'border-border hover:border-foreground/30'
+                    }`}
+                  >
+                    <span className={`text-sm font-semibold ${shippingType === 'free' && freeAllowed ? 'text-foreground' : 'text-muted-foreground'}`}>Free Shipping</span>
+                    <span className="text-xs text-muted-foreground mt-0.5">{freeAllowed ? 'You cover the label cost' : 'Available for listings $250+'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShippingType('flat')}
+                    className={`flex flex-col items-start rounded-xl border-2 px-4 py-3.5 text-left transition-all ${
+                      shippingType === 'flat' ? 'border-foreground bg-foreground/5' : 'border-border hover:border-foreground/30'
+                    }`}
+                  >
+                    <span className={`text-sm font-semibold ${shippingType === 'flat' ? 'text-foreground' : 'text-muted-foreground'}`}>Flat Rate</span>
+                    <span className="text-xs text-muted-foreground mt-0.5">Buyer pays a fixed amount</span>
+                  </button>
+                </div>
+                {shippingType === 'flat' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="shippingPrice" className="text-sm font-medium">Shipping Price</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                      <Input
+                        id="shippingPrice"
+                        type="number"
+                        min="4.99"
+                        step="0.01"
+                        value={shippingPrice}
+                        onChange={e => setShippingPrice(e.target.value)}
+                        placeholder="4.99"
+                        className="h-11 pl-7 text-base"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Minimum $4.99.</p>
+                  </div>
+                )}
+              </>
+            )
+          })()}
         </CardContent>
       </Card>
 

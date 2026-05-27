@@ -23,7 +23,7 @@ export default async function SettingsPage({
   const { tab } = await searchParams
 
   const isDealer = profile?.subscription_tier === 'dealer'
-  const validTabs = isDealer ? ['account', 'billing', 'organization'] : ['account', 'billing']
+  const validTabs = isDealer ? ['account', 'addresses', 'billing', 'organization'] : ['account', 'addresses', 'billing']
   const activeTab = validTabs.includes(tab ?? '') ? (tab ?? 'account') : 'account'
 
   return (
