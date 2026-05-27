@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Shield, TrendingUp, Clock, List, Heart, ShoppingBag, Tag, Package, CheckCircle2, X, ArrowLeftRight, Loader2, Wallet, Users, Gavel } from 'lucide-react'
+import { Shield, TrendingUp, Clock, List, Heart, ShoppingBag, Tag, Package, CheckCircle2, X, ArrowLeftRight, Loader2, Wallet, Users, Gavel, Copy, Check as CheckIcon, Gift } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 import type { OrderStatus } from '@/types'
 import { PricingSection } from '@/components/layout/pricing-section'
@@ -64,6 +64,9 @@ interface HomeData {
   incomingOffers: Offer[]
   outgoingOffers: Offer[]
   repeatBuyers: RepeatBuyer[]
+  referralCode: string | null
+  referralCount: number
+  referralConverted: number
 }
 
 export async function fetchHomeData(): Promise<HomeData> {
@@ -72,12 +75,12 @@ export async function fetchHomeData(): Promise<HomeData> {
   const user = session?.user
 
   if (!user) {
-    return { isLoggedIn: false, userId: '', allSellingOrders: [], allBuyingOrders: [], activeListingsData: [], subscriptionTier: null, incomingOffers: [], outgoingOffers: [], repeatBuyers: [] }
+    return { isLoggedIn: false, userId: '', allSellingOrders: [], allBuyingOrders: [], activeListingsData: [], subscriptionTier: null, incomingOffers: [], outgoingOffers: [], repeatBuyers: [], referralCode: null, referralCount: 0, referralConverted: 0 }
   }
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('subscription_tier')
+    .select('subscription_tier, referral_code')
     .eq('id', user.id)
     .single()
 
@@ -90,6 +93,7 @@ export async function fetchHomeData(): Promise<HomeData> {
     { data: incomingOffers },
     { data: outgoingOffers },
     { data: sellerOrders },
+    { data: referrals },
   ] = await Promise.all([
     supabase.from('orders').select('amount, status, created_at').eq('seller_id', user.id),
     supabase.from('orders').select('amount, status, created_at').eq('buyer_id', user.id),
@@ -99,6 +103,7 @@ export async function fetchHomeData(): Promise<HomeData> {
     isDealer
       ? supabase.from('orders').select('buyer_id, amount, created_at').eq('seller_id', user.id).neq('status', 'disputed')
       : Promise.resolve({ data: null }),
+    supabase.from('referrals').select('id, status').eq('referrer_id', user.id),
   ])
 
   // Build repeat buyer list for dealers
@@ -149,6 +154,9 @@ export async function fetchHomeData(): Promise<HomeData> {
     incomingOffers: (incomingOffers ?? []) as Offer[],
     outgoingOffers: (outgoingOffers ?? []) as Offer[],
     repeatBuyers,
+    referralCode: (profile as { referral_code?: string | null })?.referral_code ?? null,
+    referralCount: (referrals ?? []).length,
+    referralConverted: (referrals ?? []).filter((r: { status: string }) => r.status === 'completed').length,
   }
 }
 
@@ -333,6 +341,55 @@ function OfferRow({ offer, isSeller, onRespond }: {
   )
 }
 
+function ReferralWidget({ referralCode, referralCount, referralConverted }: { referralCode: string | null; referralCount: number; referralConverted: number }) {
+  const [copied, setCopied] = useState(false)
+
+  if (!referralCode) return null
+
+  const link = `https://pedigreecoins.com/ref/${referralCode}`
+
+  function copy() {
+    navigator.clipboard.writeText(link).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div className="mb-6 rounded-xl border border-border bg-card px-5 py-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted flex-shrink-0">
+            <Gift className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">Refer a friend, get a free month</p>
+            <p className="text-xs text-muted-foreground mt-0.5">They get 1 month free Premium. You get 1 month free per sign-up.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {referralCount > 0 && (
+            <div className="text-right hidden sm:block">
+              <p className="text-xs font-semibold tabular-nums">{referralConverted} / {referralCount}</p>
+              <p className="text-[11px] text-muted-foreground">converted</p>
+            </div>
+          )}
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 pl-3 pr-1.5 py-1.5">
+            <span className="text-xs text-muted-foreground font-mono truncate max-w-[180px]">{link}</span>
+            <button
+              onClick={copy}
+              className="flex items-center gap-1 rounded-md bg-foreground text-background px-2.5 py-1 text-xs font-semibold hover:bg-foreground/90 transition-colors flex-shrink-0"
+            >
+              {copied ? <CheckIcon className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function HomeClient() {
   const { data, isLoading, mutate } = useSWR('home-dashboard', fetchHomeData, { keepPreviousData: true })
 
@@ -344,7 +401,7 @@ export function HomeClient() {
     return <LandingPage />
   }
 
-  const { allSellingOrders, allBuyingOrders, activeListingsData, subscriptionTier, incomingOffers, outgoingOffers, userId, repeatBuyers } = data
+  const { allSellingOrders, allBuyingOrders, activeListingsData, subscriptionTier, incomingOffers, outgoingOffers, userId, repeatBuyers, referralCode, referralCount, referralConverted } = data
 
   const totalRevenue = allSellingOrders.filter(o => o.status !== 'disputed').reduce((s, o) => s + (o.amount ?? 0), 0)
   const totalSpent = allBuyingOrders.filter(o => o.status !== 'disputed').reduce((s, o) => s + (o.amount ?? 0), 0)
@@ -387,6 +444,8 @@ export function HomeClient() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
       </div>
+
+      <ReferralWidget referralCode={referralCode} referralCount={referralCount} referralConverted={referralConverted} />
 
       {/* Quick nav shortcuts */}
       <div className={`grid gap-2 mb-6 grid-cols-3 ${isDealer ? 'sm:grid-cols-7' : 'sm:grid-cols-6'}`}>

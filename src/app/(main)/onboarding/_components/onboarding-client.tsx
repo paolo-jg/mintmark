@@ -15,6 +15,7 @@ interface Props {
   initialUsername: string
   initialDisplayName: string
   currentTier: string
+  referralCode: string | null
 }
 
 const USERNAME_REGEX = /^[a-z0-9_]{3,30}$/
@@ -58,7 +59,7 @@ const PLANS = [
   },
 ]
 
-export function OnboardingClient({ initialUsername }: Props) {
+export function OnboardingClient({ initialUsername, referralCode }: Props) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -104,7 +105,7 @@ export function OnboardingClient({ initialUsername }: Props) {
     setStep(3)
   }
 
-  async function saveAndRedirect(destination: string) {
+  async function saveAndRedirect(destination: string, planKey?: string) {
     setSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -133,11 +134,19 @@ export function OnboardingClient({ initialUsername }: Props) {
       }
 
       // Store first/last name privately — owner-only RLS, never public
-      // Ignore errors: table may not exist yet, don't block onboarding
       await supabase
         .from('profiles_private')
         .upsert({ id: user.id, first_name: firstName.trim() || null, last_name: lastName.trim() || null })
         .then(() => null, () => null)
+
+      // If referred and chose Premium, complete the referral
+      if (referralCode && planKey === 'collector_premium') {
+        await fetch('/api/referrals/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referral_code: referralCode }),
+        }).catch(() => null)
+      }
 
       router.push(destination)
     } catch {
@@ -294,66 +303,106 @@ export function OnboardingClient({ initialUsername }: Props) {
           {step === 3 && (
             <div className="space-y-6">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">Choose a plan</h1>
-                <p className="text-muted-foreground mt-2">Start free and upgrade whenever you're ready.</p>
+                {referralCode ? (
+                  <>
+                    <h1 className="text-3xl font-bold tracking-tight">Your first month is free</h1>
+                    <p className="text-muted-foreground mt-2">You were referred. Collector Premium is on us for the first month.</p>
+                  </>
+                ) : (
+                  <>
+                    <h1 className="text-3xl font-bold tracking-tight">Choose a plan</h1>
+                    <p className="text-muted-foreground mt-2">Start free and upgrade whenever you're ready.</p>
+                  </>
+                )}
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                {PLANS.map(plan => (
-                  <div
-                    key={plan.key}
-                    className={`relative rounded-xl border p-6 flex flex-col gap-4 ${
-                      plan.highlight
-                        ? 'border-foreground bg-foreground text-background'
-                        : 'border-border bg-background'
-                    }`}
-                  >
-                    {plan.badge && (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-foreground text-background px-3 py-0.5 rounded-full whitespace-nowrap">
-                        {plan.badge}
-                      </span>
-                    )}
-
-                    {/* Header */}
+              {referralCode ? (
+                /* Referred users: Premium-only card */
+                <div className="max-w-sm mx-auto">
+                  <div className="relative rounded-xl border border-foreground bg-foreground text-background p-6 flex flex-col gap-4">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-green-500 text-white px-3 py-0.5 rounded-full whitespace-nowrap">
+                      1 Month Free
+                    </span>
                     <div>
-                      <p className={`text-[10px] font-bold tracking-[0.18em] uppercase mb-0.5 ${plan.highlight ? 'text-background/50' : 'text-muted-foreground/50'}`}>
-                        {plan.fullName}
-                      </p>
-                      <p className="text-lg font-bold mb-3">{plan.name}</p>
+                      <p className="text-[10px] font-bold tracking-[0.18em] uppercase mb-0.5 text-background/50">Collector Premium</p>
+                      <p className="text-lg font-bold mb-3">Premium</p>
                       <div className="flex items-baseline gap-1 mb-2">
-                        <span className="text-3xl font-bold tracking-tight">{plan.price}</span>
-                        <span className={`text-xs ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>{plan.per}</span>
+                        <span className="text-3xl font-bold tracking-tight line-through opacity-40">$9.99</span>
+                        <span className="text-xl font-bold text-green-400 ml-2">Free</span>
+                        <span className="text-xs text-background/60 ml-1">first month</span>
                       </div>
-                      <p className={`text-xs leading-snug ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
-                        {plan.description}
-                      </p>
+                      <p className="text-xs leading-snug text-background/60">Then $9.99/mo. Cancel anytime.</p>
                     </div>
-
-                    {/* Features */}
                     <ul className="space-y-1.5 flex-1">
-                      {plan.features.map(f => (
+                      {['1.9% seller fee', '$0.40 per listing', 'Up to 50 active listings/month', 'Unlimited purchases'].map(f => (
                         <li key={f} className="flex items-start gap-2">
-                          <Check className={`h-3 w-3 mt-0.5 shrink-0 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`} />
-                          <span className={`text-xs leading-snug ${plan.highlight ? 'text-background/80' : 'text-muted-foreground'}`}>{f}</span>
+                          <Check className="h-3 w-3 mt-0.5 shrink-0 text-background/60" />
+                          <span className="text-xs leading-snug text-background/80">{f}</span>
                         </li>
                       ))}
                     </ul>
-
-                    {/* CTA */}
                     <Button
-                      className={`w-full h-10 text-sm font-semibold mt-1 ${
-                        plan.highlight
-                          ? 'bg-white text-zinc-900 hover:bg-white/90 border-0'
-                          : 'bg-foreground text-background hover:bg-foreground/90'
-                      }`}
-                      onClick={() => saveAndRedirect(plan.key === 'collector_basic' ? '/listings' : '/pricing')}
+                      className="w-full h-10 text-sm font-semibold mt-1 bg-white text-zinc-900 hover:bg-white/90 border-0"
+                      onClick={() => saveAndRedirect('/listings', 'collector_premium')}
                       disabled={saving}
                     >
-                      {saving ? 'Saving…' : plan.cta}
+                      {saving ? 'Saving…' : 'Claim Free Month'}
                     </Button>
                   </div>
-                ))}
-              </div>
+                </div>
+              ) : (
+                /* Normal users: all three plans */
+                <div className="grid grid-cols-3 gap-4">
+                  {PLANS.map(plan => (
+                    <div
+                      key={plan.key}
+                      className={`relative rounded-xl border p-6 flex flex-col gap-4 ${
+                        plan.highlight
+                          ? 'border-foreground bg-foreground text-background'
+                          : 'border-border bg-background'
+                      }`}
+                    >
+                      {plan.badge && (
+                        <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-foreground text-background px-3 py-0.5 rounded-full whitespace-nowrap">
+                          {plan.badge}
+                        </span>
+                      )}
+                      <div>
+                        <p className={`text-[10px] font-bold tracking-[0.18em] uppercase mb-0.5 ${plan.highlight ? 'text-background/50' : 'text-muted-foreground/50'}`}>
+                          {plan.fullName}
+                        </p>
+                        <p className="text-lg font-bold mb-3">{plan.name}</p>
+                        <div className="flex items-baseline gap-1 mb-2">
+                          <span className="text-3xl font-bold tracking-tight">{plan.price}</span>
+                          <span className={`text-xs ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>{plan.per}</span>
+                        </div>
+                        <p className={`text-xs leading-snug ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
+                          {plan.description}
+                        </p>
+                      </div>
+                      <ul className="space-y-1.5 flex-1">
+                        {plan.features.map(f => (
+                          <li key={f} className="flex items-start gap-2">
+                            <Check className={`h-3 w-3 mt-0.5 shrink-0 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`} />
+                            <span className={`text-xs leading-snug ${plan.highlight ? 'text-background/80' : 'text-muted-foreground'}`}>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <Button
+                        className={`w-full h-10 text-sm font-semibold mt-1 ${
+                          plan.highlight
+                            ? 'bg-white text-zinc-900 hover:bg-white/90 border-0'
+                            : 'bg-foreground text-background hover:bg-foreground/90'
+                        }`}
+                        onClick={() => saveAndRedirect(plan.key === 'collector_basic' ? '/listings' : '/pricing', plan.key)}
+                        disabled={saving}
+                      >
+                        {saving ? 'Saving…' : plan.cta}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <Button
                 variant="ghost"
