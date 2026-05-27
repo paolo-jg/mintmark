@@ -13,15 +13,25 @@ export async function GET(request: Request) {
   if (code) {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
-      if (isNewUser && data.user?.email) {
-        sendWelcomeBuyer({
-          to: data.user.email,
-          name: data.user.email.split('@')[0],
-        }).catch(() => null)
-        // Always send new users through onboarding
+    if (!error && data.user) {
+      // Check onboarding status directly — more reliable than the new=1 param
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', data.user.id)
+        .single()
+
+      if (!profile?.onboarding_completed) {
+        // First-time user: send welcome email if flagged as new, then onboard
+        if (isNewUser && data.user.email) {
+          sendWelcomeBuyer({
+            to: data.user.email,
+            name: data.user.email.split('@')[0],
+          }).catch(() => null)
+        }
         return NextResponse.redirect(`${appUrl}/onboarding`)
       }
+
       return NextResponse.redirect(`${appUrl}${next}`)
     }
   }
