@@ -26,6 +26,8 @@ export default function Navbar() {
 
   function isActive(href: string) {
     if (href === '/') return pathname === '/'
+    if (href === '/sell') return pathname.startsWith('/sell') || pathname.startsWith('/listings/new') || /^\/listings\/[^/]+\/edit/.test(pathname)
+    if (href === '/listings') return pathname.startsWith('/listings') && !pathname.startsWith('/listings/new') && !/^\/listings\/[^/]+\/edit/.test(pathname)
     return pathname.startsWith(href)
   }
 
