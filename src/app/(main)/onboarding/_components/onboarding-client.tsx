@@ -124,6 +124,11 @@ export function OnboardingClient({ initialUsername }: Props) {
       return
     }
 
+    // Store first/last name privately — owner-only RLS, never public
+    await supabase
+      .from('profiles_private')
+      .upsert({ id: user.id, first_name: firstName.trim() || null, last_name: lastName.trim() || null })
+
     router.push(destination)
   }
 
