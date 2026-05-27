@@ -97,8 +97,6 @@ interface SellData {
   carryOver: number
   createdThisMonth: number
   stripeOnboardingComplete: boolean
-  sellerTosAgreed: boolean
-  privacyPolicyAgreed: boolean
   teamContext: { dealerId: string; dealerName: string; role: string } | null
 }
 
@@ -157,7 +155,7 @@ export async function fetchSellData(): Promise<SellData | null> {
       .eq('seller_id', sellerId)
       .eq('status', 'awaiting_shipment')
       .order('created_at', { ascending: true }),
-    supabase.from('profiles').select('subscription_tier, stripe_account_id, stripe_onboarding_complete, seller_tos_agreed, privacy_policy_agreed').eq('id', sellerId).single(),
+    supabase.from('profiles').select('subscription_tier, stripe_account_id, stripe_onboarding_complete').eq('id', sellerId).single(),
     supabase
       .from('listings')
       .select('id', { count: 'exact', head: true })
@@ -208,8 +206,6 @@ export async function fetchSellData(): Promise<SellData | null> {
     carryOver: carryOver ?? 0,
     createdThisMonth: createdThisMonth ?? 0,
     stripeOnboardingComplete: profile?.stripe_onboarding_complete ?? false,
-    sellerTosAgreed: profile?.seller_tos_agreed ?? false,
-    privacyPolicyAgreed: profile?.privacy_policy_agreed ?? false,
     teamContext,
   }
 }
@@ -342,9 +338,8 @@ export function SellClient() {
     return null
   }
 
-  const { allListings, orders, payoutOrders, awaitingTracking, tier, carryOver, createdThisMonth, stripeOnboardingComplete, sellerTosAgreed, privacyPolicyAgreed, teamContext } = data
-  // needsOnboarding: true until both agreements signed AND Stripe connected
-  const needsOnboarding = !sellerTosAgreed || !privacyPolicyAgreed || !stripeOnboardingComplete
+  const { allListings, orders, payoutOrders, awaitingTracking, tier, carryOver, createdThisMonth, stripeOnboardingComplete, teamContext } = data
+  const needsOnboarding = !stripeOnboardingComplete
   const tierConfig = TIER_CONFIG[tier]
 
   // Stats
@@ -384,8 +379,6 @@ export function SellClient() {
       {needsOnboarding && (
         <SellerOnboardingModal
           tier={tier}
-          sellerTosAgreed={sellerTosAgreed}
-          privacyPolicyAgreed={privacyPolicyAgreed}
           stripeOnboardingComplete={stripeOnboardingComplete}
           onComplete={() => mutate()}
         />

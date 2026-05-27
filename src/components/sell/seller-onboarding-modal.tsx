@@ -1,25 +1,21 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { FileText, Landmark, ArrowRight, Loader2, Check, Lock, ChevronLeft } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { Landmark, ArrowRight, Loader2, Check, Lock, ChevronLeft } from 'lucide-react'
 import { FeatureText } from '@/components/ui/card-fee-tooltip'
 
 type Tier = 'collector_basic' | 'collector_premium' | 'dealer'
 
 interface Props {
   tier: Tier
-  sellerTosAgreed: boolean
-  privacyPolicyAgreed: boolean
   stripeOnboardingComplete: boolean
   onComplete: () => void
 }
 
-type Step = 'tos' | 'plan' | 'stripe'
+type Step = 'plan' | 'stripe'
 
-// All steps for this user — used for the progress bar (never shrinks)
 function getAllDisplaySteps(tier: Tier): Step[] {
-  const steps: Step[] = ['tos']
+  const steps: Step[] = []
   if (tier === 'collector_basic') steps.push('plan')
   steps.push('stripe')
   return steps
@@ -73,7 +69,7 @@ function formatPrice(price: number | null) {
   return `$${price.toFixed(2)}`
 }
 
-// ── Billing upsell (shown after picking a paid plan) ──────────────────────────
+// ── Billing upsell ────────────────────────────────────────────────────────────
 function BillingChoice({ tier, onBack }: { tier: typeof COLLECTOR_TIERS[0]; onBack: () => void }) {
   return (
     <div className="flex flex-col gap-5">
@@ -84,7 +80,6 @@ function BillingChoice({ tier, onBack }: { tier: typeof COLLECTOR_TIERS[0]; onBa
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {/* Monthly */}
         <a
           href="/pricing"
           target="_blank"
@@ -98,7 +93,6 @@ function BillingChoice({ tier, onBack }: { tier: typeof COLLECTOR_TIERS[0]; onBa
           </div>
         </a>
 
-        {/* Annual */}
         <a
           href="/pricing"
           target="_blank"
@@ -111,9 +105,7 @@ function BillingChoice({ tier, onBack }: { tier: typeof COLLECTOR_TIERS[0]; onBa
           </div>
           <p className="text-xs text-muted-foreground font-medium mb-1">Annual</p>
           <p className="text-3xl font-bold mb-0.5">{formatPrice(tier.annualPrice)}<span className="text-sm font-normal text-muted-foreground">/yr</span></p>
-          <p className="text-xs text-muted-foreground mt-auto pt-3">
-            Billed annually, cancel any time
-          </p>
+          <p className="text-xs text-muted-foreground mt-auto pt-3">Billed annually, cancel any time</p>
           <div className="mt-4 inline-flex w-full items-center justify-center rounded-lg bg-foreground text-background px-3 py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity">
             Choose annual →
           </div>
@@ -190,92 +182,6 @@ function TierCard({ tier, onSelect, onSkip }: {
   )
 }
 
-// ── Step: Seller ToS + Privacy Policy ────────────────────────────────────────
-function TosStep({ onNext }: { onNext: () => void }) {
-  const [agreedSeller, setAgreedSeller] = useState(false)
-  const [agreedPrivacy, setAgreedPrivacy] = useState(false)
-  const [loading, setLoading] = useState(false)
-
-  const allAgreed = agreedSeller && agreedPrivacy
-
-  const handleAccept = async () => {
-    if (!allAgreed) return
-    setLoading(true)
-    try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Not signed in')
-      const { error } = await supabase.from('profiles').update({
-        seller_tos_agreed: true,
-        privacy_policy_agreed: true,
-      }).eq('id', user.id)
-      if (error) throw new Error(error.message)
-      onNext()
-    } catch (err) {
-      alert('Failed to save agreements: ' + (err instanceof Error ? err.message : 'Unknown error') + '\n\nPlease try again or contact support.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-8">
-      <div className="text-center">
-        <div className="flex justify-center mb-6">
-          <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center">
-            <FileText className="h-8 w-8 text-muted-foreground" />
-          </div>
-        </div>
-        <h2 className="text-2xl font-bold mb-2">Seller Agreements</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Before listing coins for sale, please review and accept our terms and privacy policy.
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <label className="flex items-start gap-4 cursor-pointer group">
-          <div className="relative mt-0.5 flex-shrink-0">
-            <input type="checkbox" checked={agreedSeller} onChange={e => setAgreedSeller(e.target.checked)} className="sr-only" />
-            <div className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-colors ${agreedSeller ? 'bg-foreground border-foreground' : 'border-border group-hover:border-foreground/40'}`}>
-              {agreedSeller && <Check className="h-3 w-3 text-background" />}
-            </div>
-          </div>
-          <span className="text-sm text-muted-foreground leading-snug">
-            I agree to the{' '}
-            <a href="/terms" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">
-              Seller Terms of Service
-            </a>.
-          </span>
-        </label>
-
-        <label className="flex items-start gap-4 cursor-pointer group">
-          <div className="relative mt-0.5 flex-shrink-0">
-            <input type="checkbox" checked={agreedPrivacy} onChange={e => setAgreedPrivacy(e.target.checked)} className="sr-only" />
-            <div className={`h-5 w-5 rounded border-2 flex items-center justify-center transition-colors ${agreedPrivacy ? 'bg-foreground border-foreground' : 'border-border group-hover:border-foreground/40'}`}>
-              {agreedPrivacy && <Check className="h-3 w-3 text-background" />}
-            </div>
-          </div>
-          <span className="text-sm text-muted-foreground leading-snug">
-            I have read and agree to the{' '}
-            <a href="/privacy" target="_blank" className="underline underline-offset-2 hover:text-foreground transition-colors">
-              Privacy Policy
-            </a>.
-          </span>
-        </label>
-      </div>
-
-      <button
-        onClick={handleAccept}
-        disabled={!allAgreed || loading}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background text-sm font-semibold h-11 px-4 hover:opacity-90 transition-opacity disabled:opacity-40"
-      >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-        {loading ? 'Saving…' : 'Accept & Continue'}
-      </button>
-    </div>
-  )
-}
-
 const ALL_TIERS = [
   ...COLLECTOR_TIERS,
   ...(DEALER_TIERS as typeof COLLECTOR_TIERS),
@@ -296,17 +202,12 @@ function PlanStep({ onSkip, selectedTier, onSelectTier }: {
       className="absolute inset-0"
       style={{ display: 'grid', gridTemplateRows: 'auto auto 1fr', gap: '12px' }}
     >
-      {/* Row 1 — header */}
       <h2 className="text-lg font-bold">Choose a plan</h2>
-
-      {/* Row 2 — trial notice */}
       <p className="text-xs text-muted-foreground">
         All paid plans include a{' '}
         <span className="font-medium text-foreground">30-day free trial</span>.
         {' '}You can change your plan at any time from Settings.
       </p>
-
-      {/* Row 3 — all 3 tiers in one grid */}
       <div className="grid grid-cols-3 gap-4">
         {ALL_TIERS.map((tier, i) => (
           <TierCard key={i} tier={tier} onSelect={() => onSelectTier(tier)} onSkip={onSkip} />
@@ -365,17 +266,11 @@ function StripeStep() {
 }
 
 // ── Main modal ────────────────────────────────────────────────────────────────
-export function SellerOnboardingModal({ tier, sellerTosAgreed, privacyPolicyAgreed, stripeOnboardingComplete, onComplete }: Props) {
+export function SellerOnboardingModal({ tier, onComplete }: Props) {
   const allDisplaySteps = getAllDisplaySteps(tier)
 
-  // Always start from the beginning — user must explicitly re-agree every session
-  // until the entire flow (ToS + Stripe) is complete. This avoids any possibility
-  // of the system silently advancing past agreements on the user's behalf.
   const [completedSteps, setCompletedSteps] = useState<Set<Step>>(new Set())
   const [stepIndex, setStepIndex] = useState(0)
-
-  // selectedTier lives here so the back button can detect the BillingChoice sub-page.
-  // Reset to null on every step change so returning to plan always shows the grid.
   const [planSelectedTier, setPlanSelectedTier] = useState<typeof COLLECTOR_TIERS[0] | null>(null)
   const prevStepIndex = useRef(stepIndex)
   if (prevStepIndex.current !== stepIndex) {
@@ -385,7 +280,6 @@ export function SellerOnboardingModal({ tier, sellerTosAgreed, privacyPolicyAgre
 
   const currentStep = allDisplaySteps[stepIndex]
 
-  // Advance to the next step after completing the current one
   const next = () => {
     const step = allDisplaySteps[stepIndex]
     const updated = new Set(completedSteps)
@@ -402,13 +296,9 @@ export function SellerOnboardingModal({ tier, sellerTosAgreed, privacyPolicyAgre
   const isPlanStep = currentStep === 'plan'
 
   return (
-    // z-40 keeps us below the navbar (z-50) so users can navigate away via the nav
     <div className="fixed top-16 inset-x-0 bottom-0 z-40 flex items-center justify-center bg-background/90 backdrop-blur-sm px-4 py-4">
       <div className={`relative w-full rounded-2xl border border-border bg-background shadow-2xl flex flex-col max-h-[calc(100vh-4rem)] transition-[max-width,height] duration-300 ${isPlanStep ? 'max-w-5xl p-6 h-[640px]' : 'max-w-lg p-8 h-[560px]'}`}>
 
-        {/* Back button — top-left corner, absolutely positioned so it never affects layout.
-            On BillingChoice sub-page: clears planSelectedTier (back to plan grid).
-            On other steps: goes to previous step. Hidden on plan grid (use progress bar). */}
         <button
           onClick={() => {
             if (planSelectedTier) { setPlanSelectedTier(null); return }
@@ -421,20 +311,16 @@ export function SellerOnboardingModal({ tier, sellerTosAgreed, privacyPolicyAgre
           Back
         </button>
 
-        {/* Progress bar — flex-shrink-0 keeps it fixed; only the content area scrolls */}
         {allDisplaySteps.length > 1 && (
           <div className="flex-shrink-0 flex items-start justify-center gap-0 mb-8">
             {allDisplaySteps.map((step, i) => {
               const isCurrent  = i === stepIndex
-              const isComplete = i < stepIndex          // positional: everything before current = done
-              const isUpcoming = i > stepIndex
-              // Disable all navigation while on the ToS step (must agree before moving)
-              const isClickable = currentStep !== 'tos' && completedSteps.has(step) && !isCurrent
-              const label = step === 'tos' ? 'Agreement' : step === 'plan' ? 'Plan' : 'Bank Account'
+              const isComplete = i < stepIndex
+              const isClickable = completedSteps.has(step) && !isCurrent
+              const label = step === 'plan' ? 'Plan' : 'Bank Account'
 
               return (
                 <div key={step} className="flex items-start">
-                  {/* Circle + label as one interactive unit */}
                   <button
                     onClick={() => setStepIndex(i)}
                     disabled={!isClickable}
@@ -459,7 +345,6 @@ export function SellerOnboardingModal({ tier, sellerTosAgreed, privacyPolicyAgre
                     </span>
                   </button>
 
-                  {/* Connector — solid once the step to its left is behind the current position */}
                   {i < allDisplaySteps.length - 1 && (
                     <div className="flex-1 mt-4 mx-2" style={{ minWidth: '3rem' }}>
                       <div className={`h-px transition-colors duration-300 ${i < stepIndex ? 'bg-foreground' : 'bg-border'}`} />
@@ -471,9 +356,7 @@ export function SellerOnboardingModal({ tier, sellerTosAgreed, privacyPolicyAgre
           </div>
         )}
 
-        {/* Content area */}
         <div className={`flex-1 min-h-0 flex flex-col ${isPlanStep ? 'overflow-hidden relative' : 'overflow-y-auto justify-center'}`}>
-          {currentStep === 'tos'    && <TosStep onNext={next} />}
           {currentStep === 'plan'   && <PlanStep onSkip={next} selectedTier={planSelectedTier} onSelectTier={setPlanSelectedTier} />}
           {currentStep === 'stripe' && <StripeStep />}
         </div>
