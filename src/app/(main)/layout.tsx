@@ -3,9 +3,11 @@ import Navbar from '@/components/layout/Navbar'
 import { InactivityGuard } from '@/components/layout/inactivity-guard'
 import { SWRProvider } from '@/components/providers/swr-provider'
 import { PageDataPrefetcher } from '@/components/layout/page-data-prefetcher'
+import { NavProvider } from '@/components/layout/nav-context'
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
+    <NavProvider>
     <SWRProvider>
       <PageDataPrefetcher />
       <div className="flex flex-col min-h-screen">
@@ -26,5 +28,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <InactivityGuard />
       </div>
     </SWRProvider>
+    </NavProvider>
   )
 }

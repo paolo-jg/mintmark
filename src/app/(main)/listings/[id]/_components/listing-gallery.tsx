@@ -48,7 +48,7 @@ export function ListingGallery({ images, title }: Props) {
       )}
 
       {/* Main image */}
-      <div className="relative flex-1 aspect-square rounded-2xl overflow-hidden bg-muted group min-h-0 max-h-[560px]">
+      <div className="relative flex-1 aspect-square rounded-2xl overflow-hidden bg-white group min-h-0 max-h-[560px]">
         <img
           src={images[active]}
           alt={title}

@@ -16,6 +16,7 @@ import { Coins, Menu, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
+import { useNavContext } from '@/components/layout/nav-context'
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null)
@@ -23,11 +24,20 @@ export default function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
+  const { sectionOverride } = useNavContext()
 
   function isActive(href: string) {
     if (href === '/') return pathname === '/'
-    if (href === '/sell') return pathname.startsWith('/sell') || pathname.startsWith('/listings/new') || /^\/listings\/[^/]+\/edit/.test(pathname)
-    if (href === '/listings') return pathname.startsWith('/listings') && !pathname.startsWith('/listings/new') && !/^\/listings\/[^/]+\/edit/.test(pathname)
+    if (href === '/sell') {
+      if (sectionOverride === 'sell') return true
+      if (sectionOverride === 'buy') return false
+      return pathname.startsWith('/sell') || pathname.startsWith('/listings/new') || /^\/listings\/[^/]+\/edit/.test(pathname)
+    }
+    if (href === '/listings') {
+      if (sectionOverride === 'buy') return true
+      if (sectionOverride === 'sell') return false
+      return pathname.startsWith('/listings') && !pathname.startsWith('/listings/new') && !/^\/listings\/[^/]+\/edit/.test(pathname)
+    }
     return pathname.startsWith(href)
   }
 

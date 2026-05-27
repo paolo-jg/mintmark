@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { getVerifyUrl } from '@/lib/grading/index'
 import { ListingGallery } from './_components/listing-gallery'
 import { ListingActions, type AuctionData } from './_components/listing-actions'
+import { SetNavSection } from '@/components/layout/nav-context'
 
 function formatGrade(grade: string | null): string {
   if (!grade) return ''
@@ -49,6 +50,7 @@ export default async function ListingPage({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <SetNavSection section={isOwner ? 'sell' : 'buy'} />
 
       {/* Back */}
       <Link
