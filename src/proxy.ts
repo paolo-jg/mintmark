@@ -117,10 +117,21 @@ export async function proxy(request: NextRequest) {
 
   // ── On pedigreecoins.com ──────────────────────────────────────────────────
   if (onMarketingDomain) {
+    // Validate/refresh the session first so stale tokens are cleared before
+    // we make any routing decisions based on hasSession().
+    const marketingResponse = await updateSession(request)
+
     if (loggedIn) {
-      const stayOnMarketing = pathname.startsWith('/auth') || pathname === '/privacy' || pathname === '/terms' || pathname === '/pricing'
+      // Always keep the landing page and marketing-only paths on this domain —
+      // avoids a redirect loop when session cookies are stale/expired.
+      const stayOnMarketing =
+        pathname === '/' ||
+        pathname.startsWith('/auth') ||
+        pathname === '/privacy' ||
+        pathname === '/terms' ||
+        pathname === '/pricing'
       if (!stayOnMarketing) {
-        return NextResponse.redirect(new URL(pathname === '/' ? '/' : pathname, APP_URL))
+        return NextResponse.redirect(new URL(pathname, APP_URL))
       }
     }
 
@@ -132,7 +143,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL(pathname, APP_URL))
     }
 
-    return updateSession(request)
+    return marketingResponse
   }
 
   // ── On my.pedigreecoins.com ───────────────────────────────────────────────

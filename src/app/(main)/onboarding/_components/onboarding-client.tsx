@@ -100,36 +100,44 @@ export function OnboardingClient({ initialUsername }: Props) {
 
   async function saveAndRedirect(destination: string) {
     setSaving(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      toast.error('Session expired. Please log in again.')
-      router.push('/auth/login')
-      return
-    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Session expired. Please log in again.')
+        router.push('/auth/login')
+        setSaving(false)
+        return
+      }
 
-    const displayName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') || null
+      const displayName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') || null
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        username,
-        display_name: shopName.trim() || displayName,
-        onboarding_completed: true,
-      })
-      .eq('id', user.id)
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          username,
+          display_name: shopName.trim() || displayName,
+          onboarding_completed: true,
+        })
+        .eq('id', user.id)
 
-    if (error) {
-      toast.error(error.message)
+      if (error) {
+        toast.error(error.message)
+        setSaving(false)
+        return
+      }
+
+      // Store first/last name privately — owner-only RLS, never public
+      // Ignore errors: table may not exist yet, don't block onboarding
+      await supabase
+        .from('profiles_private')
+        .upsert({ id: user.id, first_name: firstName.trim() || null, last_name: lastName.trim() || null })
+        .then(() => null, () => null)
+
+      router.push(destination)
+    } catch {
+      toast.error('Something went wrong. Please try again.')
       setSaving(false)
-      return
     }
-
-    // Store first/last name privately — owner-only RLS, never public
-    await supabase
-      .from('profiles_private')
-      .upsert({ id: user.id, first_name: firstName.trim() || null, last_name: lastName.trim() || null })
-
-    router.push(destination)
   }
 
   const totalSteps = 3
@@ -184,7 +192,7 @@ export function OnboardingClient({ initialUsername }: Props) {
                     id="firstName"
                     value={firstName}
                     onChange={e => setFirstName(e.target.value)}
-                    placeholder="Paolo"
+                    placeholder="First name"
                     autoComplete="given-name"
                     autoFocus
                     className="h-12 text-base"
@@ -196,7 +204,7 @@ export function OnboardingClient({ initialUsername }: Props) {
                     id="lastName"
                     value={lastName}
                     onChange={e => setLastName(e.target.value)}
-                    placeholder="Garcia"
+                    placeholder="Last name"
                     autoComplete="family-name"
                     className="h-12 text-base"
                   />
@@ -278,54 +286,60 @@ export function OnboardingClient({ initialUsername }: Props) {
 
           {/* ── STEP 3: Plan ─────────────────────────────────────────────── */}
           {step === 3 && (
-            <div className="space-y-7">
+            <div className="space-y-6">
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">Choose a plan</h1>
                 <p className="text-muted-foreground mt-2">Start free and upgrade whenever you're ready.</p>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-3">
                 {PLANS.map(plan => (
                   <div
                     key={plan.key}
-                    className={`relative rounded-xl border p-5 flex flex-col gap-4 ${
+                    className={`relative rounded-xl border px-5 py-4 flex items-center gap-4 ${
                       plan.highlight
                         ? 'border-foreground bg-foreground text-background'
-                        : 'border-border bg-muted/30'
+                        : 'border-border bg-muted/20'
                     }`}
                   >
                     {plan.badge && (
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-foreground text-background px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                      <span className="absolute -top-2.5 left-5 text-[10px] font-bold tracking-wider uppercase bg-foreground text-background px-2.5 py-0.5 rounded-full">
                         {plan.badge}
                       </span>
                     )}
-                    <div>
-                      <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
+
+                    {/* Price */}
+                    <div className="w-28 shrink-0">
+                      <p className={`text-[11px] font-semibold uppercase tracking-widest mb-0.5 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
                         {plan.name}
                       </p>
-                      <p className="text-2xl font-bold">
+                      <p className="text-xl font-bold leading-none">
                         {plan.price}
-                        <span className={`text-sm font-normal ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
+                        <span className={`text-xs font-normal ml-0.5 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`}>
                           {plan.per}
                         </span>
                       </p>
                     </div>
-                    <ul className="space-y-1.5 flex-1">
+
+                    {/* Features */}
+                    <ul className="flex-1 flex flex-wrap gap-x-4 gap-y-1">
                       {plan.features.map(f => (
-                        <li key={f} className="flex items-start gap-1.5 text-sm">
-                          <Check className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${plan.highlight ? 'text-background/70' : 'text-muted-foreground'}`} />
+                        <li key={f} className="flex items-center gap-1 text-sm">
+                          <Check className={`h-3.5 w-3.5 shrink-0 ${plan.highlight ? 'text-background/60' : 'text-muted-foreground'}`} />
                           <span className={plan.highlight ? 'text-background/80' : 'text-muted-foreground'}>
                             {f}
                           </span>
                         </li>
                       ))}
                     </ul>
+
+                    {/* CTA */}
                     <Button
-                      variant={plan.highlight ? 'outline' : 'outline'}
-                      className={`w-full h-10 text-sm ${
+                      variant="outline"
+                      className={`shrink-0 h-10 px-5 text-sm font-medium ${
                         plan.highlight
-                          ? 'border-background/40 text-background hover:bg-background/10'
-                          : ''
+                          ? 'border-background/50 bg-transparent text-background hover:bg-background hover:text-foreground'
+                          : 'border-border bg-background text-foreground hover:bg-muted'
                       }`}
                       onClick={() => saveAndRedirect(plan.key === 'collector_basic' ? '/listings' : '/pricing')}
                       disabled={saving}
