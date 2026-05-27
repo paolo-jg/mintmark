@@ -18,24 +18,29 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Retrieve the account from Stripe to check onboarding status
-    const account = await stripe.accounts.retrieve(accountId)
-
-    // In live mode also require payouts_enabled (full KYC cleared).
-    // In test mode only check details_submitted — currently_due stays non-empty
-    // after dummy onboarding so payouts_enabled is never set.
     const isLiveMode = process.env.STRIPE_SECRET_KEY?.startsWith('sk_live_') ?? false
-    const isComplete = account.details_submitted === true &&
-      (isLiveMode ? account.payouts_enabled === true : true)
+
+    let isComplete: boolean
+    if (isLiveMode) {
+      // Production: verify KYC is fully cleared with Stripe
+      const account = await stripe.accounts.retrieve(accountId)
+      isComplete = account.details_submitted === true && account.payouts_enabled === true
+    } else {
+      // Test mode: trust that Stripe returned the user — skip API check entirely
+      // (details_submitted and payouts_enabled are unreliable with dummy test data)
+      isComplete = true
+    }
 
     if (isComplete) {
       const db = getServiceDb()
-      const { data: profile } = await db
+      const { data: profile, error: dbError } = await db
         .from('profiles')
         .update({ stripe_onboarding_complete: true })
         .eq('stripe_account_id', accountId)
         .select('id')
         .single()
+
+      if (dbError) console.error('[stripe/connect/return] db update failed:', dbError.message)
 
       if (profile?.id) {
         db.auth.admin.getUserById(profile.id).then(({ data }) => {

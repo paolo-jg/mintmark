@@ -167,15 +167,19 @@ export function SellClient() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
-    if (params.get('onboarded') === '1') setStripeReturn('success')
-    else if (params.get('onboarding') === 'incomplete') setStripeReturn('incomplete')
+    if (params.get('onboarded') === '1') {
+      setStripeReturn('success')
+      mutate() // force-refresh so needsOnboarding re-evaluates with updated DB flags
+    } else if (params.get('onboarding') === 'incomplete') {
+      setStripeReturn('incomplete')
+    }
     const tabParam = params.get('tab') as TabId | null
     if (tabParam && ['all', 'active', 'draft', 'sold', 'expired'].includes(tabParam)) setTab(tabParam)
     // Clean up the URL
     if (params.has('onboarded') || params.has('onboarding') || params.has('tab')) {
       window.history.replaceState({}, '', window.location.pathname)
     }
-  }, [])
+  }, [mutate])
 
   async function handleConnectStripe() {
     setConnectLoading(true)

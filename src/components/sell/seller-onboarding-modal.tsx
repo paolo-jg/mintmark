@@ -230,16 +230,21 @@ function TosStep({ onNext, revisit = false }: { onNext: () => void; revisit?: bo
   const handleAccept = async () => {
     if (!allAgreed) return
     setLoading(true)
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      await supabase.from('profiles').update({
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not signed in')
+      const { error } = await supabase.from('profiles').update({
         seller_tos_agreed: true,
         privacy_policy_agreed: true,
       }).eq('id', user.id)
+      if (error) throw new Error(error.message)
+      onNext()
+    } catch (err) {
+      alert('Failed to save agreements: ' + (err instanceof Error ? err.message : 'Unknown error') + '\n\nPlease try again or contact support.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
-    onNext()
   }
 
   return (
