@@ -99,8 +99,8 @@ export default function Navbar() {
                     </Avatar>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={() => router.push('/profile')}>
-                      Profile
+                    <DropdownMenuItem onClick={() => router.push('/settings')}>
+                      Settings
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="text-destructive">
@@ -158,9 +158,18 @@ export default function Navbar() {
             )
           })}
           {user ? (
-            <button onClick={signOut} className="block w-full text-left px-3 py-2.5 text-sm font-semibold text-destructive">
-              Sign Out
-            </button>
+            <>
+              <Link
+                href="/settings"
+                onClick={() => setMobileOpen(false)}
+                className="block px-3 py-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Settings
+              </Link>
+              <button onClick={signOut} className="block w-full text-left px-3 py-2.5 text-sm font-semibold text-destructive">
+                Sign Out
+              </button>
+            </>
           ) : (
             <div className="flex gap-2 pt-2">
               <Button variant="ghost" size="sm" render={<Link href="/auth/login" />}>Sign In</Button>

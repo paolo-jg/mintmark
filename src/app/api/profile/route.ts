@@ -35,6 +35,16 @@ export async function POST(req: Request) {
     update.dealer_description = val || null
   }
 
+  if ('dealer_banner_url' in body) {
+    const val = (body.dealer_banner_url ?? '').trim()
+    update.dealer_banner_url = val || null
+  }
+
+  if ('dealer_tagline' in body) {
+    const val = (body.dealer_tagline ?? '').trim()
+    update.dealer_tagline = val || null
+  }
+
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
   }
