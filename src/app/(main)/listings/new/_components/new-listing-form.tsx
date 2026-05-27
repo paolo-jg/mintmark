@@ -1818,13 +1818,12 @@ export default function NewListingPage() {
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                             <Input
                               id="shippingPrice"
-                              type="number"
-                              min="4.99"
-                              step="0.01"
+                              type="text"
+                              inputMode="decimal"
                               value={shippingPrice}
-                              onChange={e => setShippingPrice(e.target.value)}
+                              onChange={e => handlePriceInput(e, setShippingPrice)}
                               placeholder="4.99"
-                              className="h-11 pl-7 text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="h-11 pl-7 text-base"
                             />
                           </div>
                           <p className="text-xs text-muted-foreground">Minimum $4.99. Added to the buyer&apos;s total at checkout.</p>

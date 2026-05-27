@@ -185,7 +185,7 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
   )
   const [shippingPrice, setShippingPrice] = useState<string>(
     (listing as { shipping_price_cents?: number | null }).shipping_price_cents
-      ? String(((listing as { shipping_price_cents?: number }).shipping_price_cents! / 100).toFixed(2))
+      ? formatPriceWhileTyping(String(((listing as { shipping_price_cents?: number }).shipping_price_cents! / 100).toFixed(2)))
       : ''
   )
 
@@ -852,13 +852,12 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
                       <Input
                         id="shippingPrice"
-                        type="number"
-                        min="4.99"
-                        step="0.01"
+                        type="text"
+                        inputMode="decimal"
                         value={shippingPrice}
-                        onChange={e => setShippingPrice(e.target.value)}
+                        onChange={e => handlePriceInput(e, setShippingPrice)}
                         placeholder="4.99"
-                        className="h-11 pl-7 text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="h-11 pl-7 text-base"
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">Minimum $4.99.</p>
