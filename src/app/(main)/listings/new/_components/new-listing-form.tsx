@@ -733,7 +733,7 @@ export default function NewListingPage() {
         .from('team_members')
         .select('dealer_id')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
       const sellerId = membership?.dealer_id ?? user.id
 
       const draftData = {
@@ -839,7 +839,7 @@ export default function NewListingPage() {
       .from('team_members')
       .select('dealer_id')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
     const sellerId = membership?.dealer_id ?? user.id
 
     setUploadingImages(imageFiles.length > 0)
