@@ -13,6 +13,7 @@ import {
   Banknote,
   BarChart3,
   ScrollText,
+  RotateCcw,
 } from 'lucide-react'
 
 const NAV = [
@@ -22,6 +23,7 @@ const NAV = [
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { href: '/admin/disputes', label: 'Disputes', icon: AlertTriangle },
+  { href: '/admin/returns', label: 'Returns', icon: RotateCcw },
   { href: '/admin/listings', label: 'Listings', icon: Tag },
   { href: '/admin/audit-log', label: 'Audit Log', icon: ScrollText },
   { href: '/admin/platform', label: 'Platform', icon: Settings2 },

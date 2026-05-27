@@ -8,6 +8,7 @@ import { formatCents } from '@/lib/utils'
 import { Package, Shield, ExternalLink } from 'lucide-react'
 import type { OrderStatus, TrackingStatus } from '@/types'
 import FileDisputeButton from './_components/file-dispute-button'
+import RequestReturnButton from './_components/request-return-button'
 
 const TRACKING_STEPS: TrackingStatus[] = ['pre_transit', 'transit', 'delivered']
 
@@ -184,11 +185,15 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
         </Card>
       )}
 
-      {/* Dispute */}
+      {/* Dispute / Return */}
       {isBuyer && ['delivered', 'shipped', 'label_purchased', 'awaiting_shipment'].includes(order.status) && (
-        <div className="text-center pt-2">
-          <p className="text-xs text-muted-foreground mb-1">Problem with this order?</p>
-          <FileDisputeButton orderId={order.id} />
+        <div className="text-center pt-2 space-y-1">
+          <p className="text-xs text-muted-foreground">Problem with this order?</p>
+          <div className="flex items-center justify-center gap-3">
+            <FileDisputeButton orderId={order.id} />
+            <span className="text-xs text-muted-foreground/40">·</span>
+            <RequestReturnButton orderId={order.id} />
+          </div>
         </div>
       )}
 

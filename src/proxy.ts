@@ -139,33 +139,22 @@ export async function proxy(request: NextRequest) {
 
   // ── On pedigreecoins.com ──────────────────────────────────────────────────
   if (onMarketingDomain) {
-    // Validate/refresh the session first so stale tokens are cleared before
-    // we make any routing decisions based on hasSession().
-    const marketingResponse = await updateSession(request).catch(() => NextResponse.next())
+    // pedigreecoins.com is STRICTLY the marketing landing page.
+    // Only these paths are served here — everything else (including /auth/*)
+    // is redirected to my.pedigreecoins.com so auth always happens on the app domain.
+    const MARKETING_SERVE_PATHS = ['/', '/pricing', '/terms', '/privacy', '/ref/']
+    const isMarketingPath = MARKETING_SERVE_PATHS.some(p =>
+      p === '/' ? pathname === '/' : pathname.startsWith(p)
+    )
 
-    if (loggedIn) {
-      // Always keep the landing page and marketing-only paths on this domain —
-      // avoids a redirect loop when session cookies are stale/expired.
-      const stayOnMarketing =
-        pathname === '/' ||
-        pathname.startsWith('/auth') ||
-        pathname === '/privacy' ||
-        pathname === '/terms' ||
-        pathname === '/pricing'
-      if (!stayOnMarketing) {
-        return NextResponse.redirect(new URL(pathname, APP_URL))
-      }
+    if (!isMarketingPath) {
+      const target = new URL(pathname, APP_URL)
+      if (request.nextUrl.search) target.search = request.nextUrl.search
+      return NextResponse.redirect(target)
     }
 
-    const isAppPath = APP_ONLY_PATHS.some(p => pathname.startsWith(p))
-    if (isAppPath) {
-      if (!loggedIn) {
-        return NextResponse.redirect(new URL(`/auth/login?redirectTo=${pathname}`, MARKETING_URL))
-      }
-      return NextResponse.redirect(new URL(pathname, APP_URL))
-    }
-
-    return marketingResponse
+    // Serve marketing paths without session processing — never show auth state here
+    return NextResponse.next()
   }
 
   // ── On my.pedigreecoins.com ───────────────────────────────────────────────

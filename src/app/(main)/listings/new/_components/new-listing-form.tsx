@@ -820,9 +820,14 @@ export default function NewListingPage() {
         return
       }
     }
-    if (shippingType === 'free' && listingType === 'fixed' && price) {
-      if (parsePriceCents(price) < FREE_SHIPPING_MIN_CENTS) {
-        toast.error('Free shipping is only available for listings priced at $250 or more')
+    if (shippingType === 'free') {
+      const refCents = listingType === 'fixed' && price
+        ? parsePriceCents(price)
+        : listingType === 'auction' && reservePrice
+          ? parsePriceCents(reservePrice)
+          : 0
+      if (refCents < FREE_SHIPPING_MIN_CENTS) {
+        toast.error('Free shipping requires a price or reserve of $250 or more')
         setShippingType('flat')
         return
       }
@@ -830,6 +835,25 @@ export default function NewListingPage() {
     if (listingType === 'auction' && !startPrice.trim()) {
       toast.error('Starting bid is required for auction listings')
       return
+    }
+    if (listingType === 'auction') {
+      if (!reservePrice.trim()) {
+        toast.error('Reserve price is required for auction listings')
+        return
+      }
+      const startCents = parsePriceCents(startPrice)
+      const reserveCents = parsePriceCents(reservePrice)
+      if (reserveCents < startCents) {
+        toast.error('Reserve price must be greater than or equal to the starting bid')
+        return
+      }
+      if (auctionBinPrice.trim()) {
+        const binCents = parsePriceCents(auctionBinPrice)
+        if (binCents < reserveCents) {
+          toast.error('Buy It Now price must be greater than or equal to the reserve price')
+          return
+        }
+      }
     }
     if (acceptOffers && listingType === 'fixed' && autoAcceptPct && price) {
       const acceptAmt = parsePriceCents(autoAcceptPct)
@@ -1561,7 +1585,7 @@ export default function NewListingPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="reservePrice">
-                          Reserve Price <span className="text-muted-foreground font-normal">(optional)</span>
+                          Reserve Price <span className="text-destructive">*</span>
                         </Label>
                         <div className="flex items-stretch rounded-xl border-2 border-border focus-within:border-foreground transition-colors overflow-hidden">
                           <span className="flex items-center px-3 text-sm font-medium text-muted-foreground bg-muted/40 border-r border-border select-none">USD</span>
@@ -1576,6 +1600,7 @@ export default function NewListingPage() {
                             placeholder="0.00"
                           />
                         </div>
+                        <p className="text-xs text-muted-foreground">Must be ≥ starting bid.</p>
                       </div>
                     </div>
                     {/* Auction BIN price */}
@@ -1596,7 +1621,7 @@ export default function NewListingPage() {
                           placeholder="0.00"
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">A buyer can skip the auction and purchase immediately at this price.</p>
+                      <p className="text-xs text-muted-foreground">Optional. Must be ≥ reserve price. Buyer skips the auction at this price.</p>
                     </div>
 
                     <div className="space-y-2">
@@ -1748,7 +1773,11 @@ export default function NewListingPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {(() => {
-                  const priceCents = listingType === 'fixed' && price ? parsePriceCents(price) : 0
+                  const priceCents = listingType === 'fixed' && price
+                    ? parsePriceCents(price)
+                    : listingType === 'auction' && reservePrice
+                      ? parsePriceCents(reservePrice)
+                      : 0
                   const freeAllowed = priceCents >= FREE_SHIPPING_MIN_CENTS
                   return (
                     <>
@@ -1794,8 +1823,8 @@ export default function NewListingPage() {
                               step="0.01"
                               value={shippingPrice}
                               onChange={e => setShippingPrice(e.target.value)}
-                              placeholder="3.99"
-                              className="h-11 pl-7 text-base"
+                              placeholder="4.99"
+                              className="h-11 pl-7 text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                           </div>
                           <p className="text-xs text-muted-foreground">Minimum $4.99. Added to the buyer&apos;s total at checkout.</p>

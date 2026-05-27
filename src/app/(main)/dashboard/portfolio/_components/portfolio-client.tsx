@@ -88,6 +88,52 @@ interface ValuationResult {
   matchedHeader: string | null
   exact: boolean
   hasProfile: boolean
+  isUngradedEst: boolean
+}
+
+// ── Ungraded price estimation ─────────────────────────────────────────────────
+//
+// Strategy: take all non-proof grades from the price table, sort low→high by
+// grade position, keep only the lower 60% (circulated range), then use their
+// median.  This gives a conservative but defensible proxy for a raw/ungraded
+// coin without inflating toward mint-state prices or the absolute floor grades.
+// Proof coins (PR*/PF*) are excluded because they trade on an entirely separate
+// market and would badly skew any average.
+
+function estimateUngradedCents(profile: CoinProfile | null): { cents: number; label: string } | null {
+  if (!profile?.price_headers || !profile?.price_row?.prices) return null
+
+  const headers = profile.price_headers
+  const prices = profile.price_row.prices
+
+  const candidates: { grade: string; cents: number; pos: number }[] = []
+
+  headers.forEach((header, i) => {
+    const norm = normalizeGrade(header)
+    if (norm.startsWith('PR') || norm.startsWith('PF')) return   // skip proof
+    const cents = parsePriceCents(prices[i] ?? '')
+    if (!cents || cents <= 0) return
+    const pos = GRADE_ORDER.indexOf(norm)
+    candidates.push({ grade: header, cents, pos: pos === -1 ? 999 : pos })
+  })
+
+  if (candidates.length === 0) return null
+
+  // Sort low→high by grade position
+  candidates.sort((a, b) => a.pos - b.pos)
+
+  // Keep the lower 60% (circulated / lower-mint range)
+  const take = Math.max(1, Math.ceil(candidates.length * 0.6))
+  const lower = candidates.slice(0, take)
+
+  // Median of that subset
+  const sorted = [...lower].sort((a, b) => a.cents - b.cents)
+  const mid = Math.floor(sorted.length / 2)
+  const median = sorted.length % 2 === 0
+    ? Math.round((sorted[mid - 1].cents + sorted[mid].cents) / 2)
+    : sorted[mid].cents
+
+  return { cents: median, label: lower[Math.floor(lower.length / 2)]?.grade ?? '' }
 }
 
 // ── Fetcher ────────────────────────────────────────────────────────────────────
@@ -112,13 +158,24 @@ async function fetchPortfolio() {
     const prices = profile?.price_row?.prices ?? []
     const hasProfile = headers.length > 0 && prices.length > 0
 
-    if (!hasProfile || !item.grade) {
-      return { ...item, estimatedCents: null, matchedHeader: null, exact: false, hasProfile }
+    // Ungraded coin: estimate from the lower price range of the profile
+    if (!item.grade) {
+      if (hasProfile) {
+        const est = estimateUngradedCents(profile)
+        if (est) {
+          return { ...item, estimatedCents: est.cents, matchedHeader: est.label, exact: false, hasProfile, isUngradedEst: true }
+        }
+      }
+      return { ...item, estimatedCents: null, matchedHeader: null, exact: false, hasProfile, isUngradedEst: true }
+    }
+
+    if (!hasProfile) {
+      return { ...item, estimatedCents: null, matchedHeader: null, exact: false, hasProfile, isUngradedEst: false }
     }
 
     const match = findNearestGrade(item.grade, headers)
     if (!match) {
-      return { ...item, estimatedCents: null, matchedHeader: null, exact: false, hasProfile }
+      return { ...item, estimatedCents: null, matchedHeader: null, exact: false, hasProfile, isUngradedEst: false }
     }
 
     const priceStr = prices[match.headerIndex] ?? ''
@@ -130,6 +187,7 @@ async function fetchPortfolio() {
       matchedHeader: headers[match.headerIndex],
       exact: match.exact,
       hasProfile,
+      isUngradedEst: false,
     }
   }
 
@@ -288,13 +346,15 @@ export function PortfolioClient() {
                       {item.estimatedCents !== null ? (
                         <div>
                           <span className="font-semibold tabular-nums">{fmtDollars(item.estimatedCents)}</span>
-                          {!item.exact && item.matchedHeader && (
+                          {item.isUngradedEst ? (
+                            <p className="text-[10px] text-blue-500 mt-0.5">~ungraded est.</p>
+                          ) : !item.exact && item.matchedHeader ? (
                             <p className="text-[10px] text-amber-600 mt-0.5">~via {item.matchedHeader}</p>
-                          )}
+                          ) : null}
                         </div>
                       ) : (
                         <span className="text-xs text-muted-foreground/60">
-                          {item.hasProfile ? 'Grade not matched' : 'No price data'}
+                          {item.isUngradedEst ? 'No price data' : item.hasProfile ? 'Grade not matched' : 'No price data'}
                         </span>
                       )}
                     </td>
@@ -309,9 +369,10 @@ export function PortfolioClient() {
               </tfoot>
             </table>
           </div>
-          {owned.some(i => !i.exact && i.matchedHeader) && (
-            <p className="text-[11px] text-amber-600 mt-2">
-              Amber prices use the nearest available grade as a proxy.
+          {(owned.some(i => !i.exact && i.matchedHeader && !i.isUngradedEst) || owned.some(i => i.isUngradedEst && i.estimatedCents !== null)) && (
+            <p className="text-[11px] text-muted-foreground mt-2">
+              {owned.some(i => !i.exact && i.matchedHeader && !i.isUngradedEst) && <span className="text-amber-600">Amber: nearest available grade used as proxy. </span>}
+              {owned.some(i => i.isUngradedEst && i.estimatedCents !== null) && <span className="text-blue-500">Blue: median of lower circulated grades used for ungraded coin.</span>}
             </p>
           )}
         </div>
@@ -351,13 +412,15 @@ export function PortfolioClient() {
                       {item.estimatedCents !== null ? (
                         <div>
                           <span className="font-semibold tabular-nums">{fmtDollars(item.estimatedCents)}</span>
-                          {!item.exact && item.matchedHeader && (
+                          {item.isUngradedEst ? (
+                            <p className="text-[10px] text-blue-500 mt-0.5">~ungraded est.</p>
+                          ) : !item.exact && item.matchedHeader ? (
                             <p className="text-[10px] text-amber-600 mt-0.5">~via {item.matchedHeader}</p>
-                          )}
+                          ) : null}
                         </div>
                       ) : (
                         <span className="text-xs text-muted-foreground/60">
-                          {item.hasProfile ? 'Grade not matched' : 'No price data'}
+                          {item.isUngradedEst ? 'No price data' : item.hasProfile ? 'Grade not matched' : 'No price data'}
                         </span>
                       )}
                     </td>

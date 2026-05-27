@@ -858,7 +858,7 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
                         value={shippingPrice}
                         onChange={e => setShippingPrice(e.target.value)}
                         placeholder="4.99"
-                        className="h-11 pl-7 text-base"
+                        className="h-11 pl-7 text-base [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">Minimum $4.99.</p>

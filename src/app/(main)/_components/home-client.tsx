@@ -6,10 +6,9 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Shield, TrendingUp, Clock, List, Heart, ShoppingBag, Tag, Package, CheckCircle2, X, ArrowLeftRight, Loader2, Wallet, Users, Gavel, Copy, Check as CheckIcon, Gift } from 'lucide-react'
+import { Heart, ShoppingBag, Tag, Package, CheckCircle2, X, ArrowLeftRight, Loader2, Wallet, Users, Gavel, Copy, Check as CheckIcon, Gift, Info } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 import type { OrderStatus } from '@/types'
-import { PricingSection } from '@/components/layout/pricing-section'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -363,7 +362,23 @@ function ReferralWidget({ referralCode, referralCount, referralConverted }: { re
             <Gift className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">Refer a friend, get a free month</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-sm font-semibold">Refer a friend, get a free month</p>
+              <div className="group relative">
+                <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help flex-shrink-0" />
+                <div className="pointer-events-none absolute bottom-full left-0 mb-2 w-64 rounded-lg border border-border bg-popover px-3 py-2.5 text-xs text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                  <p className="font-semibold mb-1">How referrals work</p>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>• Share your link with a friend</li>
+                    <li>• They sign up and choose a paid plan (Premium or Dealer)</li>
+                    <li>• They get their first month free</li>
+                    <li>• You get 1 free month of your current plan</li>
+                    <li>• Free months stack — refer more, earn more</li>
+                  </ul>
+                  <p className="mt-1.5 text-muted-foreground/70">Dealer referrers earn a free Dealer month. Basic/Premium referrers earn a free Premium month.</p>
+                </div>
+              </div>
+            </div>
             <p className="text-xs text-muted-foreground mt-0.5">They get 1 month free Premium. You get 1 month free per sign-up.</p>
           </div>
         </div>
@@ -397,9 +412,7 @@ export function HomeClient() {
     return <DashboardSkeleton />
   }
 
-  if (!data || !data.isLoggedIn) {
-    return <LandingPage />
-  }
+  if (!data) return null
 
   const { allSellingOrders, allBuyingOrders, activeListingsData, subscriptionTier, incomingOffers, outgoingOffers, userId, repeatBuyers, referralCode, referralCount, referralConverted } = data
 
@@ -518,9 +531,9 @@ export function HomeClient() {
         </Card>
       </div>
 
-      {/* Row 2: Sales chart + Fee comparison */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <Card className="lg:col-span-2">
+      {/* Row 2: Sales chart */}
+      <div className="grid grid-cols-1 gap-6 mb-8">
+        <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Sales vs Purchases, Last 6 Months</CardTitle>
@@ -557,27 +570,6 @@ export function HomeClient() {
             {totalRevenue === 0 && totalSpent === 0 && (
               <p className="text-sm text-muted-foreground text-center mt-4">No activity yet. Data will appear here once you buy or sell.</p>
             )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Fee Comparison</CardTitle>
-            <CardDescription>vs. typical marketplace fees</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { label: 'Pedigree Coins', fee: 'From 1.9%', highlight: true },
-              { label: 'eBay (coins)', fee: '~12.35%', highlight: false },
-              { label: 'Heritage Auctions', fee: '20%+ BP', highlight: false },
-              { label: 'PCGS CoinFacts', fee: 'Varies', highlight: false },
-            ].map(({ label, fee, highlight }) => (
-              <div key={label} className={`flex items-center justify-between py-2 px-3 rounded-lg ${highlight ? 'bg-muted font-semibold' : ''}`}>
-                <p className="text-sm">{label}</p>
-                <p className={`text-sm tabular-nums ${highlight ? 'text-foreground' : 'text-muted-foreground'}`}>{fee}</p>
-              </div>
-            ))}
-            <p className="text-[11px] text-muted-foreground pt-1">Collector Basic tier. Upgrade for lower rates.</p>
           </CardContent>
         </Card>
       </div>
@@ -727,84 +719,6 @@ export function HomeClient() {
         </Card>
       )}
 
-    </div>
-  )
-}
-
-function LandingPage() {
-  return (
-    <div>
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
-        <Badge variant="secondary" className="mb-6">Only professionally rare coins</Badge>
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-          The marketplace for<br />
-          <span className="text-muted-foreground">rare, verified coins</span>
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
-          Every coin on Pedigree Coins is certified by a professional grading service.
-          PCGS, NGC, and more. Buy and sell with complete confidence.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button size="lg" render={<Link href="/listings" />}>Browse Coins</Button>
-          <Button size="lg" variant="outline" render={<Link href="/auctions" />}>Live Auctions</Button>
-        </div>
-      </section>
-
-      <section className="border-y border-border bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Shield, title: 'Cert-verified listings', desc: 'PCGS and NGC cert numbers are verified against official APIs at time of listing.' },
-              { icon: TrendingUp, title: 'Population & price data', desc: 'See how many coins exist at each grade and realized sale prices for every listing.' },
-              { icon: Clock, title: 'Fixed price & auctions', desc: 'Buy now or bid in real-time auctions. Set a reserve price to protect your coin.' },
-              { icon: List, title: 'Want list matching', desc: "List the coins you're hunting. Get notified when a matching coin is listed." },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex flex-col gap-2">
-                <Icon className="h-5 w-5 text-muted-foreground" />
-                <p className="font-medium text-sm">{title}</p>
-                <p className="text-sm text-muted-foreground">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <h2 className="text-xl font-semibold mb-2">Accepted grading services</h2>
-        <p className="text-muted-foreground text-sm mb-8">
-          Coins graded by PCGS and NGC are automatically verified. Others are listed with an unverified badge.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {[
-            { label: 'PCGS', verified: true },
-            { label: 'NGC', verified: true },
-            { label: 'ANACS', verified: false },
-            { label: 'ICG', verified: false },
-            { label: 'SEGS', verified: false },
-          ].map(({ label, verified }) => (
-            <Card key={label} className="px-4 py-2">
-              <CardContent className="p-0 flex items-center gap-2">
-                <span className="font-mono font-semibold text-sm">{label}</span>
-                <Badge variant={verified ? 'default' : 'secondary'} className="text-xs">
-                  {verified ? 'Auto-verified' : 'Unverified'}
-                </Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <PricingSection />
-
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 text-center">
-        <div className="bg-muted rounded-2xl px-8 py-14">
-          <h2 className="text-2xl font-bold mb-3">Ready to sell a coin?</h2>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Create a free account, enter your cert number, and your listing goes live in minutes.
-          </p>
-          <Button size="lg" render={<Link href="/auth/register" />}>Start Selling</Button>
-        </div>
-      </section>
     </div>
   )
 }

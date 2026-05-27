@@ -139,12 +139,12 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
         .upsert({ id: user.id, first_name: firstName.trim() || null, last_name: lastName.trim() || null })
         .then(() => null, () => null)
 
-      // If referred and chose Premium, complete the referral
-      if (referralCode && planKey === 'collector_premium') {
+      // If referred and chose a paid plan, complete the referral
+      if (referralCode && (planKey === 'collector_premium' || planKey === 'dealer')) {
         await fetch('/api/referrals/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ referral_code: referralCode }),
+          body: JSON.stringify({ referral_code: referralCode, chosen_tier: planKey }),
         }).catch(() => null)
       }
 
@@ -317,8 +317,9 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
               </div>
 
               {referralCode ? (
-                /* Referred users: Premium-only card */
-                <div className="max-w-sm mx-auto">
+                /* Referred users: Premium (1 month free) + Dealer (full price), no Free option */
+                <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+                  {/* Premium — referral bonus */}
                   <div className="relative rounded-xl border border-foreground bg-foreground text-background p-6 flex flex-col gap-4">
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-green-500 text-white px-3 py-0.5 rounded-full whitespace-nowrap">
                       1 Month Free
@@ -344,6 +345,38 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
                     <Button
                       className="w-full h-10 text-sm font-semibold mt-1 bg-white text-zinc-900 hover:bg-white/90 border-0"
                       onClick={() => saveAndRedirect('/listings', 'collector_premium')}
+                      disabled={saving}
+                    >
+                      {saving ? 'Saving…' : 'Claim Free Month'}
+                    </Button>
+                  </div>
+
+                  {/* Dealer — also 1 month free */}
+                  <div className="relative rounded-xl border border-border bg-background p-6 flex flex-col gap-4">
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-green-500 text-white px-3 py-0.5 rounded-full whitespace-nowrap">
+                      1 Month Free
+                    </span>
+                    <div>
+                      <p className="text-[10px] font-bold tracking-[0.18em] uppercase mb-0.5 text-muted-foreground/50">Dealer</p>
+                      <p className="text-lg font-bold mb-3">Dealer</p>
+                      <div className="flex items-baseline gap-1 mb-2">
+                        <span className="text-3xl font-bold tracking-tight line-through opacity-40">$49.99</span>
+                        <span className="text-xl font-bold text-green-400 ml-2">Free</span>
+                        <span className="text-xs text-muted-foreground ml-1">first month</span>
+                      </div>
+                      <p className="text-xs leading-snug text-muted-foreground">Then $49.99/mo. Unlimited listings and the lowest fees for serious dealers.</p>
+                    </div>
+                    <ul className="space-y-1.5 flex-1">
+                      {['0% seller fee', '$0 per listing', 'Unlimited listings', 'Unlimited purchases', 'Advanced analytics'].map(f => (
+                        <li key={f} className="flex items-start gap-2">
+                          <Check className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground" />
+                          <span className="text-xs leading-snug text-muted-foreground">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      className="w-full h-10 text-sm font-semibold mt-1 bg-foreground text-background hover:bg-foreground/90"
+                      onClick={() => saveAndRedirect('/pricing', 'dealer')}
                       disabled={saving}
                     >
                       {saving ? 'Saving…' : 'Claim Free Month'}

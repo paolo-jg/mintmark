@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
-import { Plus, Trash2, Star, Coins, ScanLine, ArrowRight, ArrowUpRight, Search, X, Pencil, LogIn, Tag, ChevronDown, CheckCheck, TrendingUp } from 'lucide-react'
+import { Plus, Trash2, Star, Coins, ScanLine, ArrowRight, ArrowUpRight, Search, X, Pencil, LogIn, Tag, ChevronDown, CheckCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -736,15 +736,11 @@ export function CollectClient() {
           ))}
         </div>
         <div className="pb-2 flex items-center gap-2">
-          <Link
-            href="/dashboard/portfolio"
-            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <TrendingUp className="h-3.5 w-3.5" />
-            Portfolio Valuation
-          </Link>
           {tab === 'owned' && (
             <>
+              <Button variant="outline" size="lg" className="h-11 px-4" render={<Link href="/dashboard/portfolio" />}>
+                Calculate Portfolio Value
+              </Button>
               <Button variant="outline" size="lg" className="h-11 px-4" onClick={openAddScan}>
                 <ScanLine className="h-4 w-4 mr-1.5" />Scan
               </Button>
@@ -754,9 +750,14 @@ export function CollectClient() {
             </>
           )}
           {tab === 'wishlist' && (
-            <Button size="lg" className="h-11 px-4" onClick={openAddWish}>
-              <Plus className="h-4 w-4 mr-1" />Add to Wish List
-            </Button>
+            <>
+              <Button variant="outline" size="lg" className="h-11 px-4" render={<Link href="/dashboard/portfolio" />}>
+                Estimate Wishlist Cost
+              </Button>
+              <Button size="lg" className="h-11 px-4" onClick={openAddWish}>
+                <Plus className="h-4 w-4 mr-1" />Add to Wish List
+              </Button>
+            </>
           )}
         </div>
       </div>
