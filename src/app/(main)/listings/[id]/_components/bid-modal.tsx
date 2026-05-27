@@ -1,10 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Loader2, Gavel, AlertTriangle } from 'lucide-react'
+import { X, Loader2, Gavel, AlertTriangle, CreditCard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCents } from '@/lib/utils'
 import { toast } from 'sonner'
+import { loadStripe } from '@stripe/stripe-js'
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 interface Props {
   auctionId: string
@@ -15,18 +18,44 @@ interface Props {
 }
 
 export function BidModal({ auctionId, currentBid, endTime, onClose, onBidPlaced }: Props) {
-  const minBid     = currentBid + 100                          // $1 above current
+  const minBid = currentBid + 100
   const [dollars, setDollars] = useState((minBid / 100).toFixed(2))
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showCardSetup, setShowCardSetup] = useState(false)
+  const [settingUpCard, setSettingUpCard] = useState(false)
 
   const amountCents = Math.round(parseFloat(dollars || '0') * 100)
-  const tooLow      = amountCents < minBid
+  const tooLow = amountCents < minBid
 
   const msLeft = new Date(endTime).getTime() - Date.now()
-  const finalSeconds = msLeft > 0 && msLeft < 60_000
-    ? Math.floor(msLeft / 1000)
-    : null
+  const finalSeconds = msLeft > 0 && msLeft < 60_000 ? Math.floor(msLeft / 1000) : null
+
+  async function setupCard() {
+    setSettingUpCard(true)
+    try {
+      const res = await fetch('/api/stripe/setup', { method: 'POST' })
+      const { client_secret } = await res.json()
+      if (!client_secret) throw new Error('Failed to initialize card setup')
+
+      const stripe = await stripePromise
+      if (!stripe) throw new Error('Stripe not loaded')
+
+      const { error: stripeError } = await stripe.confirmCardSetup(client_secret, {
+        payment_method: {
+          card: { token: '' } as never, // placeholder — triggers Stripe's hosted card input
+        },
+      })
+
+      if (stripeError) throw new Error(stripeError.message)
+      toast.success('Card saved — you can now place your bid')
+      setShowCardSetup(false)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Card setup failed')
+    } finally {
+      setSettingUpCard(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,14 +66,19 @@ export function BidModal({ auctionId, currentBid, endTime, onClose, onBidPlaced 
 
     try {
       const res = await fetch('/api/auctions/bid', {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ auction_id: auctionId, amount: amountCents }),
+        body: JSON.stringify({ auction_id: auctionId, amount: amountCents }),
       })
 
       const json = await res.json()
 
       if (!res.ok) {
+        if (json.error === 'no_payment_method') {
+          setShowCardSetup(true)
+          setSubmitting(false)
+          return
+        }
         setError(json.error ?? 'Failed to place bid')
         setSubmitting(false)
         return
@@ -68,11 +102,37 @@ export function BidModal({ auctionId, currentBid, endTime, onClose, onBidPlaced 
     }
   }
 
+  if (showCardSetup) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="bg-background rounded-2xl shadow-2xl w-full max-w-sm border border-border p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold">Add a Payment Method</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            A payment authorization hold will be placed on your card for your bid amount. The hold is released if you're outbid, and captured only if you win.
+          </p>
+          <p className="text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2">
+            You'll be redirected to securely enter your card details via Stripe.
+          </p>
+          <div className="flex gap-2.5 pt-1">
+            <Button variant="outline" className="flex-1" onClick={() => setShowCardSetup(false)}>
+              Back
+            </Button>
+            <Button className="flex-1" onClick={setupCard} disabled={settingUpCard}>
+              {settingUpCard ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />Setting up…</> : 'Add Card'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-background rounded-2xl shadow-2xl w-full max-w-sm border border-border">
 
-        {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4">
           <div className="flex items-center gap-2">
             <Gavel className="h-4 w-4 text-muted-foreground" />
@@ -89,7 +149,6 @@ export function BidModal({ auctionId, currentBid, endTime, onClose, onBidPlaced 
 
         <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-4">
 
-          {/* Current bid info */}
           <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 space-y-1">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Current bid</span>
@@ -101,7 +160,13 @@ export function BidModal({ auctionId, currentBid, endTime, onClose, onBidPlaced 
             </div>
           </div>
 
-          {/* Snipe warning */}
+          <div className="flex items-start gap-2 rounded-xl border border-amber-300/50 bg-amber-50/50 dark:bg-amber-950/20 px-3 py-2.5">
+            <CreditCard className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+              Bidding places an authorization hold on your saved card. Released if outbid, captured if you win.
+            </p>
+          </div>
+
           {finalSeconds !== null && (
             <div className="flex items-start gap-2.5 rounded-xl border border-red-400/40 bg-red-50/60 dark:bg-red-950/20 px-4 py-3">
               <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
@@ -111,15 +176,10 @@ export function BidModal({ auctionId, currentBid, endTime, onClose, onBidPlaced 
             </div>
           )}
 
-          {/* Bid input */}
           <div>
-            <label className="block text-sm font-medium mb-1.5">
-              Your bid (USD)
-            </label>
+            <label className="block text-sm font-medium mb-1.5">Your bid (USD)</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
-                $
-              </span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">$</span>
               <input
                 type="number"
                 step="0.01"
@@ -131,33 +191,17 @@ export function BidModal({ auctionId, currentBid, endTime, onClose, onBidPlaced 
               />
             </div>
             {tooLow && dollars !== '' && (
-              <p className="text-xs text-destructive mt-1.5">
-                Must be at least {formatCents(minBid)}
-              </p>
+              <p className="text-xs text-destructive mt-1.5">Must be at least {formatCents(minBid)}</p>
             )}
           </div>
 
-          {/* Server error */}
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
-          {/* Actions */}
           <div className="flex gap-2.5 pt-1">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={onClose}
-              disabled={submitting}
-            >
+            <Button type="button" variant="outline" className="flex-1" onClick={onClose} disabled={submitting}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={submitting || tooLow || !dollars}
-            >
+            <Button type="submit" className="flex-1" disabled={submitting || tooLow || !dollars}>
               {submitting
                 ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Bidding…</>
                 : `Bid ${amountCents >= minBid ? formatCents(amountCents) : '–'}`
