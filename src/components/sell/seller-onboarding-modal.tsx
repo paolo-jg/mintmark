@@ -401,8 +401,15 @@ export function SellerOnboardingModal({ tier, sellerTosAgreed, privacyPolicyAgre
     return set
   })
 
-  // Always start at step 0 — no skipping ahead on refresh
-  const [stepIndex, setStepIndex] = useState(0)
+  // Start at the first incomplete step so returning users don't re-read agreements
+  const [stepIndex, setStepIndex] = useState(() => {
+    const firstIncomplete = allDisplaySteps.findIndex(s => {
+      if (s === 'tos') return !(sellerTosAgreed && privacyPolicyAgreed)
+      if (s === 'stripe') return !stripeOnboardingComplete
+      return true // 'plan' always needs to be chosen
+    })
+    return firstIncomplete === -1 ? 0 : firstIncomplete
+  })
 
   // selectedTier lives here so the back button can detect the BillingChoice sub-page.
   // Reset to null on every step change so returning to plan always shows the grid.

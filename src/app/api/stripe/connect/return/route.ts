@@ -21,9 +21,9 @@ export async function GET(req: NextRequest) {
     // Retrieve the account from Stripe to check onboarding status
     const account = await stripe.accounts.retrieve(accountId)
 
-    const isComplete =
-      account.details_submitted &&
-      !account.requirements?.currently_due?.length
+    // details_submitted is the reliable signal — currently_due can remain
+    // non-empty in test mode even after completing the dummy onboarding flow.
+    const isComplete = account.details_submitted === true
 
     if (isComplete) {
       const db = getServiceDb()
