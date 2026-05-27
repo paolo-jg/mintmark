@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import { FeatureText } from '@/components/ui/card-fee-tooltip'
 
 type Tier = 'collector_basic' | 'collector_premium' | 'dealer'
-type Group = 'collectors' | 'dealers'
 
 interface Props {
   tier: Tier
@@ -301,65 +300,41 @@ function TosStep({ onNext, revisit = false }: { onNext: () => void; revisit?: bo
   )
 }
 
+const ALL_TIERS = [
+  ...COLLECTOR_TIERS,
+  ...(DEALER_TIERS as typeof COLLECTOR_TIERS),
+]
+
 // ── Step: Plan upgrade ────────────────────────────────────────────────────────
 function PlanStep({ onSkip, selectedTier, onSelectTier }: {
   onSkip: () => void
   selectedTier: typeof COLLECTOR_TIERS[0] | null
   onSelectTier: (t: typeof COLLECTOR_TIERS[0] | null) => void
 }) {
-  const [group, setGroup] = useState<Group>('collectors')
-
   if (selectedTier) {
     return <BillingChoice tier={selectedTier} onBack={() => onSelectTier(null)} />
   }
 
-  // CSS grid with explicit row sizes so nothing can reflow on toggle.
-  // Row 1 (auto): header. Row 2 (auto): notice. Row 3 (1fr): cards.
   return (
     <div
       className="absolute inset-0"
       style={{ display: 'grid', gridTemplateRows: 'auto auto 1fr', gap: '12px' }}
     >
       {/* Row 1 — header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">Choose a plan</h2>
-        <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1 gap-1">
-          {(['collectors', 'dealers'] as Group[]).map(g => (
-            <button
-              key={g}
-              onClick={() => setGroup(g)}
-              className={`px-4 py-1 rounded-lg text-xs font-semibold capitalize transition-colors ${
-                group === g
-                  ? 'bg-background text-foreground shadow-sm border border-border'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {g === 'collectors' ? 'Collectors' : 'Dealers'}
-            </button>
-          ))}
-        </div>
-      </div>
+      <h2 className="text-lg font-bold">Choose a plan</h2>
 
       {/* Row 2 — trial notice */}
-      <p className="text-xs text-muted-foreground text-center">
+      <p className="text-xs text-muted-foreground">
         All paid plans include a{' '}
         <span className="font-medium text-foreground">30-day free trial</span>.
         {' '}You can change your plan at any time from Settings.
       </p>
 
-      {/* Row 3 — both grids always in DOM, stacked, visibility-toggled only.
-          visibility:hidden keeps each grid's box intact so row 3 never resizes. */}
-      <div className="relative">
-        <div className={`absolute inset-0 grid grid-cols-3 gap-4 ${group !== 'collectors' ? 'invisible pointer-events-none' : ''}`}>
-          {COLLECTOR_TIERS.map((tier, i) => (
-            <TierCard key={i} tier={tier} onSelect={() => onSelectTier(tier)} onSkip={onSkip} />
-          ))}
-        </div>
-        <div className={`absolute inset-0 grid grid-cols-3 gap-4 ${group !== 'dealers' ? 'invisible pointer-events-none' : ''}`}>
-          {DEALER_TIERS.map((tier, i) => (
-            <TierCard key={i} tier={tier as typeof COLLECTOR_TIERS[0]} onSelect={() => onSelectTier(tier as typeof COLLECTOR_TIERS[0])} onSkip={onSkip} />
-          ))}
-        </div>
+      {/* Row 3 — all 3 tiers in one grid */}
+      <div className="grid grid-cols-3 gap-4">
+        {ALL_TIERS.map((tier, i) => (
+          <TierCard key={i} tier={tier} onSelect={() => onSelectTier(tier)} onSkip={onSkip} />
+        ))}
       </div>
     </div>
   )
