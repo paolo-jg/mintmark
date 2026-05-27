@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { formatCents } from '@/lib/utils'
 import { Package, Shield, ExternalLink } from 'lucide-react'
 import type { OrderStatus, TrackingStatus } from '@/types'
+import FileDisputeButton from './_components/file-dispute-button'
 
 const TRACKING_STEPS: TrackingStatus[] = ['pre_transit', 'transit', 'delivered']
 
@@ -179,6 +180,23 @@ export default async function OrderTrackingPage({ params }: { params: Promise<{ 
               </p>
             </div>
             <Button size="sm">Confirm Receipt</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Dispute */}
+      {isBuyer && ['delivered', 'shipped', 'label_purchased', 'awaiting_shipment'].includes(order.status) && (
+        <div className="text-center pt-2">
+          <p className="text-xs text-muted-foreground mb-1">Problem with this order?</p>
+          <FileDisputeButton orderId={order.id} />
+        </div>
+      )}
+
+      {order.status === 'disputed' && (
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+          <CardContent className="py-4">
+            <p className="text-sm font-medium text-red-700 dark:text-red-400">Dispute in progress</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Our team is reviewing this order. You will be notified of the outcome.</p>
           </CardContent>
         </Card>
       )}

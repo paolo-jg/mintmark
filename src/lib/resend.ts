@@ -119,13 +119,13 @@ export async function sendWelcomeBuyer({ to, name }: { to: string; name: string 
     to,
     subject: 'Welcome to Pedigree Coins',
     html: emailHtml({
-      preheader: 'Your account is ready start discovering rare coins.',
+      preheader: 'Welcome to Pedigree Coins. We\'re glad you\'re here.',
       body: `
         ${greeting(name)}
-        ${bodyText('Welcome to <strong>Pedigree Coins</strong> the marketplace for rare coins.')}
-        ${bodyText('You can browse listings, place bids, and buy with confidence. Every purchase is protected by our escrow system, so your payment is held safely until delivery is confirmed.')}
+        ${bodyText('We\'re so glad you\'re here. Welcome to <strong>Pedigree Coins</strong>, a marketplace built for collectors and enthusiasts who care about the coins they buy and sell.')}
+        ${bodyText('Whether you\'re hunting for a specific date and mintmark, building a type set, or just getting started, you\'ll find a curated selection of coins from sellers who share your passion.')}
         ${divider()}
-        ${bodyText('Have a question? Reply to this email and our team will get back to you.')}
+        ${bodyText('Take a look around, save coins you love, and don\'t hesitate to make an offer. If you ever have a question, just reply to this email. We\'re always happy to help.')}
       `,
       ctaLabel: 'Start Browsing',
       ctaUrl: `${BASE_URL}/listings`,
@@ -139,16 +139,17 @@ export async function sendWelcomeSeller({ to, name }: { to: string; name: string
     to,
     subject: "You're ready to sell on Pedigree Coins",
     html: emailHtml({
-      preheader: 'Your seller account is active create your first listing.',
+      preheader: 'Your seller account is active. Create your first listing.',
       body: `
         ${greeting(name)}
         ${bodyText('Your seller account is fully set up. You can now create listings and receive payouts directly to your connected bank account.')}
         ${divider()}
         ${metaTable(
           metaRow('Payout timing', '48 hours after delivery confirmed') +
-          metaRow('Escrow', 'All payments held until delivery')
+          metaRow('Shipping', 'Mark orders shipped promptly to keep buyers happy')
         )}
-        ${bodyText('Ship every order promptly and mark it shipped in your dashboard to trigger payout.')}
+        ${bodyText('Your payout is released automatically 48 hours after the buyer\'s order is confirmed delivered. No action needed on your end once it ships.')}
+        ${bodyText('By listing on Pedigree Coins, you certify that every coin you sell is authentic and accurately described. Misrepresentation may result in account suspension and dispute liability.')}
       `,
       ctaLabel: 'Go to Seller Dashboard',
       ctaUrl: `${BASE_URL}/sell`,

@@ -13,7 +13,7 @@ const APP_ONLY_PATHS = ['/sell', '/collect', '/listings', '/buy-now', '/auctions
 const PUBLIC_PATHS = ['/privacy', '/terms']
 
 // Paths that bypass the onboarding gate
-const ONBOARDING_BYPASS = ['/auth/', '/onboarding', '/api/', '/_next/', '/favicon']
+const ONBOARDING_BYPASS = ['/auth/', '/onboarding', '/api/', '/_next/', '/favicon', '/admin']
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Coins } from 'lucide-react'
 import { toast } from 'sonner'
 
 function GoogleIcon() {
@@ -120,9 +119,8 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4 bg-muted/20">
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-6">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
-            <Coins className="h-5 w-5" />
-            Pedigree Coins
+          <Link href="/">
+            <img src="/logo-horizontal.png" alt="Pedigree Coins" className="h-10 w-auto" />
           </Link>
         </div>
         <Card>
