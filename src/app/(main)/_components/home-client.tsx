@@ -382,7 +382,7 @@ function ReferralWidget({ referralCode, referralCount, referralConverted }: { re
                 </div>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">They get 1 month free Premium. You get 1 month free per sign-up.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Both of you get a free month — theirs on signup, yours for each referral.</p>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
