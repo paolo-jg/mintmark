@@ -55,7 +55,7 @@ export default async function ReferralLandingPage({ params }: { params: Promise<
           </p>
           <h1 className="text-4xl font-bold tracking-tight">Your first month is free</h1>
           <p className="text-muted-foreground">
-            Choose a plan below and your first month is waived. No commitment.
+            Choose a plan below and your first month is free.
           </p>
         </div>
 
