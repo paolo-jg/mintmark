@@ -530,7 +530,8 @@ export default function NewListingPage() {
           .from('listings')
           .select('id', { count: 'exact', head: true })
           .eq('seller_id', userId)
-          .gte('created_at', monthStart),
+          .gte('created_at', monthStart)
+          .in('status', ['active', 'sold', 'expired']),
       ])
       const used = (carryOver ?? 0) + (createdThisMonth ?? 0)
       setListingsUsed(used)
