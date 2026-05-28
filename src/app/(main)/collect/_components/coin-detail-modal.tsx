@@ -2,6 +2,12 @@
 
 import { X, Coins, Star } from 'lucide-react'
 import type { CollectionItem } from './collect-client'
+import dynamic from 'next/dynamic'
+
+const PriceHistoryChart = dynamic(
+  () => import('@/app/(main)/listings/[id]/_components/price-history-chart'),
+  { ssr: false, loading: () => <div className="h-24 animate-pulse rounded-xl bg-muted/40" /> }
+)
 
 interface Props {
   item: CollectionItem
@@ -180,6 +186,20 @@ export function CoinDetailModal({ item, onClose }: Props) {
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-1">Max Budget</p>
               <p className="text-[15px] font-semibold">{formatPrice(item.max_price)}</p>
+            </div>
+          )}
+
+          {/* Price history chart — shown for all owned/graded coins */}
+          {item.grade && (
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-3">Sale Price History</p>
+              <PriceHistoryChart
+                coinName={item.coin_name}
+                year={item.year}
+                mintMark={item.mint_mark}
+                grade={item.grade}
+                seriesSlug={item.series_slug}
+              />
             </div>
           )}
 

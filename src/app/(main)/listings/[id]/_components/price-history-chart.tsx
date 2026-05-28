@@ -72,10 +72,26 @@ export default function PriceHistoryChart({ coinName, year, mintMark, grade, ser
   }
 
   if (!data.length) {
+    // Flat line placeholder when no sales exist yet
+    const flatData = [
+      { label: '', price: 0 },
+      { label: '', price: 0 },
+    ]
     return (
-      <p className="text-xs text-muted-foreground py-4 text-center">
-        No sale history yet for this exact coin. Check back after the first sale.
-      </p>
+      <div className="space-y-2">
+        <p className="text-xs text-muted-foreground text-center">No sale history yet for this coin.</p>
+        <ResponsiveContainer width="100%" height={80}>
+          <AreaChart data={flatData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+            <defs>
+              <linearGradient id="flatGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.08} />
+                <stop offset="95%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <Area type="monotone" dataKey="price" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} strokeDasharray="4 3" fill="url(#flatGradient)" dot={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
     )
   }
 
