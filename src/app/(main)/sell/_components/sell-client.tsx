@@ -789,7 +789,7 @@ export function SellClient() {
           )}
         </div>
       ) : (
-        <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
+        <div className="space-y-2">
           {listings.map(listing => {
             const isAuction = listing.listing_type === 'auction'
             const auc = listing.auction
@@ -801,7 +801,7 @@ export function SellClient() {
             <Link
               key={listing.id}
               href={listing.status === 'draft' ? `/listings/new?draft=${listing.id}` : `/listings/${listing.id}`}
-              className="flex items-center gap-4 px-4 py-3.5 bg-card hover:bg-muted/40 transition-colors"
+              className="flex items-center gap-4 px-4 py-3.5 bg-card rounded-xl border border-border hover:bg-muted/40 transition-colors"
             >
               {/* Thumbnail */}
               <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0 relative">

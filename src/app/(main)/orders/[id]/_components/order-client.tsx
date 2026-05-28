@@ -215,7 +215,7 @@ export function OrderClient({ id }: { id: string }) {
         <div className="text-center pt-2 space-y-1">
           <p className="text-xs text-muted-foreground">
             {autoConfirmAt
-              ? <>Dispute deadline: <strong>{autoConfirmAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong> — 48 hours after confirmation or 14 days from ship date, whichever comes first.</>
+              ? <>Dispute deadline: <strong>{autoConfirmAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>. You have 48 hours after confirmation or 14 days from ship date, whichever comes first.</>
               : 'You have 48 hours after confirming receipt, or 14 days from the ship date, to file a dispute.'}
           </p>
           <FileDisputeButton orderId={order.id} />
