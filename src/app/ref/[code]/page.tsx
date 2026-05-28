@@ -44,7 +44,7 @@ export default async function ReferralLandingPage({ params }: { params: Promise<
         {/* Logo */}
         <div className="flex justify-center mb-10">
           <Link href="/">
-            <img src="/logo-horizontal.png" alt="Pedigree Coins" className="h-14 w-auto" />
+            <img src="/logo-horizontal.png" alt="Pedigree Coins" className="h-20 w-auto" />
           </Link>
         </div>
 
