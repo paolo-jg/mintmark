@@ -61,11 +61,11 @@ export default function Navbar() {
   return (
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-18">
+        <div className="flex items-center h-28">
           {/* Logo — far left, flex-1 so nav stays centered */}
           <div className="flex-1">
             <Link href="/" className="flex items-center w-fit">
-              <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="object-contain h-16 w-auto" />
+              <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="object-contain h-24 w-auto" />
             </Link>
           </div>
 
