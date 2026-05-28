@@ -427,6 +427,8 @@ export default function NewListingPage() {
   const searchParams = useSearchParams()
   // ID of an existing owned collection item to list for sale (from /collect "List for Sale" button)
   const fromCollectionItemId = searchParams.get('from')
+  // ID of an existing draft to resume editing
+  const draftId = searchParams.get('draft')
 
   // Tier config — mirrors sell/page.tsx
   const LISTING_LIMITS: Record<string, number | null> = {
@@ -494,6 +496,10 @@ export default function NewListingPage() {
 
   const [submitting, setSubmitting] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
+
+  // Draft resume state
+  const [draftListingId, setDraftListingId] = useState<string | null>(null)
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([])
 
   // Fetch seller's subscription tier + remaining listing slots
   useEffect(() => {
@@ -572,10 +578,71 @@ export default function NewListingPage() {
       })
   }, [fromCollectionItemId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pre-populate form from a saved draft (when "Continue editing" is clicked in /sell)
+  useEffect(() => {
+    if (!draftId) return
+    supabase
+      .from('listings')
+      .select('*')
+      .eq('id', draftId)
+      .single()
+      .then(({ data: draft }) => {
+        if (!draft) return
+        setDraftListingId(draft.id as string)
+
+        const svc = (draft.grading_service as GradingService | null) ?? 'Ungraded'
+        const prePopCoin: PickedCoin = {
+          seriesName: draft.series_slug
+            ? (draft.series_slug as string).split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+            : (draft.coin_name as string),
+          seriesSlug: (draft.series_slug as string) ?? '',
+          coinName: (draft.coin_name as string) ?? '',
+          priceRowLabel: (draft.price_row_label as string | null) ?? null,
+          denomination: (draft.denomination as string | null) ?? null,
+          year: (draft.year as number | null) ?? null,
+          mintMark: (draft.mint_mark as string | null) ?? null,
+          pcgsImageUrl: (draft.grading_service_image_url as string | null) ?? null,
+          coinProfile: null,
+        }
+        setCoinQueue([prePopCoin])
+
+        if (svc !== 'Ungraded') setService(svc)
+        if (draft.cert_number) setCertNumber(draft.cert_number as string)
+        if (draft.grade) setManualGrade(draft.grade as string)
+        setCacDesignation((draft.cac_designation as boolean) ?? false)
+        if (svc === 'PCGS' && draft.grade) {
+          setCoinGrade({
+            grade: draft.grade as string,
+            coinName: (draft.coin_name as string) ?? '',
+            year: (draft.year as number | null) ?? undefined,
+            mintMark: (draft.mint_mark as string | null) ?? undefined,
+            denomination: (draft.denomination as string | null) ?? undefined,
+            populationAtGrade: (draft.population_at_grade as number | null) ?? undefined,
+            populationAbove: (draft.population_above as number | null) ?? undefined,
+            verificationStatus: ((draft.verification_status as string | null) ?? 'unverified') as import('@/types').VerificationStatus,
+            pcgsImageUrl: (draft.grading_service_image_url as string | null) ?? undefined,
+          })
+        }
+
+        if (draft.title) setTitle(draft.title as string)
+        if (draft.description) setDescription(draft.description as string)
+        if (draft.listing_type) setListingType(draft.listing_type as ListingType)
+        if (draft.price) setPrice(formatPriceWhileTyping(((draft.price as number) / 100).toFixed(2)))
+        if (draft.listing_duration_days) setListingDuration(String(draft.listing_duration_days))
+        if (draft.shipping_type) setShippingType(draft.shipping_type as 'free' | 'flat')
+        if (draft.shipping_price_cents) setShippingPrice(formatPriceWhileTyping(((draft.shipping_price_cents as number) / 100).toFixed(2)))
+        if (draft.accept_offers) setAcceptOffers(draft.accept_offers as boolean)
+        if (draft.pass_convenience_fee) setPassConvenienceFee(draft.pass_convenience_fee as boolean)
+        if ((draft.images as string[] | null)?.length) setExistingImageUrls(draft.images as string[])
+
+        setStep(3)
+      })
+  }, [draftId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleImageSelect = useCallback((files: FileList | null) => {
     if (!files) return
     const newFiles = Array.from(files).filter(f => f.type.startsWith('image/'))
-    if (imageFiles.length + newFiles.length > 8) {
+    if (existingImageUrls.length + imageFiles.length + newFiles.length > 8) {
       toast.error('Maximum 8 images allowed')
       return
     }
@@ -591,6 +658,10 @@ export default function NewListingPage() {
     setImageFiles(prev => prev.filter((_, i) => i !== index))
     setImagePreviews(prev => prev.filter((_, i) => i !== index))
   }, [imagePreviews])
+
+  const removeExistingImage = useCallback((index: number) => {
+    setExistingImageUrls(prev => prev.filter((_, i) => i !== index))
+  }, [])
 
   const uploadImages = async (): Promise<string[]> => {
     if (imageFiles.length === 0) return []
@@ -744,7 +815,7 @@ export default function NewListingPage() {
       const draftData = {
         seller_id: sellerId,
         status: 'draft' as const,
-        images: [] as string[],
+        images: existingImageUrls,
         title: title.trim() || pickedCoin.coinName,
         description: description.trim() || null,
         listing_type: listingType,
@@ -776,7 +847,9 @@ export default function NewListingPage() {
         shipping_price_cents: shippingType === 'flat' && shippingPrice ? parsePriceCents(shippingPrice) : null,
       }
 
-      const { error } = await supabase.from('listings').insert(draftData)
+      const { error } = draftListingId
+        ? await supabase.from('listings').update(draftData).eq('id', draftListingId)
+        : await supabase.from('listings').insert(draftData)
       if (error) { toast.error(error.message); setSavingDraft(false); return }
 
       toast.success('Draft saved')
@@ -805,7 +878,7 @@ export default function NewListingPage() {
       toast.error('Description is required')
       return
     }
-    if (imageFiles.length === 0) {
+    if (imageFiles.length === 0 && existingImageUrls.length === 0) {
       toast.error('Add at least one photo')
       return
     }
@@ -910,7 +983,7 @@ export default function NewListingPage() {
         return
       }
 
-      imageUrls = uploadedUrls
+      imageUrls = [...existingImageUrls, ...uploadedUrls]
     } catch (err) {
       setUploadingImages(false)
       toast.error(err instanceof Error ? err.message : 'Failed to prepare listing')
@@ -987,11 +1060,9 @@ export default function NewListingPage() {
       shipping_price_cents: shippingType === 'flat' && shippingPrice ? parsePriceCents(shippingPrice) : null,
     }
 
-    const { data: listing, error } = await supabase
-      .from('listings')
-      .insert(listingData)
-      .select()
-      .single()
+    const { data: listing, error } = draftListingId
+      ? await supabase.from('listings').update(listingData).eq('id', draftListingId).select().single()
+      : await supabase.from('listings').insert(listingData).select().single()
 
     if (error || !listing) {
       toast.error(error?.message ?? 'Failed to create listing')
@@ -1063,9 +1134,9 @@ export default function NewListingPage() {
       <StripeConnectGate onBack={() => router.push('/sell')} />
     )}
     <div className="max-w-2xl mx-auto px-4 py-12">
-      <h1 className="text-2xl font-bold tracking-tight mb-1">List a Coin</h1>
+      <h1 className="text-2xl font-bold tracking-tight mb-1">{draftListingId ? 'Edit Draft' : 'List a Coin'}</h1>
       <p className="text-muted-foreground text-sm mb-8">
-        Select the coin you are listing, add grading details, and set your price.
+        {draftListingId ? 'Pick up where you left off — all fields are editable before you publish.' : 'Select the coin you are listing, add grading details, and set your price.'}
       </p>
 
       {/* Step indicator */}
@@ -1861,11 +1932,33 @@ export default function NewListingPage() {
                   />
                 </div>
 
-                {imagePreviews.length > 0 && (
+                {(imagePreviews.length > 0 || existingImageUrls.length > 0) && (
                   <div className="grid grid-cols-4 gap-2">
+                    {/* Existing uploaded images from saved draft */}
+                    {existingImageUrls.map((src, i) => (
+                      <div
+                        key={`existing-${i}`}
+                        className="relative aspect-square rounded-lg overflow-hidden border border-border group"
+                      >
+                        {i === 0 && (
+                          <span className="absolute top-1 left-1 z-10 text-[10px] font-semibold bg-black/60 text-white px-1.5 py-0.5 rounded">
+                            Cover
+                          </span>
+                        )}
+                        <img src={src} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => removeExistingImage(i)}
+                          className="absolute top-1 right-1 z-10 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {/* New images being added */}
                     {imagePreviews.map((src, i) => (
                       <div
-                        key={i}
+                        key={`new-${i}`}
                         draggable
                         onDragStart={() => { dragIndexRef.current = i }}
                         onDragOver={e => { e.preventDefault(); setDragOverIndex(i) }}
@@ -1890,7 +1983,7 @@ export default function NewListingPage() {
                           dragOverIndex === i ? 'border-foreground ring-2 ring-foreground/20 scale-105' : 'border-border'
                         }`}
                       >
-                        {i === 0 && (
+                        {i === 0 && existingImageUrls.length === 0 && (
                           <span className="absolute top-1 left-1 z-10 text-[10px] font-semibold bg-black/60 text-white px-1.5 py-0.5 rounded">
                             Cover
                           </span>

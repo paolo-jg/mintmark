@@ -219,6 +219,8 @@ export function SellClient() {
   const [dismissedOnboarded, setDismissedOnboarded] = useState(false)
   const [relistingId, setRelistingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [relistModal, setRelistModal] = useState<{ id: string } | null>(null)
+  const [relistingMode, setRelistingMode] = useState<'as-is' | 'edit' | null>(null)
 
   async function handleDeleteDraft(e: React.MouseEvent, listingId: string) {
     e.preventDefault()
@@ -237,22 +239,54 @@ export function SellClient() {
     }
   }
 
-  async function handleRelist(e: React.MouseEvent, listingId: string) {
+  function openRelistModal(e: React.MouseEvent, listingId: string) {
     e.preventDefault()
     e.stopPropagation()
-    setRelistingId(listingId)
+    setRelistModal({ id: listingId })
+  }
+
+  async function handleRelistAsIs() {
+    if (!relistModal) return
+    setRelistingMode('as-is')
+    setRelistingId(relistModal.id)
     try {
-      const res = await fetch(`/api/listings/${listingId}/relist`, { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) {
-        toast.error(data.error ?? 'Failed to relist')
-        return
-      }
-      router.push(`/listings/${data.id}/edit`)
+      const res = await fetch(`/api/listings/${relistModal.id}/relist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'active' }),
+      })
+      const json = await res.json()
+      if (!res.ok) { toast.error(json.error ?? 'Failed to relist'); return }
+      toast.success('Listing is live!')
+      setRelistModal(null)
+      mutate()
     } catch {
       toast.error('Network error')
     } finally {
       setRelistingId(null)
+      setRelistingMode(null)
+    }
+  }
+
+  async function handleRelistEdit() {
+    if (!relistModal) return
+    setRelistingMode('edit')
+    setRelistingId(relistModal.id)
+    try {
+      const res = await fetch(`/api/listings/${relistModal.id}/relist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'draft' }),
+      })
+      const json = await res.json()
+      if (!res.ok) { toast.error(json.error ?? 'Failed to relist'); return }
+      setRelistModal(null)
+      router.push(`/listings/new?draft=${json.id}`)
+    } catch {
+      toast.error('Network error')
+    } finally {
+      setRelistingId(null)
+      setRelistingMode(null)
     }
   }
 
@@ -393,6 +427,47 @@ export function SellClient() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+      {/* Relist confirmation modal */}
+      {relistModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4">
+          <div className="bg-background border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-base font-bold mb-1">Relist this coin?</h3>
+            <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+              This listing will count toward your monthly limit.
+              {remaining !== null && (
+                <span> You have <span className={`font-semibold ${remaining === 0 ? 'text-destructive' : 'text-foreground'}`}>{remaining} listing{remaining !== 1 ? 's' : ''}</span> remaining this month.</span>
+              )}
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleRelistAsIs}
+                disabled={relistingMode !== null}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background text-sm font-semibold h-11 px-4 hover:opacity-90 transition-opacity disabled:opacity-60"
+              >
+                {relistingMode === 'as-is' && <Loader2 className="h-4 w-4 animate-spin" />}
+                Relist as is
+              </button>
+              <button
+                onClick={handleRelistEdit}
+                disabled={relistingMode !== null}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-border text-sm font-semibold h-11 px-4 hover:bg-muted transition-colors disabled:opacity-60"
+              >
+                {relistingMode === 'edit' && <Loader2 className="h-4 w-4 animate-spin" />}
+                Edit details
+              </button>
+              <button
+                onClick={() => setRelistModal(null)}
+                disabled={relistingMode !== null}
+                className="w-full text-sm text-muted-foreground py-2 hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Seller onboarding — blocks the sell page until setup is complete.
           Modal is z-40; navbar is z-50 so navigation away is still possible. */}
       {needsOnboarding && (
@@ -725,11 +800,11 @@ export function SellClient() {
             return (
             <Link
               key={listing.id}
-              href={listing.status === 'draft' ? `/listings/${listing.id}/edit` : `/listings/${listing.id}`}
-              className="flex items-start gap-4 px-4 py-3.5 bg-card hover:bg-muted/40 transition-colors"
+              href={listing.status === 'draft' ? `/listings/new?draft=${listing.id}` : `/listings/${listing.id}`}
+              className="flex items-center gap-4 px-4 py-3.5 bg-card hover:bg-muted/40 transition-colors"
             >
               {/* Thumbnail */}
-              <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0 relative mt-0.5">
+              <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0 relative">
                 {listing.images?.[0] ? (
                   <Image src={listing.images[0]} alt={listing.title} fill sizes="48px" className="object-cover" />
                 ) : (
@@ -784,17 +859,17 @@ export function SellClient() {
               </div>
 
               {/* Type */}
-              <p className="text-xs text-muted-foreground hidden sm:block flex-shrink-0 mt-0.5">
+              <p className="text-xs text-muted-foreground hidden sm:block flex-shrink-0">
                 {listing.listing_type === 'fixed' ? 'Buy It Now' : 'Auction'}
               </p>
 
               {/* Price (fixed only) */}
-              <p className="text-sm font-semibold tabular-nums flex-shrink-0 w-24 text-right mt-0.5">
+              <p className="text-sm font-semibold tabular-nums flex-shrink-0 w-24 text-right">
                 {!isAuction && listing.price ? formatCents(listing.price) : isAuction ? '' : '—'}
               </p>
 
               {/* Status / CTA */}
-              <div className="flex-shrink-0 mt-0.5">
+              <div className="flex-shrink-0">
                 {listing.status === 'draft' ? (
                   <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                     <span className="text-xs font-medium px-2.5 py-1 rounded-lg border border-border bg-muted whitespace-nowrap">
@@ -818,14 +893,10 @@ export function SellClient() {
                       {STATUS_LABEL[listing.status]}
                     </Badge>
                     <button
-                      onClick={e => handleRelist(e, listing.id)}
-                      disabled={relistingId === listing.id}
-                      className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg border border-border bg-muted hover:bg-muted/60 transition-colors whitespace-nowrap disabled:opacity-50"
+                      onClick={e => openRelistModal(e, listing.id)}
+                      className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg border border-border bg-muted hover:bg-muted/60 transition-colors whitespace-nowrap"
                     >
-                      {relistingId === listing.id
-                        ? <Loader2 className="h-3 w-3 animate-spin" />
-                        : <RotateCcw className="h-3 w-3" />
-                      }
+                      <RotateCcw className="h-3 w-3" />
                       Relist
                     </button>
                   </div>
