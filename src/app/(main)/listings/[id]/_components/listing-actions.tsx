@@ -320,16 +320,23 @@ function AuctionSection({
 
 export function ListingActions({
   listing,
-  isOwner,
+  isOwner: isOwnerProp,
   sellerTier = 'collector_basic',
   auction,
 }: Props) {
+  const [isOwner, setIsOwner] = useState(isOwnerProp)
   const [showBuyModal, setShowBuyModal] = useState(false)
   const [showOfferModal, setShowOfferModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [relisting, setRelisting] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.id === listing.seller_id) setIsOwner(true)
+    })
+  }, [listing.seller_id])
 
   const handleRelist = async () => {
     setRelisting(true)

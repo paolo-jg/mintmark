@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 30
 
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -40,8 +40,6 @@ export default async function ListingPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-
   const [{ data: listing }, { data: auctionRow }] = await Promise.all([
     supabase
       .from('listings')
@@ -57,7 +55,6 @@ export default async function ListingPage({
 
   if (!listing) notFound()
 
-  const isOwner = user?.id === listing.seller_id
   const isVerified = listing.verification_status === 'verified'
   const images: string[] = listing.images ?? []
   const isPcgs = listing.grading_service === 'PCGS'
@@ -67,14 +64,14 @@ export default async function ListingPage({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <SetNavSection section={isOwner ? 'sell' : 'buy'} />
+      <SetNavSection section="buy" />
 
       {/* Back */}
       <Link
-        href={isOwner ? '/sell' : '/listings'}
+        href="/listings"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8 transition-colors"
       >
-        <ChevronLeft className="h-3.5 w-3.5" /> {isOwner ? 'My Listings' : 'Browse Coins'}
+        <ChevronLeft className="h-3.5 w-3.5" /> Browse Coins
       </Link>
 
       {/* Main layout: gallery + details */}
@@ -144,11 +141,11 @@ export default async function ListingPage({
                     accept_offers: listing.accept_offers ?? false,
                     collection_item_id: listing.collection_item_id ?? null,
                   }}
-                  isOwner={isOwner}
+                  isOwner={false}
                   sellerTier={sellerTier}
                   auction={auction}
                 />
-                {!isOwner && listing.status === 'active' && (
+                {listing.status === 'active' && (
                   <MessageSellerButton
                     listingId={listing.id}
                     sellerId={listing.seller_id}
@@ -292,7 +289,7 @@ export default async function ListingPage({
           )}
 
           {/* Report listing */}
-          {!isOwner && listing.status === 'active' && (
+          {listing.status === 'active' && (
             <div className="flex justify-end">
               <ReportListingButton listingId={listing.id} />
             </div>
