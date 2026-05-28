@@ -71,7 +71,7 @@ export default async function ReferralLandingPage({ params }: { params: Promise<
               }`}
             >
               {/* Badge */}
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[11px] font-bold tracking-wider uppercase bg-emerald-500 text-white px-3 py-0.5 rounded-full whitespace-nowrap">
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[11px] font-bold tracking-wider uppercase bg-foreground text-background px-3 py-0.5 rounded-full whitespace-nowrap">
                 1 Month Free
               </span>
 
@@ -81,7 +81,7 @@ export default async function ReferralLandingPage({ params }: { params: Promise<
                 </p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold line-through text-muted-foreground/60">{plan.price}</span>
-                  <span className="text-2xl font-bold text-emerald-600">Free</span>
+                  <span className="text-2xl font-bold text-foreground">Free</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Then {plan.price}/mo</p>
               </div>
@@ -89,7 +89,7 @@ export default async function ReferralLandingPage({ params }: { params: Promise<
               <ul className="space-y-2">
                 {plan.features.map(f => (
                   <li key={f} className="flex items-center gap-2.5 text-sm">
-                    <Check className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <Check className="h-4 w-4 text-foreground shrink-0" />
                     <span>{f}</span>
                   </li>
                 ))}
