@@ -366,7 +366,7 @@ function ReferralWidget({ referralCode, referralCount, referralConverted }: { re
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <p className="text-sm font-semibold">Refer a friend, get a free month</p>
+              <p className="text-sm font-semibold">Refer a collector or dealer, get a free month</p>
               <div className="group relative">
                 <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help flex-shrink-0" />
                 <div className="pointer-events-none absolute bottom-full left-0 mb-2 w-64 rounded-lg border border-border bg-popover px-3 py-2.5 text-xs text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-50">
@@ -484,12 +484,12 @@ export function HomeClient() {
           <Link
             key={href}
             href={href}
-            className="flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-3 py-3 hover:border-foreground/20 hover:bg-muted/40 transition-colors group"
+            className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-card px-2 py-2.5 hover:border-foreground/20 hover:bg-muted/40 transition-colors group"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted group-hover:bg-background transition-colors">
-              <Icon className="h-4 w-4 text-muted-foreground" />
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-muted group-hover:bg-background transition-colors">
+              <Icon className="h-3.5 w-3.5 text-muted-foreground" />
             </div>
-            <p className="text-xs font-semibold text-center leading-tight">{label}</p>
+            <p className="text-[11px] font-semibold text-center leading-tight">{label}</p>
           </Link>
         ))}
       </div>
