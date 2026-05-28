@@ -62,15 +62,13 @@ export default function Navbar() {
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-18">
-          {/* Logo — far left, flex-1 so nav stays centered */}
-          <div className="flex-1">
-            <Link href="/" className="flex items-center w-fit">
-              <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="object-contain h-8 w-auto" />
-            </Link>
-          </div>
+          {/* Logo — far left */}
+          <Link href="/" className="flex items-center shrink-0 mr-6">
+            <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="object-contain h-11 w-auto" />
+          </Link>
 
-          {/* Desktop nav — true center */}
-          <nav className="hidden md:flex items-center gap-2">
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-2 flex-1">
             {[
               { href: '/', label: 'Home' },
               { href: '/listings', label: user ? 'Buy' : 'Browse' },
@@ -95,8 +93,8 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Desktop actions — far right, flex-1 so nav stays centered */}
-          <div className="flex-1 hidden md:flex items-center justify-end gap-3">
+          {/* Desktop actions — far right */}
+          <div className="hidden md:flex items-center gap-3 ml-auto">
             {user ? (
               <>
                 <DropdownMenu>

@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -55,9 +55,6 @@ export default async function SellerPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: { session } } = await supabase.auth.getSession()
-  const currentUserId = session?.user?.id ?? null
-
   const [
     { data: profile },
     { data: listings },
@@ -84,29 +81,7 @@ export default async function SellerPage({
 
   if (!profile) notFound()
 
-  // Find orders this user can review
-  let reviewableOrders: ReviewableOrder[] = []
-  if (currentUserId && currentUserId !== id) {
-    const { data: completedOrders } = await supabase
-      .from('orders')
-      .select('id, amount, created_at')
-      .eq('buyer_id', currentUserId)
-      .eq('seller_id', id)
-      .eq('status', 'complete')
-
-    if (completedOrders?.length) {
-      const { data: existingReviews } = await supabase
-        .from('reviews')
-        .select('order_id')
-        .eq('reviewer_id', currentUserId)
-        .in('order_id', completedOrders.map(o => o.id))
-
-      const reviewedOrderIds = new Set((existingReviews ?? []).map((r: { order_id: string }) => r.order_id))
-      reviewableOrders = completedOrders
-        .filter(o => !reviewedOrderIds.has(o.id))
-        .map(o => ({ id: o.id, amount: o.amount, created_at: o.created_at }))
-    }
-  }
+  const reviewableOrders: ReviewableOrder[] = []
 
   const isDealer = profile.subscription_tier === 'dealer'
   const name = profile.display_name ?? profile.email
