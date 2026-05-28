@@ -1,9 +1,9 @@
 export const dynamic = 'force-dynamic'
 
-import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getServiceDb } from '@/lib/admin'
 import Link from 'next/link'
+import { SetRefCookie } from './_components/set-ref-cookie'
 
 export default async function ReferralLandingPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params
@@ -17,15 +17,6 @@ export default async function ReferralLandingPage({ params }: { params: Promise<
     .single()
 
   if (!referrer) redirect('/auth/register')
-
-  // Set the referral cookie (30 days)
-  const cookieStore = await cookies()
-  cookieStore.set('pc_ref', code.toUpperCase(), {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 30,
-  })
 
   const referrerName = referrer.display_name ?? `@${referrer.username}`
 
@@ -46,6 +37,7 @@ export default async function ReferralLandingPage({ params }: { params: Promise<
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-zinc-950">
+      <SetRefCookie code={code.toUpperCase()} />
       <div className="w-full max-w-2xl">
         <div className="flex justify-center mb-8">
           <img src="/logo-horizontal.png" alt="Pedigree Coins" className="h-10 w-auto" />
