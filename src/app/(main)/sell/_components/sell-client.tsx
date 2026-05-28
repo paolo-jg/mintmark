@@ -12,6 +12,7 @@ import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRig
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { SellerOnboardingModal } from '@/components/sell/seller-onboarding-modal'
+import { UpgradePlanModal } from '@/components/sell/upgrade-plan-modal'
 import { MessagesPanel } from './messages-panel'
 import { AuctionCountdown } from '@/components/ui/auction-countdown'
 
@@ -221,6 +222,7 @@ export function SellClient() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [relistModal, setRelistModal] = useState<{ id: string } | null>(null)
   const [relistingMode, setRelistingMode] = useState<'as-is' | 'edit' | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   async function handleDeleteDraft(e: React.MouseEvent, listingId: string) {
     e.preventDefault()
@@ -297,14 +299,17 @@ export function SellClient() {
     const params = new URLSearchParams(window.location.search)
     if (params.get('onboarded') === '1') {
       setStripeReturn('success')
-      mutate() // force-refresh so needsOnboarding re-evaluates with updated DB flags
+      mutate()
     } else if (params.get('onboarding') === 'incomplete') {
       setStripeReturn('incomplete')
     }
+    if (params.get('upgraded') === '1') {
+      toast.success('Plan upgraded! Your listings and history are all intact.')
+      mutate()
+    }
     const tabParam = params.get('tab') as TabId | null
     if (tabParam && ['all', 'active', 'draft', 'sold', 'expired'].includes(tabParam)) setTab(tabParam)
-    // Clean up the URL
-    if (params.has('onboarded') || params.has('onboarding') || params.has('tab')) {
+    if (params.has('onboarded') || params.has('onboarding') || params.has('tab') || params.has('upgraded')) {
       window.history.replaceState({}, '', window.location.pathname)
     }
   }, [mutate])
@@ -503,7 +508,7 @@ export function SellClient() {
               Import CSV
             </Button>
           )}
-          <Button onClick={() => atLimit ? router.push('/pricing') : router.push('/listings/new')}>
+          <Button onClick={() => atLimit ? setShowUpgradeModal(true) : router.push('/listings/new')}>
             <Plus className="h-4 w-4 mr-1.5" />
             {atLimit ? 'Upgrade to List More' : 'Create Listing'}
           </Button>
@@ -591,7 +596,7 @@ export function SellClient() {
                   Upgrade to list more coins this month.
                 </p>
                 <button
-                  onClick={() => router.push('/pricing')}
+                  onClick={() => setShowUpgradeModal(true)}
                   className="text-xs font-semibold text-foreground underline underline-offset-2 hover:opacity-70 transition-opacity whitespace-nowrap"
                 >
                   View plans →
@@ -781,7 +786,7 @@ export function SellClient() {
             <Button
               size="lg"
               className="h-11 px-4"
-              onClick={() => atLimit ? router.push('/pricing') : router.push('/listings/new')}
+              onClick={() => atLimit ? setShowUpgradeModal(true) : router.push('/listings/new')}
             >
               <Plus className="h-4 w-4 mr-1.5" />
               {atLimit ? 'Upgrade to List More' : 'Create Listing'}
@@ -912,5 +917,11 @@ export function SellClient() {
         </div>
       ))}
     </div>
+
+    <UpgradePlanModal
+      open={showUpgradeModal}
+      onOpenChange={setShowUpgradeModal}
+      returnPath="/sell"
+    />
   )
 }

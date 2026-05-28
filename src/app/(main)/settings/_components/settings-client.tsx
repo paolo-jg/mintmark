@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useTransition } from 'react'
+import { useState, useRef, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import {
   ExternalLink, CheckCircle2, AlertCircle, Star, ShieldCheck,
   Eye, EyeOff, ChevronRight, MapPin, Plus, Trash2,
 } from 'lucide-react'
+import { UpgradePlanModal } from '@/components/sell/upgrade-plan-modal'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -361,6 +362,7 @@ function BillingTab({
   isDealer: boolean
 }) {
   const [connectingStripe, setConnectingStripe] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   const tier = TIER_META[subscriptionTier] ?? TIER_META.collector_basic
   const memberYear = memberSince ? new Date(memberSince).getFullYear() : null
@@ -391,8 +393,8 @@ function BillingTab({
             </p>
           </div>
           {subscriptionTier !== 'dealer' && (
-            <Button variant="outline" size="sm" disabled className="text-xs">
-              Upgrade — Coming Soon
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setShowUpgradeModal(true)}>
+              Upgrade Plan
             </Button>
           )}
         </div>
@@ -491,6 +493,12 @@ function BillingTab({
           </div>
         )}
       </SectionCard>
+
+      <UpgradePlanModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        returnPath="/settings"
+      />
     </div>
   )
 }
@@ -800,6 +808,14 @@ export function SettingsClient({
   const setTab = (id: string) => {
     startTransition(() => router.push(`/settings?tab=${id}`, { scroll: false }))
   }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('upgraded') === '1') {
+      toast.success('Plan upgraded! Your listings and history are all intact.')
+      window.history.replaceState({}, '', window.location.pathname + (params.get('tab') ? `?tab=${params.get('tab')}` : ''))
+    }
+  }, [])
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

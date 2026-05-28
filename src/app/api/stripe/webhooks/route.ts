@@ -225,5 +225,25 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ── customer.subscription.created / updated ───────────────────────────────
+  if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
+    const sub = event.data.object as Stripe.Subscription
+    const userId = sub.metadata?.supabase_user_id
+    const targetTier = sub.metadata?.target_tier
+
+    if (userId && targetTier && sub.status === 'active') {
+      await db.from('profiles').update({ subscription_tier: targetTier }).eq('id', userId)
+    }
+  }
+
+  // ── customer.subscription.deleted ────────────────────────────────────────
+  if (event.type === 'customer.subscription.deleted') {
+    const sub = event.data.object as Stripe.Subscription
+    const userId = sub.metadata?.supabase_user_id
+    if (userId) {
+      await db.from('profiles').update({ subscription_tier: 'collector_basic' }).eq('id', userId)
+    }
+  }
+
   return NextResponse.json({ received: true })
 }
