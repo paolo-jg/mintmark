@@ -1,7 +1,8 @@
 'use client'
 
 import useSWR from 'swr'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -408,7 +409,14 @@ function ReferralWidget({ referralCode, referralCount, referralConverted }: { re
 }
 
 export function HomeClient() {
+  const router = useRouter()
   const { data, isLoading, mutate } = useSWR('home-dashboard', fetchHomeData, { keepPreviousData: true })
+
+  // Prefetch all main nav routes so every page loads instantly after visiting home
+  useEffect(() => {
+    const routes = ['/listings', '/sell', '/collect', '/dealers', '/leaderboard', '/settings']
+    routes.forEach(route => router.prefetch(route))
+  }, [])
 
   if (isLoading && !data) {
     return <DashboardSkeleton />
