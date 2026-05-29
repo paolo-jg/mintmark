@@ -431,6 +431,7 @@ export function SellClient() {
   ]
 
   return (
+    <>
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
       {/* Relist confirmation modal */}
@@ -918,10 +919,12 @@ export function SellClient() {
       ))}
     </div>
 
+    </div>
     <UpgradePlanModal
       open={showUpgradeModal}
       onOpenChange={setShowUpgradeModal}
       returnPath="/sell"
     />
+    </>
   )
 }
