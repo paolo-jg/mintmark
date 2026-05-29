@@ -62,7 +62,7 @@ export default function Navbar() {
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <div className="relative flex items-center h-20 px-4 sm:px-6 lg:px-8">
           {/* Logo — absolute left edge */}
-          <div className="absolute left-0">
+          <div className="absolute left-4">
             <Link href="/" className="flex items-center w-fit">
               <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="object-contain h-14 w-auto" />
             </Link>
