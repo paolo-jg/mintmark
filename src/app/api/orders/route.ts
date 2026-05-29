@@ -64,6 +64,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'You cannot buy your own listing' }, { status: 400 })
   }
 
+  const CONCIERGE_THRESHOLD_CENTS = 50_000_000
+  if ((listing.price ?? 0) >= CONCIERGE_THRESHOLD_CENTS) {
+    return NextResponse.json({
+      error: 'This listing requires Pedigree Concierge shipping. Please contact us to arrange insured delivery for high-value transactions.',
+      concierge_required: true,
+    }, { status: 400 })
+  }
+
   // Create the order
   const { data: order, error: orderError } = await db
     .from('orders')

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
-import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload, MessageCircle, Gavel, RotateCcw, Trash2 } from 'lucide-react'
+import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload, MessageCircle, Gavel, RotateCcw, Trash2, Download } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { SellerOnboardingModal } from '@/components/sell/seller-onboarding-modal'
@@ -223,6 +223,68 @@ export function SellClient() {
   const [relistModal, setRelistModal] = useState<{ id: string } | null>(null)
   const [relistingMode, setRelistingMode] = useState<'as-is' | 'edit' | null>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedListings, setSelectedListings] = useState<Set<string>>(new Set())
+  const [showRepriceModal, setShowRepriceModal] = useState(false)
+  const [repriceValue, setRepriceValue] = useState('')
+  const [repriceType, setRepriceType] = useState<'pct' | 'flat'>('pct')
+  const [repricing, setRepricing] = useState(false)
+
+  async function handleBulkReprice() {
+    if (!repriceValue.trim()) return
+    setRepricing(true)
+    const supabase = createClient()
+    try {
+      const ids = [...selectedListings]
+      const selectedItems = (data?.allListings ?? []).filter(l => ids.includes(l.id) && l.price !== null)
+      await Promise.all(selectedItems.map(async l => {
+        const currentPrice = l.price!
+        let newPrice: number
+        if (repriceType === 'pct') {
+          const pct = parseFloat(repriceValue)
+          newPrice = Math.round(currentPrice * (1 + pct / 100))
+        } else {
+          const delta = Math.round(parseFloat(repriceValue) * 100)
+          newPrice = currentPrice + delta
+        }
+        if (newPrice < 100) newPrice = 100 // minimum $1.00
+        await supabase.from('listings').update({ price: newPrice }).eq('id', l.id)
+      }))
+      toast.success(`Repriced ${selectedItems.length} listing${selectedItems.length !== 1 ? 's' : ''}`)
+      setShowRepriceModal(false)
+      setSelectMode(false)
+      setSelectedListings(new Set())
+      setRepriceValue('')
+      mutate()
+    } catch {
+      toast.error('Failed to reprice some listings')
+    } finally {
+      setRepricing(false)
+    }
+  }
+
+  function handleExportCSV() {
+    const rows = [
+      ['Title', 'Status', 'Price', 'Type', 'Grade', 'Grading Service', 'Year', 'Created'].join(','),
+      ...(data?.allListings ?? []).map(l => [
+        `"${(l.title ?? '').replace(/"/g, '""')}"`,
+        l.status,
+        l.price !== null ? (l.price / 100).toFixed(2) : '',
+        l.listing_type,
+        l.grade ?? '',
+        l.grading_service ?? '',
+        l.year ?? '',
+        l.created_at,
+      ].join(','))
+    ].join('\n')
+    const blob = new Blob([rows], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `listings-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   async function handleDeleteDraft(e: React.MouseEvent, listingId: string) {
     e.preventDefault()
@@ -507,6 +569,17 @@ export function SellClient() {
             <Button variant="outline" onClick={() => router.push('/dashboard/import')}>
               <Upload className="h-4 w-4 mr-1.5" />
               Import CSV
+            </Button>
+          )}
+          {tier === 'dealer' && tab === 'active' && (
+            <Button variant="outline" onClick={() => { setSelectMode(v => !v); setSelectedListings(new Set()) }}>
+              {selectMode ? 'Cancel' : 'Bulk Reprice'}
+            </Button>
+          )}
+          {tier === 'dealer' && (
+            <Button variant="outline" onClick={handleExportCSV}>
+              <Download className="h-4 w-4 mr-1.5" />
+              Export CSV
             </Button>
           )}
           <Button onClick={() => atLimit ? setShowUpgradeModal(true) : router.push('/listings/new')}>
@@ -803,12 +876,18 @@ export function SellClient() {
             const startPrice = auc?.start_price ?? null
             const reservePrice = auc?.reserve_price ?? null
             const reserveMet = reservePrice !== null && currentBid !== null && currentBid >= reservePrice
-            return (
-            <Link
-              key={listing.id}
-              href={listing.status === 'draft' ? `/listings/new?draft=${listing.id}` : `/listings/${listing.id}`}
-              className="flex items-center gap-4 px-4 py-3.5 bg-card rounded-xl border border-border hover:bg-muted/40 transition-colors"
-            >
+            const isSelectable = selectMode && listing.status === 'active'
+            const isSelected = selectedListings.has(listing.id)
+            const rowContent = (
+              <>
+              {isSelectable && (
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  readOnly
+                  className="h-4 w-4 flex-shrink-0 rounded border-border accent-foreground cursor-pointer"
+                />
+              )}
               {/* Thumbnail */}
               <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0 relative">
                 {listing.images?.[0] ? (
@@ -912,11 +991,67 @@ export function SellClient() {
                   </Badge>
                 )}
               </div>
-            </Link>
+              </>
+            )
+            return isSelectable ? (
+              <div
+                key={listing.id}
+                onClick={() => setSelectedListings(prev => {
+                  const next = new Set(prev)
+                  if (next.has(listing.id)) next.delete(listing.id)
+                  else next.add(listing.id)
+                  return next
+                })}
+                className={`flex items-center gap-4 px-4 py-3.5 bg-card rounded-xl border transition-colors cursor-pointer ${isSelected ? 'border-foreground bg-muted/40' : 'border-border hover:bg-muted/40'}`}
+              >
+                {rowContent}
+              </div>
+            ) : (
+              <Link
+                key={listing.id}
+                href={listing.status === 'draft' ? `/listings/new?draft=${listing.id}` : `/listings/${listing.id}`}
+                className="flex items-center gap-4 px-4 py-3.5 bg-card rounded-xl border border-border hover:bg-muted/40 transition-colors"
+              >
+                {rowContent}
+              </Link>
             )
           })}
         </div>
       ))}
+
+      {/* Floating action bar for bulk reprice */}
+      {selectMode && selectedListings.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-2xl border border-border bg-background shadow-2xl px-5 py-3">
+          <span className="text-sm font-semibold">{selectedListings.size} selected</span>
+          <Button size="sm" onClick={() => setShowRepriceModal(true)}>Reprice</Button>
+          <button onClick={() => setSelectedListings(new Set())} className="text-sm text-muted-foreground hover:text-foreground">Clear</button>
+        </div>
+      )}
+
+      {/* Reprice modal */}
+      {showRepriceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm px-4">
+          <div className="bg-background border border-border rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-base font-bold mb-1">Reprice {selectedListings.size} listing{selectedListings.size !== 1 ? 's' : ''}</h3>
+            <p className="text-sm text-muted-foreground mb-5">Adjust prices by a percentage or flat amount.</p>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <button onClick={() => setRepriceType('pct')} className={`rounded-lg border-2 py-2 text-sm font-semibold transition-all ${repriceType === 'pct' ? 'border-foreground' : 'border-border text-muted-foreground'}`}>% Change</button>
+              <button onClick={() => setRepriceType('flat')} className={`rounded-lg border-2 py-2 text-sm font-semibold transition-all ${repriceType === 'flat' ? 'border-foreground' : 'border-border text-muted-foreground'}`}>Flat Adjust</button>
+            </div>
+            <div className="flex items-stretch rounded-xl border-2 border-border focus-within:border-foreground overflow-hidden mb-4">
+              <span className="flex items-center px-4 text-sm font-medium text-muted-foreground bg-muted/40 border-r border-border select-none">{repriceType === 'pct' ? '%' : '$'}</span>
+              <input type="text" inputMode="decimal" value={repriceValue} onChange={e => setRepriceValue(e.target.value)} className="flex-1 bg-transparent px-4 py-3 text-lg font-semibold focus:outline-none" placeholder={repriceType === 'pct' ? '-10 or +10' : '-50 or +50'} />
+            </div>
+            <p className="text-xs text-muted-foreground mb-5">{repriceType === 'pct' ? 'Enter a positive number to increase or negative to decrease (e.g. -10 decreases prices by 10%).' : 'Enter a positive number to add or negative to subtract from each price.'}</p>
+            <div className="flex flex-col gap-2">
+              <button onClick={handleBulkReprice} disabled={repricing || !repriceValue.trim()} className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background text-sm font-semibold h-11 px-4 hover:opacity-90 disabled:opacity-40">
+                {repricing ? <><span className="h-4 w-4 animate-spin border-2 border-background/40 border-t-background rounded-full" /> Repricing...</> : 'Apply'}
+              </button>
+              <button onClick={() => setShowRepriceModal(false)} disabled={repricing} className="w-full text-sm text-muted-foreground py-2">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     <UpgradePlanModal
       open={showUpgradeModal}

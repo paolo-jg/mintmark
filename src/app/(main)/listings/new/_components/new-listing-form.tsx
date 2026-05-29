@@ -194,6 +194,7 @@ function calcConvenienceFee(priceUsd: number): number {
 }
 
 const FREE_SHIPPING_MIN_CENTS = 25_000 // $250 — below this, minimum $3.99 flat rate required
+const CONCIERGE_THRESHOLD_CENTS = 50_000_000 // $500,000
 const FLAT_RATE_MINIMUM_CENTS = 499    // $4.99
 
 // Price input helpers
@@ -471,6 +472,7 @@ export default function NewListingPage() {
   const [startPrice, setStartPrice] = useState('')
   const [reservePrice, setReservePrice] = useState('')
   const [auctionDays, setAuctionDays] = useState('7')
+  const [costBasis, setCostBasis] = useState('')
 
   // Images
   const [imageFiles, setImageFiles] = useState<File[]>([])
@@ -496,6 +498,8 @@ export default function NewListingPage() {
 
   const [submitting, setSubmitting] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
+
+  const isDealer = sellerTier === 'dealer'
 
   // Draft resume state
   const [draftListingId, setDraftListingId] = useState<string | null>(null)
@@ -1012,6 +1016,7 @@ export default function NewListingPage() {
         series_slug: pickedCoin.seriesSlug,
         price_row_label: pickedCoin.priceRowLabel,
         coin_profile: pickedCoin.coinProfile,
+        cost_basis_cents: isDealer && costBasis ? parsePriceCents(costBasis) : null,
       }
       collectionPromise = fetch('/api/collection', {
         method: 'POST',
@@ -1096,7 +1101,15 @@ export default function NewListingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: fromCollectionItemId, status: 'for_sale' }),
       }).catch(() => null)
-    } else {
+    }
+    if (isFromCollection && isDealer && costBasis) {
+      fetch('/api/collection', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: fromCollectionItemId, cost_basis_cents: parsePriceCents(costBasis) }),
+      }).catch(() => null)
+    }
+    if (!isFromCollection) {
       // Back-fill collection_item_id once the background POST resolves
       collectionPromise.then(collJson => {
         const collectionItemId = collJson?.data?.id ?? null
@@ -1718,6 +1731,26 @@ export default function NewListingPage() {
                   </div>
                 )}
 
+                {isDealer && (
+                  <div className="space-y-2">
+                    <Label htmlFor="costBasis">Previously Paid <span className="text-muted-foreground font-normal text-xs">(optional, visible only to you)</span></Label>
+                    <div className="flex items-stretch rounded-xl border-2 border-border focus-within:border-foreground transition-colors overflow-hidden">
+                      <span className="flex items-center px-4 text-sm font-medium text-muted-foreground bg-muted/40 border-r border-border select-none">USD</span>
+                      <input
+                        id="costBasis"
+                        type="text"
+                        inputMode="decimal"
+                        value={costBasis}
+                        onChange={e => handlePriceInput(e, setCostBasis)}
+                        onBlur={() => setCostBasis(formatPriceInput(costBasis))}
+                        className="flex-1 bg-transparent px-4 py-3 text-lg font-semibold tabular-nums placeholder:text-muted-foreground/40 placeholder:font-normal focus:outline-none"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Your acquisition cost for P&amp;L tracking. Never shown to buyers.</p>
+                  </div>
+                )}
+
               </CardContent>
             </Card>
 
@@ -1850,6 +1883,17 @@ export default function NewListingPage() {
                     : listingType === 'auction' && reservePrice
                       ? parsePriceCents(reservePrice)
                       : 0
+                  const requiresConcierge = priceCents >= CONCIERGE_THRESHOLD_CENTS
+                  if (requiresConcierge) {
+                    return (
+                      <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2">
+                        <p className="text-sm font-semibold">Pedigree Concierge Shipping Required</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          Listings priced at $500,000 or more require coordinated delivery through Pedigree Concierge. Our team will contact you to arrange insured, authenticated transport.
+                        </p>
+                      </div>
+                    )
+                  }
                   const freeAllowed = priceCents >= FREE_SHIPPING_MIN_CENTS
                   return (
                     <>

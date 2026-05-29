@@ -69,6 +69,8 @@ interface HomeData {
   referralCode: string | null
   referralCount: number
   referralConverted: number
+  totalCostBasisCents: number
+  realizedPnLCents: number
 }
 
 export async function fetchHomeData(): Promise<HomeData> {
@@ -77,7 +79,7 @@ export async function fetchHomeData(): Promise<HomeData> {
   const user = session?.user
 
   if (!user) {
-    return { isLoggedIn: false, userId: '', allSellingOrders: [], allBuyingOrders: [], activeListingsData: [], subscriptionTier: null, incomingOffers: [], outgoingOffers: [], repeatBuyers: [], referralCode: null, referralCount: 0, referralConverted: 0 }
+    return { isLoggedIn: false, userId: '', allSellingOrders: [], allBuyingOrders: [], activeListingsData: [], subscriptionTier: null, incomingOffers: [], outgoingOffers: [], repeatBuyers: [], referralCode: null, referralCount: 0, referralConverted: 0, totalCostBasisCents: 0, realizedPnLCents: 0 }
   }
 
   const { data: profile } = await supabase
@@ -96,6 +98,7 @@ export async function fetchHomeData(): Promise<HomeData> {
     { data: outgoingOffers },
     { data: sellerOrders },
     { data: referrals },
+    { data: inventoryItems },
   ] = await Promise.all([
     supabase.from('orders').select('amount, status, created_at').eq('seller_id', user.id),
     supabase.from('orders').select('amount, status, created_at').eq('buyer_id', user.id),
@@ -106,6 +109,9 @@ export async function fetchHomeData(): Promise<HomeData> {
       ? supabase.from('orders').select('buyer_id, amount, created_at').eq('seller_id', user.id).neq('status', 'disputed')
       : Promise.resolve({ data: null }),
     supabase.from('referrals').select('id, status').eq('referrer_id', user.id),
+    isDealer
+      ? supabase.from('collection_items').select('cost_basis_cents, status').eq('user_id', user.id).eq('type', 'owned')
+      : Promise.resolve({ data: null }),
   ])
 
   // Build repeat buyer list for dealers
@@ -146,6 +152,12 @@ export async function fetchHomeData(): Promise<HomeData> {
     }
   }
 
+  const invItems = (inventoryItems ?? []) as { cost_basis_cents: number | null; status: string }[]
+  const totalCostBasisCents = invItems.filter(i => i.status !== 'sold').reduce((s, i) => s + (i.cost_basis_cents ?? 0), 0)
+  const soldWithBasis = invItems.filter(i => i.status === 'sold' && i.cost_basis_cents)
+  const realizedPnLCents = (allSellingOrders ?? []).filter(o => o.status !== 'disputed').reduce((s, o) => s + (o.amount ?? 0), 0)
+    - soldWithBasis.reduce((s, i) => s + (i.cost_basis_cents ?? 0), 0)
+
   return {
     isLoggedIn: true,
     userId: user.id,
@@ -159,6 +171,8 @@ export async function fetchHomeData(): Promise<HomeData> {
     referralCode: (profile as { referral_code?: string | null })?.referral_code ?? null,
     referralCount: (referrals ?? []).length,
     referralConverted: (referrals ?? []).filter((r: { status: string }) => r.status === 'completed').length,
+    totalCostBasisCents,
+    realizedPnLCents: soldWithBasis.length > 0 ? realizedPnLCents : 0,
   }
 }
 
@@ -369,20 +383,20 @@ function ReferralWidget({ referralCode, referralCount, referralConverted }: { re
               <p className="text-sm font-semibold">Refer a collector or dealer, get a free month</p>
               <div className="group relative">
                 <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help flex-shrink-0" />
-                <div className="pointer-events-none absolute bottom-full left-0 mb-2 w-64 rounded-lg border border-border bg-popover px-3 py-2.5 text-xs text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                <div className="pointer-events-none absolute top-full left-0 mt-2 w-80 rounded-lg border border-border bg-popover px-3 py-2.5 text-xs text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-50">
                   <p className="font-semibold mb-1">How referrals work</p>
                   <ul className="space-y-1 text-muted-foreground">
                     <li>• Share your link with a friend</li>
                     <li>• They sign up and choose a paid plan (Premium or Dealer)</li>
                     <li>• They get their first month free</li>
                     <li>• You get 1 free month of your current plan</li>
-                    <li>• Free months stack — refer more, earn more</li>
+                    <li>• Free months stack, refer more to earn more</li>
                   </ul>
                   <p className="mt-1.5 text-muted-foreground/70">Dealer referrers earn a free Dealer month. Basic/Premium referrers earn a free Premium month.</p>
                 </div>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">Both of you get a free month — theirs on signup, yours for each referral.</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Both of you get a free month. Theirs on signup, yours for each referral.</p>
           </div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
@@ -424,7 +438,7 @@ export function HomeClient() {
 
   if (!data) return null
 
-  const { allSellingOrders, allBuyingOrders, activeListingsData, subscriptionTier, incomingOffers, outgoingOffers, userId, repeatBuyers, referralCode, referralCount, referralConverted } = data
+  const { allSellingOrders, allBuyingOrders, activeListingsData, subscriptionTier, incomingOffers, outgoingOffers, userId, repeatBuyers, referralCode, referralCount, referralConverted, totalCostBasisCents, realizedPnLCents } = data
 
   const totalRevenue = allSellingOrders.filter(o => o.status !== 'disputed').reduce((s, o) => s + (o.amount ?? 0), 0)
   const totalSpent = allBuyingOrders.filter(o => o.status !== 'disputed').reduce((s, o) => s + (o.amount ?? 0), 0)
@@ -486,9 +500,7 @@ export function HomeClient() {
             href={href}
             className="flex flex-col items-center gap-1.5 rounded-xl border border-border bg-card px-2 py-2.5 hover:border-foreground/20 hover:bg-muted/40 transition-colors group"
           >
-            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-muted group-hover:bg-background transition-colors">
-              <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
+            <Icon className="h-3.5 w-3.5 text-muted-foreground" />
             <p className="text-[11px] font-semibold text-center leading-tight">{label}</p>
           </Link>
         ))}
@@ -548,6 +560,33 @@ export function HomeClient() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dealer inventory value + P&L */}
+      {isDealer && totalCostBasisCents > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <Card>
+            <CardContent className="pt-5 pb-4 px-5">
+              <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground/60 mb-1">Inventory Value</p>
+              <p className="text-2xl font-bold tabular-nums">{formatCents(inventoryValueCents)}</p>
+              <p className="text-xs text-muted-foreground mt-1">Total listed price of active inventory</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-5 pb-4 px-5">
+              <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground/60 mb-1">Cost Basis</p>
+              <p className="text-2xl font-bold tabular-nums">{formatCents(totalCostBasisCents)}</p>
+              <p className="text-xs text-muted-foreground mt-1">Total acquisition cost of active inventory</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-5 pb-4 px-5">
+              <p className="text-xs font-semibold tracking-widest uppercase text-muted-foreground/60 mb-1">Realized P&amp;L</p>
+              <p className={`text-2xl font-bold tabular-nums ${realizedPnLCents >= 0 ? '' : 'text-destructive'}`}>{realizedPnLCents >= 0 ? '+' : ''}{formatCents(realizedPnLCents)}</p>
+              <p className="text-xs text-muted-foreground mt-1">Net profit on sold inventory with cost basis</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Row 2: Sales chart */}
       <div className="grid grid-cols-1 gap-6 mb-8">

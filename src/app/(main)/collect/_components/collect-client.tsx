@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
-import { Plus, Trash2, Star, Coins, ScanLine, ArrowRight, ArrowUpRight, Search, X, Pencil, LogIn, Tag, ChevronDown, CheckCheck } from 'lucide-react'
+import { Plus, Trash2, Star, Coins, ScanLine, ArrowRight, ArrowUpRight, Search, X, Pencil, LogIn, Tag, ChevronDown, CheckCheck, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -133,6 +133,7 @@ export interface CollectionItem {
   created_at: string
   // canonical coin type from the linked listing (if auto-created from a listing)
   listing_coin_name?: string | null
+  cost_basis_cents?: number | null
 }
 
 function formatPrice(cents: number) {
@@ -156,14 +157,17 @@ function StatusIcon({ status }: { status: OwnedStatus }) {
 // Status is mostly system-controlled; the only manual actions are:
 //   • Move to Wish List  (for owned / for_sale)
 //   • Mark as sold       (for external sales, owned / for_sale)
-function StatusDropdown({ item, onMarkAsSold, onMoveToWishlist }: {
+function StatusDropdown({ item, onMarkAsSold, onMoveToWishlist, ownedLabel }: {
   item: CollectionItem
   onMarkAsSold: () => void
   onMoveToWishlist: () => void
+  ownedLabel?: string
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const { label, color } = STATUS_DISPLAY[item.status] ?? STATUS_DISPLAY.owned
+  const base = STATUS_DISPLAY[item.status] ?? STATUS_DISPLAY.owned
+  const label = (item.status === 'owned' && ownedLabel) ? ownedLabel : base.label
+  const { color } = base
   const canChange = item.status !== 'sold'
 
   useEffect(() => {
@@ -238,11 +242,12 @@ function StarButton({ starred, onToggle }: { starred: boolean; onToggle: () => v
   )
 }
 
-function OwnedCard({ item, onDelete, onUpdate, onClick }: {
+function OwnedCard({ item, onDelete, onUpdate, onClick, isDealer }: {
   item: CollectionItem
   onDelete: () => void
   onUpdate: (updated: CollectionItem) => void
   onClick: () => void
+  isDealer?: boolean
 }) {
   const [deleting, setDeleting] = useState(false)
 
@@ -352,6 +357,11 @@ function OwnedCard({ item, onDelete, onUpdate, onClick }: {
         <p className={`text-[14px] font-semibold leading-snug text-foreground ${isSold ? 'line-through text-muted-foreground' : ''}`}>
           {displayName}
         </p>
+        {isDealer && !isSold && (
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            {Math.floor((Date.now() - new Date(item.created_at).getTime()) / 86400000)}d in inventory
+          </p>
+        )}
         {item.cert_number && (
           <p className="text-[11px] text-muted-foreground mt-1">Cert #{item.cert_number}</p>
         )}
@@ -359,7 +369,10 @@ function OwnedCard({ item, onDelete, onUpdate, onClick }: {
           <p className="text-[12px] text-muted-foreground/70 mt-1.5 italic">{item.notes}</p>
         )}
         <div className="mt-auto pt-3 border-t border-border/50 space-y-2" onClick={e => e.stopPropagation()}>
-          <StatusDropdown item={item} onMarkAsSold={handleMarkAsSold} onMoveToWishlist={handleMoveToWishlist} />
+          {isDealer && item.cost_basis_cents && (
+            <p className="text-[11px] text-muted-foreground">Cost: {formatPrice(item.cost_basis_cents)}</p>
+          )}
+          <StatusDropdown item={item} onMarkAsSold={handleMarkAsSold} onMoveToWishlist={handleMoveToWishlist} ownedLabel={isDealer ? 'In Inventory' : undefined} />
           {item.status === 'owned' && (
             <Link
               href={`/listings/new?from=${item.id}`}
@@ -544,17 +557,26 @@ function SectionHeader({ icon, label }: { icon?: React.ReactNode; label: string 
   )
 }
 
-export async function fetchCollectionItems(): Promise<{ items: CollectionItem[]; isLoggedIn: boolean }> {
+export async function fetchCollectionItems(): Promise<{ items: CollectionItem[]; isLoggedIn: boolean; isDealer: boolean }> {
   const db = createClient()
   const { data: { session } } = await db.auth.getSession()
   const user = session?.user
-  if (!user) return { items: [], isLoggedIn: false }
-  const { data } = await db
-    .from('collection_items')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+  if (!user) return { items: [], isLoggedIn: false, isDealer: false }
 
+  const [{ data }, { data: profile }] = await Promise.all([
+    db
+      .from('collection_items')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false }),
+    db
+      .from('profiles')
+      .select('subscription_tier')
+      .eq('id', user.id)
+      .single(),
+  ])
+
+  const isDealer = profile?.subscription_tier === 'dealer'
   const rawItems = (data ?? []) as CollectionItem[]
 
   // For items auto-created from listings, backfill the canonical coin_name
@@ -575,10 +597,11 @@ export async function fetchCollectionItems(): Promise<{ items: CollectionItem[];
         listing_coin_name: coinNameByItemId.get(item.id) ?? null,
       })),
       isLoggedIn: true,
+      isDealer,
     }
   }
 
-  return { items: rawItems, isLoggedIn: true }
+  return { items: rawItems, isLoggedIn: true, isDealer }
 }
 
 export function CollectClient() {
@@ -586,6 +609,7 @@ export function CollectClient() {
     keepPreviousData: true,
   })
   const isLoggedIn = data?.isLoggedIn ?? false
+  const isDealer = data?.isDealer ?? false
 
   const searchParams = useSearchParams()
   const initialTab = (searchParams.get('tab') as Tab | null) ?? 'owned'
@@ -667,13 +691,31 @@ export function CollectClient() {
   const handleUpdate = (updated: CollectionItem) => setItems(prev => prev.map(i => i.id === updated.id ? updated : i))
 
   const tabs: { id: Tab; label: string; count: number }[] = [
-    { id: 'owned',    label: 'Owned',     count: owned.length },
+    { id: 'owned',    label: isDealer ? 'Inventory' : 'Owned', count: owned.length },
     { id: 'wishlist', label: 'Wish List', count: wishlist.length },
     ...(isLoggedIn ? [{ id: 'sold' as Tab, label: 'Sold', count: soldCoins.length }] : []),
   ]
 
+  const handleExportCSV = () => {
+    const csvContent = [
+      'Coin,Year,Mint,Grade,Service,Cert#,Cost Basis,Status,Days in Inventory,Added',
+      ...filteredOwned.map(item => {
+        const days = Math.floor((Date.now() - new Date(item.created_at).getTime()) / 86400000)
+        const cost = item.cost_basis_cents ? (item.cost_basis_cents / 100).toFixed(2) : ''
+        return [item.coin_name, item.year ?? '', item.mint_mark ?? '', item.grade ?? '', item.grading_service ?? '', item.cert_number ?? '', cost, item.status, days, item.created_at].join(',')
+      }),
+    ].join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'inventory.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const ownedCard = (item: CollectionItem) => (
-    <OwnedCard key={item.id} item={item} onDelete={() => handleDelete(item.id)} onUpdate={handleUpdate} onClick={() => setSelectedItem(item)} />
+    <OwnedCard key={item.id} item={item} onDelete={() => handleDelete(item.id)} onUpdate={handleUpdate} onClick={() => setSelectedItem(item)} isDealer={isDealer} />
   )
 
   const wishlistCard = (item: CollectionItem) => (
@@ -696,7 +738,7 @@ export function CollectClient() {
         {/* Static tabs shell */}
         <div className="flex items-center justify-between mb-6 border-b border-border">
           <div className="flex gap-1">
-            {['Owned', 'Wish List', 'Sold'].map(label => (
+            {[isDealer ? 'Inventory' : 'Owned', 'Wish List', 'Sold'].map(label => (
               <div key={label} className="px-4 py-2.5 text-sm font-medium text-muted-foreground">{label}</div>
             ))}
           </div>
@@ -720,6 +762,7 @@ export function CollectClient() {
 
   return (
     <div>
+      <h1 className="text-2xl font-bold tracking-tight mb-6">{isDealer ? 'Inventory' : 'My Collection'}</h1>
       {/* Tabs + Add button */}
       <div className="flex items-center justify-between mb-6 border-b border-border">
         <div className="flex gap-1">
@@ -741,6 +784,11 @@ export function CollectClient() {
               <Button variant="outline" size="lg" className="h-11 px-4" render={<Link href="/dashboard/portfolio" />}>
                 Calculate Portfolio Value
               </Button>
+              {isDealer && (
+                <Button variant="outline" size="lg" className="h-11 px-4" onClick={handleExportCSV}>
+                  <Download className="h-4 w-4 mr-1.5" />Export CSV
+                </Button>
+              )}
               <Button variant="outline" size="lg" className="h-11 px-4" onClick={openAddScan}>
                 <ScanLine className="h-4 w-4 mr-1.5" />Scan
               </Button>

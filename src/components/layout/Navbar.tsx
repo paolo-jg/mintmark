@@ -113,9 +113,6 @@ export default function Navbar() {
                     <DropdownMenuItem onClick={() => router.push('/settings')}>
                       Settings
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/leaderboard')}>
-                      Leaderboard
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={signOut} className="text-destructive">
                       Sign Out
