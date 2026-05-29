@@ -60,17 +60,16 @@ export default function Navbar() {
 
   return (
     <header className="border-b border-border bg-background sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-20">
-          {/* Logo — far left, flex-1 so nav stays centered */}
-          <div className="flex-1">
+      <div className="relative flex items-center h-20 px-4 sm:px-6 lg:px-8">
+          {/* Logo — absolute left edge */}
+          <div className="absolute left-4 sm:left-6 lg:left-8">
             <Link href="/" className="flex items-center w-fit">
               <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="object-contain h-14 w-auto" />
             </Link>
           </div>
 
           {/* Desktop nav — true center */}
-          <nav className="hidden md:flex items-center gap-2">
+          <nav className="hidden md:flex items-center gap-2 mx-auto">
             {[
               { href: '/', label: 'Home' },
               { href: '/listings', label: user ? 'Buy' : 'Browse' },
@@ -95,8 +94,8 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Desktop actions — far right, flex-1 so nav stays centered */}
-          <div className="flex-1 hidden md:flex items-center justify-end gap-3">
+          {/* Desktop actions — absolute right edge */}
+          <div className="absolute right-4 sm:right-6 lg:right-8 hidden md:flex items-center gap-3">
             {user ? (
               <>
                 <DropdownMenu>
@@ -144,7 +143,7 @@ export default function Navbar() {
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
-      </div>
+      </div>  {/* end relative container */}
 
       {/* Mobile menu */}
       {mobileOpen && (
