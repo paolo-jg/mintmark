@@ -918,8 +918,6 @@ export function SellClient() {
         </div>
       ))}
     </div>
-
-    </div>
     <UpgradePlanModal
       open={showUpgradeModal}
       onOpenChange={setShowUpgradeModal}
