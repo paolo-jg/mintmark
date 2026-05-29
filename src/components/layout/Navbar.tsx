@@ -142,8 +142,7 @@ export default function Navbar() {
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-        </div>
-      </div>  {/* end relative container */}
+      </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
