@@ -61,26 +61,6 @@ function LoginForm() {
 
   return (
     <div className="space-y-4">
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full gap-2"
-        onClick={handleGoogle}
-        disabled={googleLoading || loading}
-      >
-        <GoogleIcon />
-        {googleLoading ? 'Redirecting…' : 'Continue with Google'}
-      </Button>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-card px-2 text-muted-foreground">or</span>
-        </div>
-      </div>
-
       <form onSubmit={handleLogin} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
@@ -110,6 +90,26 @@ function LoginForm() {
           {loading ? 'Signing in…' : 'Sign in'}
         </Button>
       </form>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-card px-2 text-muted-foreground">or</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full gap-2"
+        onClick={handleGoogle}
+        disabled={googleLoading || loading}
+      >
+        <GoogleIcon />
+        {googleLoading ? 'Redirecting…' : 'Continue with Google'}
+      </Button>
     </div>
   )
 }
