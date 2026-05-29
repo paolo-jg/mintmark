@@ -87,18 +87,13 @@ export default async function AdminFinancePage() {
     .reduce((s, [tier, count]) => s + TIER_PRICE[tier] * count, 0)
 
   // ── Shipping P&L ─────────────────────────────────────────────────────────
-  // For each shipped order:
-  //   deduction  = what we charged the seller (stored on shipment)
-  //   labelCost  = what Shippo charged us (rate_amount)
-  //   margin     = deduction - labelCost (positive = markup, negative = we absorbed the gap)
-  //
-  // A negative margin only occurs when the seller's payout was too small to cover
-  // the full deduction (the cap-at-zero case in the label route).
+  // Sellers purchase labels directly and enter tracking manually.
+  // rate_amount on shipments is unused but kept for historical records.
   const shipmentMap = new Map(allShipments.map(s => [s.order_id, s]))
   let shippingDeducted = 0    // total we recovered from sellers
-  let shippingLabelCost = 0  // total paid to Shippo
-  let shippingMarkup = 0     // gross margin (deducted - label cost)
-  let shippingLosses = 0     // sum of cases where deduction < label cost (payout was floored)
+  let shippingLabelCost = 0
+  let shippingMarkup = 0
+  let shippingLosses = 0
   let spreadOrders = 0
   let freeShippingOrders = 0
   let flatShippingOrders = 0

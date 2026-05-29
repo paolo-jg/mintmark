@@ -62,7 +62,7 @@ GRADING SERVICES:
 
 ORDERS & SHIPPING:
 - After purchase, seller has 3 business days to ship
-- Integrated shipping labels via Shippo
+- Sellers purchase labels directly through USPS, UPS, FedEx, or DHL and enter the tracking number manually
 - Payment held in escrow until buyer confirms delivery
 - Funds auto-release 48h after delivery if buyer doesn't dispute
 

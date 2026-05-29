@@ -168,19 +168,6 @@ export interface Shipment {
   updatedAt: string
 }
 
-export interface ShippoRate {
-  objectId: string
-  provider: string
-  servicelevel: { name: string; token: string }
-  amount: string // string USD e.g. "12.50"
-  currency: string
-  estimatedDays: number
-  durationTerms: string
-  attributes: string[] // e.g. ['BESTVALUE', 'FASTEST']
-  // Insurance
-  includesInsurance: boolean
-}
-
 export interface Transaction {
   id: string
   listingId: string
