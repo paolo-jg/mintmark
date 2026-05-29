@@ -75,7 +75,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-6">
           <Link href="/">
-            <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="h-40 w-auto object-contain" />
+            <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="h-16 w-auto object-contain" />
           </Link>
         </div>
         <Card>

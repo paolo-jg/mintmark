@@ -120,7 +120,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-6">
           <Link href="/">
-            <img src="/logo-horizontal.png" alt="Pedigree Coins" className="h-40 w-auto" />
+            <img src="/logo-horizontal.png" alt="Pedigree Coins" className="h-16 w-auto" />
           </Link>
         </div>
         <Card>
