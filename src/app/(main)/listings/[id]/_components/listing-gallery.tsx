@@ -24,7 +24,7 @@ export function ListingGallery({ images, title }: Props) {
 
   return (
     <div className="flex gap-3 max-h-[560px]">
-      {/* Thumbnail strip — left */}
+      {/* Thumbnail strip - left */}
       {images.length > 1 && (
         <div className="flex flex-col gap-2 w-[72px] shrink-0 overflow-y-auto">
           {images.map((src, i) => (
@@ -53,12 +53,12 @@ export function ListingGallery({ images, title }: Props) {
         <img
           src={images[active]}
           alt={title}
-          // @ts-ignore — fetchpriority is valid HTML but not yet in React's typedefs
+          // @ts-ignore - fetchpriority is valid HTML but not yet in React's typedefs
           fetchpriority="high"
           className="w-full h-full object-contain transition-opacity duration-200"
         />
 
-        {/* Arrows — only show if multiple images */}
+        {/* Arrows - only show if multiple images */}
         {images.length > 1 && (
           <>
             <button

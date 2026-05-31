@@ -6,13 +6,13 @@ import { Landmark, ArrowRight, Loader2, X } from 'lucide-react'
 import Link from 'next/link'
 
 interface Props {
-  /** Called after the user clicks "Back" — defaults to router.back() */
+  /** Called after the user clicks "Back" - defaults to router.back() */
   onBack?: () => void
 }
 
 /**
  * Full-screen blocking modal shown when a seller hasn't completed
- * Stripe Connect onboarding. Cannot be dismissed — they must either
+ * Stripe Connect onboarding. Cannot be dismissed - they must either
  * set up payouts or navigate back.
  */
 export function StripeConnectGate({ onBack }: Props) {

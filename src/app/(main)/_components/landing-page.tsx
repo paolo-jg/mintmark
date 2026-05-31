@@ -1,97 +1,184 @@
 import Link from 'next/link'
-import { Shield, TrendingUp, Clock, List } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { PricingSection } from '@/components/layout/pricing-section'
 
 export function LandingPage() {
   return (
-    <div>
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
-        <Badge variant="secondary" className="mb-6">Only professionally rare coins</Badge>
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-          The marketplace for<br />
-          <span className="text-muted-foreground">rare, verified coins</span>
+    <div className="bg-background text-foreground">
+
+      {/* ── Hero ─────────────────────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 sm:px-10 pt-24 pb-20">
+        <p className="text-sm font-medium text-muted-foreground tracking-wide uppercase mb-8">
+          Rare US coins
+        </p>
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] mb-8">
+          The place to buy<br className="hidden sm:block" /> and sell rare<br className="hidden sm:block" /> US coins.
         </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-10">
-          Every coin on Pedigree Coins is certified by a professional grading service.
-          PCGS, NGC, and more. Buy and sell with complete confidence.
+        <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mb-10 leading-relaxed">
+          Every coin certified by PCGS or NGC. Every transaction protected by escrow.
+          Built for serious collectors.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button size="lg" render={<Link href="/listings" />}>Browse Coins</Button>
-          <Button size="lg" variant="outline" render={<Link href="/auctions" />}>Live Auctions</Button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link
+            href="https://my.pedigreecoins.com/listings"
+            className="inline-flex items-center justify-center rounded-xl bg-foreground text-background text-sm font-semibold h-12 px-7 hover:opacity-85 transition-opacity"
+          >
+            Browse Coins
+          </Link>
+          <Link
+            href="https://my.pedigreecoins.com/auth/register"
+            className="inline-flex items-center justify-center rounded-xl border border-border text-sm font-semibold h-12 px-7 hover:bg-muted transition-colors"
+          >
+            Start Selling
+          </Link>
         </div>
       </section>
 
-      <section className="border-y border-border bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Shield, title: 'Cert-verified listings', desc: 'PCGS and NGC cert numbers are verified against official APIs at time of listing.' },
-              { icon: TrendingUp, title: 'Population & price data', desc: 'See how many coins exist at each grade and realized sale prices for every listing.' },
-              { icon: Clock, title: 'Fixed price & auctions', desc: 'Buy now or bid in real-time auctions. Set a reserve price to protect your coin.' },
-              { icon: List, title: 'Want list matching', desc: "List the coins you're hunting. Get notified when a matching coin is listed." },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex flex-col gap-2">
-                <Icon className="h-5 w-5 text-muted-foreground" />
-                <p className="font-medium text-sm">{title}</p>
-                <p className="text-sm text-muted-foreground">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── Divider ──────────────────────────────────────────────────────────── */}
+      <div className="border-t border-border" />
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <h2 className="text-xl font-semibold mb-2">Accepted grading services</h2>
-        <p className="text-muted-foreground text-sm mb-8">
-          Coins graded by PCGS and NGC are automatically verified. Others are listed with an unverified badge.
-        </p>
-        <div className="flex flex-wrap gap-3">
+      {/* ── Trust bar ────────────────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 sm:px-10 py-10">
+        <div className="flex flex-wrap gap-x-10 gap-y-3">
           {[
-            { label: 'PCGS', verified: true },
-            { label: 'NGC', verified: true },
-            { label: 'ANACS', verified: false },
-            { label: 'ICG', verified: false },
-            { label: 'SEGS', verified: false },
-          ].map(({ label, verified }) => (
-            <Card key={label} className="px-4 py-2">
-              <CardContent className="p-0 flex items-center gap-2">
-                <span className="font-mono font-semibold text-sm">{label}</span>
-                <Badge variant={verified ? 'default' : 'secondary'} className="text-xs">
-                  {verified ? 'Auto-verified' : 'Unverified'}
-                </Badge>
-              </CardContent>
-            </Card>
+            'PCGS & NGC certified',
+            'Secure escrow payments',
+            'Buyer protection on every order',
+            'Fixed price and live auctions',
+          ].map(item => (
+            <span key={item} className="text-sm text-muted-foreground flex items-center gap-2">
+              <span className="h-1 w-1 rounded-full bg-muted-foreground/40 flex-shrink-0" />
+              {item}
+            </span>
           ))}
         </div>
       </section>
 
-      <PricingSection />
+      {/* ── Divider ──────────────────────────────────────────────────────────── */}
+      <div className="border-t border-border" />
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 text-center">
-        <div className="bg-muted rounded-2xl px-8 py-14">
-          <h2 className="text-2xl font-bold mb-3">Ready to sell a coin?</h2>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Create a free account, enter your cert number, and your listing goes live in minutes.
+      {/* ── For buyers / For sellers ─────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 sm:px-10 py-20 grid sm:grid-cols-2 gap-16">
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">For buyers</p>
+          <h2 className="text-2xl font-bold tracking-tight mb-4">Shop with confidence.</h2>
+          <p className="text-muted-foreground leading-relaxed mb-6">
+            Every listing includes a certified grade, population data, and price history. Your payment is held in escrow until your coin arrives.
           </p>
-          <Button size="lg" render={<Link href="/auth/register" />}>Start Selling</Button>
+          <ul className="space-y-3 text-sm text-muted-foreground">
+            {[
+              'Browse certified coins from trusted sellers',
+              'Bid at live auction or buy at a fixed price',
+              'Dispute protection if something goes wrong',
+              'Want list - get notified when your coin is listed',
+            ].map(item => (
+              <li key={item} className="flex items-start gap-2.5">
+                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-foreground/30 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-5">For sellers</p>
+          <h2 className="text-2xl font-bold tracking-tight mb-4">List in minutes.</h2>
+          <p className="text-muted-foreground leading-relaxed mb-6">
+            Enter your cert number and your listing is live. Pedigree Coins handles payments, shipping labels, and payouts automatically.
+          </p>
+          <ul className="space-y-3 text-sm text-muted-foreground">
+            {[
+              'Cert number auto-fills coin details',
+              'Fixed price or auction with reserve',
+              'Payout released 48 hours after delivery',
+              'No listing fees on the free plan',
+            ].map(item => (
+              <li key={item} className="flex items-start gap-2.5">
+                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-foreground/30 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
-      <footer className="border-t border-border py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-sm text-muted-foreground">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p>© {new Date().getFullYear()} Pedigree Coins. All professionally rare coins only.</p>
-            <div className="flex items-center gap-4">
-              <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
-              <span aria-hidden>·</span>
-              <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+      {/* ── Divider ──────────────────────────────────────────────────────────── */}
+      <div className="border-t border-border" />
+
+      {/* ── How it works ─────────────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 sm:px-10 py-20">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-10">How it works</p>
+        <div className="grid sm:grid-cols-3 gap-10">
+          {[
+            {
+              step: '01',
+              title: 'Create an account',
+              desc: 'Sign up free. No subscription required to browse or buy.',
+            },
+            {
+              step: '02',
+              title: 'Find or list a coin',
+              desc: 'Search by series, grade, or cert number. Sellers enter a cert and go live in minutes.',
+            },
+            {
+              step: '03',
+              title: 'Buy or sell securely',
+              desc: 'Payments held in escrow. Shipping tracked. Payout released on delivery.',
+            },
+          ].map(({ step, title, desc }) => (
+            <div key={step}>
+              <p className="text-3xl font-bold text-muted-foreground/20 mb-4 tabular-nums">{step}</p>
+              <p className="font-semibold mb-2">{title}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Divider ──────────────────────────────────────────────────────────── */}
+      <div className="border-t border-border" />
+
+      {/* ── Pricing ──────────────────────────────────────────────────────────── */}
+      <PricingSection />
+
+      {/* ── Divider ──────────────────────────────────────────────────────────── */}
+      <div className="border-t border-border" />
+
+      {/* ── CTA ──────────────────────────────────────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 sm:px-10 py-24 text-center">
+        <h2 className="text-4xl sm:text-5xl font-bold tracking-tight mb-5">
+          Ready to get started?
+        </h2>
+        <p className="text-muted-foreground text-lg mb-10 max-w-md mx-auto">
+          Join collectors and dealers buying and selling rare US coins.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="https://my.pedigreecoins.com/auth/register"
+            className="inline-flex items-center justify-center rounded-xl bg-foreground text-background text-sm font-semibold h-12 px-8 hover:opacity-85 transition-opacity"
+          >
+            Create a free account
+          </Link>
+          <Link
+            href="https://my.pedigreecoins.com/listings"
+            className="inline-flex items-center justify-center rounded-xl border border-border text-sm font-semibold h-12 px-8 hover:bg-muted transition-colors"
+          >
+            Browse listings
+          </Link>
+        </div>
+      </section>
+
+      {/* ── Footer ───────────────────────────────────────────────────────────── */}
+      <footer className="border-t border-border">
+        <div className="max-w-5xl mx-auto px-6 sm:px-10 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <p>© {new Date().getFullYear()} Pedigree Coins</p>
+          <div className="flex items-center gap-6">
+            <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
           </div>
         </div>
       </footer>
+
     </div>
   )
 }

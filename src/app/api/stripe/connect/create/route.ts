@@ -20,45 +20,66 @@ export async function POST() {
 
   const db = getServiceDb()
 
-  // 2. Fetch existing profile
-  const { data: profile } = await db
-    .from('profiles')
-    .select('stripe_account_id, stripe_onboarding_complete')
-    .eq('id', user.id)
-    .single()
+  try {
+    // 2. Fetch existing profile
+    const { data: profile } = await db
+      .from('profiles')
+      .select('stripe_account_id, stripe_onboarding_complete')
+      .eq('id', user.id)
+      .single()
 
-  let accountId = profile?.stripe_account_id as string | null
+    let accountId = profile?.stripe_account_id as string | null
 
-  // 3. Create Express account if one doesn't exist yet
-  if (!accountId) {
-    const account = await stripe.accounts.create({
-      type: 'express',
-      email: user.email,
-      capabilities: {
-        card_payments: { requested: true },
-        transfers: { requested: true },
-      },
-      metadata: { user_id: user.id },
+    // 3. Create Express account if one doesn't exist yet
+    if (!accountId) {
+      const account = await stripe.accounts.create({
+        type: 'express',
+        email: user.email,
+        capabilities: {
+          card_payments: { requested: true },
+          transfers: { requested: true },
+        },
+        metadata: { user_id: user.id },
+      })
+
+      accountId = account.id
+
+      await db
+        .from('profiles')
+        .update({ stripe_account_id: accountId })
+        .eq('id', user.id)
+    }
+
+    // 4. Check if the account is already fully verified in Stripe
+    const stripeAccount = await stripe.accounts.retrieve(accountId)
+    const isComplete = stripeAccount.details_submitted === true && stripeAccount.payouts_enabled === true
+
+    if (isComplete) {
+      // Sync completion status to DB in case the return webhook missed it
+      await db
+        .from('profiles')
+        .update({ stripe_onboarding_complete: true })
+        .eq('id', user.id)
+
+      // Return a Stripe Express Dashboard login link so they can manage their account
+      const loginLink = await stripe.accounts.createLoginLink(accountId)
+      return NextResponse.json({ url: loginLink.url, alreadyComplete: true })
+    }
+
+    // 5. Generate a fresh onboarding link for incomplete accounts
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+
+    const accountLink = await stripe.accountLinks.create({
+      account: accountId,
+      refresh_url: `${baseUrl}/api/stripe/connect/refresh?account=${accountId}`,
+      return_url: `${baseUrl}/api/stripe/connect/return?account=${accountId}`,
+      type: 'account_onboarding',
     })
 
-    accountId = account.id
-
-    // Save account ID immediately so we don't create duplicates on retry
-    await db
-      .from('profiles')
-      .update({ stripe_account_id: accountId })
-      .eq('id', user.id)
+    return NextResponse.json({ url: accountLink.url })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[stripe/connect/create]', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
-
-  // 4. Generate a fresh onboarding link (links expire after a few minutes)
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-
-  const accountLink = await stripe.accountLinks.create({
-    account: accountId,
-    refresh_url: `${baseUrl}/api/stripe/connect/refresh?account=${accountId}`,
-    return_url: `${baseUrl}/api/stripe/connect/return?account=${accountId}`,
-    type: 'account_onboarding',
-  })
-
-  return NextResponse.json({ url: accountLink.url })
 }

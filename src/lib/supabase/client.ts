@@ -5,7 +5,7 @@ function getCookieDomain(): string | undefined {
   if (!marketingUrl) return undefined
   try {
     const host = new URL(marketingUrl).hostname
-    // Skip localhost / IP addresses — cookie domain scoping only works on real domains
+    // Skip localhost / IP addresses - cookie domain scoping only works on real domains
     if (host === 'localhost' || host.startsWith('127.') || host.startsWith('192.')) return undefined
     // Strip www. prefix → ".pedigreecoins.com" shared across all subdomains
     const base = host.replace(/^www\./, '')

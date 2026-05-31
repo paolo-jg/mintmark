@@ -99,7 +99,7 @@ export default async function AdminPayoutsPage() {
       <div className="space-y-8">
         <section>
           <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Disputed — Needs Decision</h2>
+            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Disputed: Needs Decision</h2>
             {disputed.length > 0 && (
               <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-xs font-semibold rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
                 {disputed.length}

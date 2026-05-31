@@ -528,6 +528,226 @@ export async function sendPayoutReleased({
   })
 }
 
+function stepList(steps: string[]) {
+  const items = steps.map((s, i) =>
+    `<tr>
+      <td style="padding:12px 0;border-bottom:1px solid #f4f4f5;vertical-align:top;width:28px;">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:#18181b;color:#fff;border-radius:50%;font-size:11px;font-weight:700;flex-shrink:0;">${i + 1}</span>
+      </td>
+      <td style="padding:12px 0 12px 12px;border-bottom:1px solid #f4f4f5;color:#3f3f46;font-size:14px;line-height:1.6;">${s}</td>
+    </tr>`
+  ).join('')
+  return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:20px 0;">${items}</table>`
+}
+
+const SELLER_STEPS = [
+  'Watch for offers. Buyers can make offers below your asking price. Accept, decline, or counter from your seller dashboard.',
+  'Respond to messages. Buyers may have questions about the coin. Replies from your inbox keep the conversation in one place.',
+  'Once sold, ship within 3 business days. Package the coin securely and use a tracked service.',
+  'Add the tracking number to your order. Go to your seller dashboard, find the order, and mark it shipped with the carrier and tracking number.',
+  'Your payout is released automatically 48 hours after the buyer confirms delivery. No action needed on your end after shipping.',
+]
+
+const BUYER_STEPS = [
+  'The seller has 3 business days to ship your coin. Most sellers ship much sooner.',
+  'You will receive a shipping notification with a tracking number as soon as the seller marks it shipped.',
+  'When your coin arrives, inspect it carefully. If everything looks right, confirm receipt in your account under Orders.',
+  'If there is any problem with your order, such as a coin not matching the description, open a dispute within 48 hours of delivery from your order page.',
+  'Once you confirm receipt, the seller receives their payout. If you take no action, the order auto-confirms after 7 days.',
+]
+
+export async function sendFirstListingCongrats({
+  to,
+  sellerName,
+  listingTitle,
+  listingUrl,
+}: {
+  to: string
+  sellerName: string
+  listingTitle: string
+  listingUrl: string
+}) {
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: 'Congratulations on your first listing',
+    html: emailHtml({
+      preheader: `Your first listing is live: ${listingTitle}`,
+      body: `
+        ${greeting(sellerName)}
+        ${bodyText(`Congratulations. Your first listing, <strong>${listingTitle}</strong>, is now live on Pedigree Coins.`)}
+        ${divider()}
+        ${bodyText('<strong>What to do now</strong>')}
+        ${stepList(SELLER_STEPS)}
+        ${divider()}
+        ${bodyText('If a buyer does not confirm delivery, the order auto-confirms after 7 days and your payout releases on schedule.')}
+      `,
+      ctaLabel: 'View Listing',
+      ctaUrl: listingUrl,
+    }),
+  })
+}
+
+export async function sendListingReminder({
+  to,
+  sellerName,
+  listingTitle,
+  listingUrl,
+}: {
+  to: string
+  sellerName: string
+  listingTitle: string
+  listingUrl: string
+}) {
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: 'Your listing is live',
+    html: emailHtml({
+      preheader: `${listingTitle} is now live on Pedigree Coins.`,
+      body: `
+        ${greeting(sellerName)}
+        ${bodyText(`Your listing <strong>${listingTitle}</strong> is live and visible to buyers.`)}
+        ${divider()}
+        ${bodyText('<strong>Seller checklist</strong>')}
+        ${stepList(SELLER_STEPS)}
+        ${divider()}
+        ${bodyText('If a buyer does not confirm delivery, the order auto-confirms after 7 days and your payout releases on schedule.')}
+      `,
+      ctaLabel: 'View Listing',
+      ctaUrl: listingUrl,
+    }),
+  })
+}
+
+export async function sendFirstPurchaseCongrats({
+  to,
+  buyerName,
+  listingTitle,
+  orderId,
+}: {
+  to: string
+  buyerName: string
+  listingTitle: string
+  orderId: string
+}) {
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: 'Congratulations on your first purchase',
+    html: emailHtml({
+      preheader: `Your first purchase: ${listingTitle}`,
+      body: `
+        ${greeting(buyerName)}
+        ${bodyText(`Congratulations on your first purchase. <strong>${listingTitle}</strong> is on its way.`)}
+        ${divider()}
+        ${bodyText('<strong>What happens next</strong>')}
+        ${stepList(BUYER_STEPS)}
+        ${divider()}
+        ${bodyText('Your coin is covered by Pedigree Coins buyer protection for the full duration of the delivery window.')}
+      `,
+      ctaLabel: 'View Your Order',
+      ctaUrl: `${BASE_URL}/orders/${orderId}`,
+    }),
+  })
+}
+
+export async function sendPurchaseReminder({
+  to,
+  buyerName,
+  listingTitle,
+  orderId,
+}: {
+  to: string
+  buyerName: string
+  listingTitle: string
+  orderId: string
+}) {
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: 'Your purchase is confirmed',
+    html: emailHtml({
+      preheader: `${listingTitle} has been purchased successfully.`,
+      body: `
+        ${greeting(buyerName)}
+        ${bodyText(`Your purchase of <strong>${listingTitle}</strong> is confirmed.`)}
+        ${divider()}
+        ${bodyText('<strong>What happens next</strong>')}
+        ${stepList(BUYER_STEPS)}
+        ${divider()}
+        ${bodyText('Your coin is covered by Pedigree Coins buyer protection for the full duration of the delivery window.')}
+      `,
+      ctaLabel: 'View Your Order',
+      ctaUrl: `${BASE_URL}/orders/${orderId}`,
+    }),
+  })
+}
+
+export async function sendImportRequestReceived({
+  to,
+  dealerName,
+  rowCount,
+  isFree,
+  amountCents,
+  notes,
+}: {
+  to: string
+  dealerName: string
+  rowCount: number
+  isFree: boolean
+  amountCents: number
+  notes?: string
+}) {
+  const costLabel = isFree ? 'FREE (first import)' : fmt(amountCents)
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: `New import request - ${dealerName} (${rowCount} coins)`,
+    html: emailHtml({
+      preheader: `${dealerName} submitted an import request for ${rowCount} coins.`,
+      body: `
+        ${greeting('New Import Request')}
+        ${metaTable(
+          metaRow('Dealer', dealerName) +
+          metaRow('Coins', String(rowCount)) +
+          metaRow('Cost', costLabel) +
+          (notes ? metaRow('Notes', notes) : '')
+        )}
+        ${bodyText('Review and process this request in the admin imports panel.')}
+      `,
+      ctaLabel: 'View Imports',
+      ctaUrl: 'https://my.pedigreecoins.com/admin/imports',
+    }),
+  })
+}
+
+export async function sendImportCompleted({
+  to,
+  dealerName,
+  rowCount,
+}: {
+  to: string
+  dealerName: string
+  rowCount: number
+}) {
+  return getResend().emails.send({
+    from: FROM,
+    to,
+    subject: `Your listings are ready - ${rowCount} listings created`,
+    html: emailHtml({
+      preheader: `${rowCount} coin listings are now live on your account.`,
+      body: `
+        ${greeting(dealerName)}
+        ${bodyText(`${rowCount} coin listing${rowCount !== 1 ? 's' : ''} have been created and are now live on your account.`)}
+        ${bodyText('Head to your seller dashboard to review them, add images, and manage your inventory.')}
+      `,
+      ctaLabel: 'View Your Listings',
+      ctaUrl: 'https://my.pedigreecoins.com/sell',
+    }),
+  })
+}
+
 export async function sendTeamInvite({
   to,
   dealerName,

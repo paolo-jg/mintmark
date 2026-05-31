@@ -1,8 +1,10 @@
+export const dynamic = 'force-dynamic'
+
 import { Suspense } from 'react'
 import NewListingForm from './_components/new-listing-form'
 
 export const metadata = {
-  title: 'List a Coin — Pedigree Coins',
+  title: 'List a Coin | Pedigree Coins',
 }
 
 // Suspense required because NewListingForm uses useSearchParams()

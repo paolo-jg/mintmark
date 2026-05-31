@@ -181,7 +181,7 @@ export function AddWishlistModal({ onClose, onAdded }: Props) {
             </div>
             <div className="overflow-y-auto flex-1 px-2 py-2">
               {search.trim() ? (
-                // Search results — flat series list
+                // Search results - flat series list
                 filteredSeries.length > 0 ? filteredSeries.map(series => (
                   <button
                     key={series.slug}
@@ -253,7 +253,7 @@ export function AddWishlistModal({ onClose, onAdded }: Props) {
                 )}
               </div>
 
-              {/* Year + Mintmark pickers — from scraped date data */}
+              {/* Year + Mintmark pickers - from scraped date data */}
               {availableYears.length > 0 && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
@@ -287,7 +287,7 @@ export function AddWishlistModal({ onClose, onAdded }: Props) {
                 </div>
               )}
 
-              {/* Coin variant picker — if series has multiple coinNames */}
+              {/* Coin variant picker - if series has multiple coinNames */}
               {selectedSeries && selectedSeries.coinNames.length > 1 && (
                 <div className="space-y-1.5">
                   <Label>Coin Type</Label>

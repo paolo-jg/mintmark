@@ -12,7 +12,7 @@ type Message = {
 const GREETING: Message = {
   role: 'assistant',
   content:
-    "Hi! I'm the Pedigree Coins assistant. Ask me anything about the platform — listings, auctions, collections, fees, or how anything works.",
+    "Hi! I'm the Pedigree Coins assistant. Ask me anything about the platform - listings, auctions, collections, fees, or how anything works.",
 }
 
 export function ChatWidget() {

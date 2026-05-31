@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Heart, ShoppingBag, Tag, Package, CheckCircle2, X, ArrowLeftRight, Loader2, Wallet, Users, Gavel, Copy, Check as CheckIcon, Gift, Info, AlertTriangle } from 'lucide-react'
+import { Heart, Tag, Package, CheckCircle2, X, ArrowLeftRight, Loader2, Wallet, Users, Copy, Check as CheckIcon, Gift, Info, AlertTriangle, ClipboardList } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 import type { OrderStatus } from '@/types'
 import { createClient } from '@/lib/supabase/client'
@@ -357,12 +357,17 @@ function OfferRow({ offer, isSeller, onRespond }: {
   )
 }
 
+const REFERRAL_CAP = 12
+
 function ReferralWidget({ referralCode, referralCount, referralConverted }: { referralCode: string | null; referralCount: number; referralConverted: number }) {
   const [copied, setCopied] = useState(false)
 
   if (!referralCode) return null
 
   const link = `https://pedigreecoins.com/ref/${referralCode}`
+  const monthsEarned = Math.min(referralConverted, REFERRAL_CAP)
+  const isCapped = referralConverted >= REFERRAL_CAP
+  const progressPct = Math.min((monthsEarned / REFERRAL_CAP) * 100, 100)
 
   function copy() {
     navigator.clipboard.writeText(link).then(() => {
@@ -374,48 +379,67 @@ function ReferralWidget({ referralCode, referralCount, referralConverted }: { re
   return (
     <div className="mb-6 rounded-xl border border-border bg-card px-5 py-4">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted flex-shrink-0">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted flex-shrink-0 mt-0.5">
             <Gift className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <p className="text-sm font-semibold">Refer a collector or dealer, get a free month</p>
-              <div className="group relative">
-                <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help flex-shrink-0" />
-                <div className="pointer-events-none absolute top-full left-0 mt-2 w-80 rounded-lg border border-border bg-popover px-3 py-2.5 text-xs text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                  <p className="font-semibold mb-1">How referrals work</p>
-                  <ul className="space-y-1 text-muted-foreground">
-                    <li>• Share your link with a friend</li>
-                    <li>• They sign up and choose a paid plan (Premium or Dealer)</li>
-                    <li>• They get their first month free</li>
-                    <li>• You get 1 free month of your current plan</li>
-                    <li>• Free months stack, refer more to earn more</li>
-                  </ul>
-                  <p className="mt-1.5 text-muted-foreground/70">Dealer referrers earn a free Dealer month. Basic/Premium referrers earn a free Premium month.</p>
+              <p className="text-sm font-semibold">
+                {isCapped ? 'You\'ve earned a full year free!' : 'Refer a collector or dealer, get a free month'}
+              </p>
+              {!isCapped && (
+                <div className="group relative">
+                  <Info className="h-3.5 w-3.5 text-muted-foreground/60 cursor-help flex-shrink-0" />
+                  <div className="pointer-events-none absolute top-full left-0 mt-2 w-80 rounded-lg border border-border bg-popover px-3 py-2.5 text-xs text-popover-foreground shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    <p className="font-semibold mb-1">How referrals work</p>
+                    <ul className="space-y-1 text-muted-foreground">
+                      <li>• Share your link with a friend</li>
+                      <li>• They sign up and choose a paid plan (Premium or Dealer)</li>
+                      <li>• They get their first month free</li>
+                      <li>• You get 1 free month of your current plan</li>
+                      <li>• Up to 12 free months total (1 full year)</li>
+                    </ul>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">Both of you get a free month. Theirs on signup, yours for each referral.</p>
+
+            {isCapped ? (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                You&apos;ve hit the 12-month cap - but feel free to keep referring. Every new member makes the platform better for everyone.
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Both of you get a free month. Earn up to 12 months free by referring friends.
+              </p>
+            )}
+
+            {/* Progress bar */}
+            <div className="mt-2.5 flex items-center gap-2.5">
+              <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${isCapped ? 'bg-emerald-500' : 'bg-foreground'}`}
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+              <span className="text-[11px] font-semibold tabular-nums text-muted-foreground flex-shrink-0">
+                {monthsEarned} / {REFERRAL_CAP} months
+              </span>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
-          {referralCount > 0 && (
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-semibold tabular-nums">{referralConverted} / {referralCount}</p>
-              <p className="text-[11px] text-muted-foreground">converted</p>
-            </div>
-          )}
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 pl-3 pr-1.5 py-1.5">
-            <span className="text-xs text-muted-foreground font-mono truncate max-w-[180px]">{link}</span>
-            <button
-              onClick={copy}
-              className="flex items-center gap-1 rounded-md bg-foreground text-background px-2.5 py-1 text-xs font-semibold hover:bg-foreground/90 transition-colors flex-shrink-0"
-            >
-              {copied ? <CheckIcon className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-          </div>
+
+        {/* Copy link */}
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 pl-3 pr-1.5 py-1.5 flex-shrink-0">
+          <span className="text-xs text-muted-foreground font-mono truncate max-w-[180px]">{link}</span>
+          <button
+            onClick={copy}
+            className="flex items-center gap-1 rounded-md bg-foreground text-background px-2.5 py-1 text-xs font-semibold hover:bg-foreground/90 transition-colors flex-shrink-0"
+          >
+            {copied ? <CheckIcon className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            {copied ? 'Copied' : 'Copy'}
+          </button>
         </div>
       </div>
     </div>
@@ -485,13 +509,12 @@ export function HomeClient() {
       <ReferralWidget referralCode={referralCode} referralCount={referralCount} referralConverted={referralConverted} />
 
       {/* Quick nav shortcuts */}
-      <div className={`grid gap-2 mb-6 grid-cols-3 ${isDealer ? 'sm:grid-cols-7' : 'sm:grid-cols-6'}`}>
+      <div className={`grid gap-2 mb-6 grid-cols-3 ${isDealer ? 'sm:grid-cols-6' : 'sm:grid-cols-5'}`}>
         {[
           { href: '/collect?tab=wishlist', icon: Heart, label: 'Wish List' },
           { href: '/listings', icon: Tag, label: 'Marketplace' },
-          { href: '/buy-now', icon: ShoppingBag, label: 'Buy Now' },
-          { href: '/auctions', icon: Gavel, label: 'Auctions' },
           { href: '/sell', icon: Package, label: 'My Listings' },
+          { href: '/orders', icon: ClipboardList, label: 'My Orders' },
           { href: '/collect', icon: Wallet, label: 'Collection' },
           ...(isDealer ? [{ href: '/dashboard/team', icon: Users, label: 'Team' }] : []),
         ].map(({ href, icon: Icon, label }) => (
@@ -769,7 +792,7 @@ export function HomeClient() {
 
             {trailing3Avg === 0 && (
               <p className="text-sm text-muted-foreground text-center mt-3">
-                No sales in the last 3 months — projections will populate once you have completed sales.
+                No sales in the last 3 months - projections will populate once you have completed sales.
               </p>
             )}
           </CardContent>

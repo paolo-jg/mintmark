@@ -3,6 +3,15 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { sendShippingUpdate } from '@/lib/resend'
 
+function getTrackingUrl(carrier: string, trackingNumber: string): string {
+  const c = carrier.toLowerCase()
+  if (c.includes('usps')) return `https://tools.usps.com/go/TrackConfirmAction?tLabels=${trackingNumber}`
+  if (c.includes('ups')) return `https://www.ups.com/track?tracknum=${trackingNumber}`
+  if (c.includes('fedex')) return `https://www.fedex.com/fedextrack/?trknbr=${trackingNumber}`
+  if (c.includes('dhl')) return `https://www.dhl.com/us-en/home/tracking/tracking-express.html?submit=1&tracking-id=${trackingNumber}`
+  return ''
+}
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: orderId } = await params
   const supabase = await createClient()
@@ -71,7 +80,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           buyerName: buyerEmail.split('@')[0],
           listingTitle: listing?.coin_name ?? 'your order',
           trackingNumber: trackingNumber.trim(),
-          trackingUrl: '',
+          trackingUrl: getTrackingUrl(carrier, trackingNumber.trim()),
           carrier,
         })
       }

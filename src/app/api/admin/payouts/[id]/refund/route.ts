@@ -16,7 +16,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     .single()
 
   if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })
-  if (order.transfer_released) return NextResponse.json({ error: 'Funds already released to seller — cannot refund' }, { status: 409 })
+  if (order.transfer_released) return NextResponse.json({ error: 'Funds already released to seller. Cannot refund.' }, { status: 409 })
   if (!order.stripe_payment_intent_id) return NextResponse.json({ error: 'No payment intent on record' }, { status: 400 })
 
   const refund = await stripe.refunds.create({

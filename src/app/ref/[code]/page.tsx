@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import { redirect } from 'next/navigation'
 import { getServiceDb } from '@/lib/admin'
+import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Check } from 'lucide-react'
 import { SetRefCookie } from './_components/set-ref-cookie'
@@ -9,6 +10,34 @@ import { SetRefCookie } from './_components/set-ref-cookie'
 export default async function ReferralLandingPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params
   const db = getServiceDb()
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (user) {
+    return (
+      <div className="min-h-screen bg-muted/20 flex flex-col items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md text-center space-y-6">
+          <div className="flex justify-center">
+            <Link href="/">
+              <img src="/logo-horizontal.png" alt="Pedigree Coins" className="h-16 w-auto" />
+            </Link>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-8 space-y-4">
+            <h1 className="text-xl font-bold">Referral links are for new accounts only</h1>
+            <p className="text-sm text-muted-foreground">
+              You are already signed in. Referral bonuses can only be applied when creating a new account.
+            </p>
+            <Link
+              href="/"
+              className="block w-full py-3 px-6 bg-foreground text-background font-semibold rounded-xl hover:opacity-90 transition-opacity text-sm text-center"
+            >
+              Go to Pedigree Coins
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const { data: referrer } = await db
     .from('profiles')

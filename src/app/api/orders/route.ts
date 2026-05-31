@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { sendFirstPurchaseCongrats, sendPurchaseReminder } from '@/lib/resend'
 
 function getServiceDb() {
   return createServiceClient(
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
   // Fetch and validate listing
   const { data: listing, error: listingError } = await db
     .from('listings')
-    .select('*')
+    .select('id, status, seller_id, price, coin_name, year, mint_mark, denomination, cert_number, grading_service, grade, grading_service_image_url, series_slug, price_row_label, collection_item_id, shipping_type, shipping_price_cents')
     .eq('id', listing_id)
     .single()
 
@@ -152,6 +153,27 @@ export async function POST(req: NextRequest) {
       }
     }
   }
+
+  // Fire-and-forget steps email
+  void (async () => {
+    try {
+      const db2 = getServiceDb()
+      const [{ data: authUser }, { count }] = await Promise.all([
+        db2.auth.admin.getUserById(user.id),
+        db2.from('orders').select('id', { count: 'exact', head: true }).eq('buyer_id', user.id),
+      ])
+      const email = authUser.user?.email
+      if (email) {
+        const buyerName = email.split('@')[0]
+        const listingTitle = listing.coin_name ?? 'your order'
+        if ((count ?? 0) <= 1) {
+          await sendFirstPurchaseCongrats({ to: email, buyerName, listingTitle, orderId: order.id })
+        } else {
+          await sendPurchaseReminder({ to: email, buyerName, listingTitle, orderId: order.id })
+        }
+      }
+    } catch { /* non-critical */ }
+  })()
 
   return NextResponse.json({ data: { order_id: order.id } })
 }

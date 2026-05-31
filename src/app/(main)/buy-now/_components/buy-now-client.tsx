@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Search, ShoppingBag, Heart } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
-import Image from 'next/image'
+import { Card, CardContent } from '@/components/ui/card'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 export interface BuyNowListing {
@@ -61,41 +61,45 @@ export async function fetchBuyNowData() {
 // ── Card ─────────────────────────────────────────────────────────────────────
 function BuyNowCard({ listing, wishlistCounts }: { listing: BuyNowListing; wishlistCounts: Record<string, number> }) {
   const wishCount = wishlistCounts[listing.series_slug ?? ''] ?? 0
+  const gradeParts = [listing.grading_service, listing.grade].filter(Boolean).join(' · ')
+  const yearPart = listing.year
+    ? `${listing.year}${listing.mint_mark ? `-${listing.mint_mark}` : ''}`
+    : null
 
   return (
-    <Link href={`/listings/${listing.id}`} className="group block">
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted mb-3">
-        {listing.images?.[0] ? (
-          <Image
-            src={listing.images[0]}
-            alt={listing.title}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 text-xs">
-            No photo
+    <Link href={`/listings/${listing.id}`} className="group block h-full">
+      <Card className="overflow-hidden hover:shadow-xl hover:border-foreground/20 transition-all h-full bg-background">
+        <div className="aspect-square relative overflow-hidden bg-zinc-50 dark:bg-zinc-900">
+          {listing.images?.[0] ? (
+            <img
+              src={listing.images[0]}
+              alt={listing.title}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 text-xs">
+              No photo
+            </div>
+          )}
+          <div className="absolute top-2 left-2 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm bg-emerald-600/90 text-white">
+            <ShoppingBag className="h-3 w-3" />
+            Buy Now
           </div>
-        )}
-        {wishCount >= 3 && (
-          <div className="absolute top-2 right-2 flex items-center gap-1 bg-rose-500/90 text-white rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
-            <Heart className="h-2.5 w-2.5" fill="currentColor" />
-            {wishCount} want this
-          </div>
-        )}
-        <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm bg-emerald-600/90 text-white">
-          <ShoppingBag className="h-3 w-3" />
-          Buy Now
+          {wishCount >= 3 && (
+            <div className="absolute top-2 right-2 flex items-center gap-1 bg-rose-500/90 text-white rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
+              <Heart className="h-2.5 w-2.5" fill="currentColor" />
+              {wishCount} want this
+            </div>
+          )}
         </div>
-      </div>
-      <div>
-        <p className="text-sm font-semibold truncate mb-0.5">{listing.title}</p>
-        <p className="text-xs text-muted-foreground mb-2">
-          {[listing.grading_service, listing.grade].filter(Boolean).join(' · ')}
-        </p>
-        <p className="text-sm font-bold">{formatCents(listing.price)}</p>
-      </div>
+        <CardContent className="p-3 border-t border-border">
+          <p className="text-xs text-muted-foreground mb-0.5">
+            {[gradeParts, yearPart].filter(Boolean).join(' · ')}
+          </p>
+          <p className="text-sm font-medium leading-snug line-clamp-2 mb-2">{listing.title}</p>
+          <p className="text-sm font-bold">{formatCents(listing.price)}</p>
+        </CardContent>
+      </Card>
     </Link>
   )
 }
@@ -238,7 +242,7 @@ export function BuyNowClient() {
 
       {/* Grid */}
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map(listing => (
             <BuyNowCard key={listing.id} listing={listing} wishlistCounts={wishlistCounts} />
           ))}

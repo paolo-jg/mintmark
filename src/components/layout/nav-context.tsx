@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from 'react'
 
-type NavSection = 'sell' | 'buy' | null
+type NavSection = 'sell' | 'buy' | 'leaderboard' | null
 
 interface NavContextValue {
   sectionOverride: NavSection

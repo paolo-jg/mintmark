@@ -6,25 +6,20 @@ import { LandingPage } from './landing-page'
 import { HomeClient } from './home-client'
 
 export function HomeShell() {
-  const [view, setView] = useState<'loading' | 'landing' | 'home'>('loading')
+  const [view, setView] = useState<'landing' | 'home'>('landing')
 
   useEffect(() => {
-    const marketingHostname = process.env.NEXT_PUBLIC_MARKETING_URL
-      ? new URL(process.env.NEXT_PUBLIC_MARKETING_URL).hostname
-      : 'pedigreecoins.com'
-
-    if (window.location.hostname === marketingHostname) {
-      setView('landing')
-      return
-    }
+    const hostname = window.location.hostname
+    const isLocalDev = hostname === 'localhost' || hostname.startsWith('127.')
+    const isAppDomain = hostname.startsWith('my.') || isLocalDev
+    if (!isAppDomain) return
 
     const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setView(session ? 'home' : 'landing')
+      if (session) setView('home')
     })
   }, [])
 
-  if (view === 'loading') return null
   if (view === 'landing') return <LandingPage />
   return <HomeClient />
 }

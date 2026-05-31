@@ -38,7 +38,7 @@ LISTING CREATION STEPS:
 4. Set listing type: Fixed Price or Auction
 5. Fixed price: set your price + optional "Accept Offers" toggle
 6. Auction: set start bid, optional reserve price, optional Buy-It-Now price, end date
-7. Upload photos (obverse + reverse strongly recommended — hover shows reverse on cards)
+7. Upload photos (obverse + reverse strongly recommended - hover shows reverse on cards)
 8. Add description
 9. Publish (goes live immediately if account in good standing)
 
@@ -69,7 +69,7 @@ ORDERS & SHIPPING:
 RULES:
 1. Only answer questions about Pedigree Coins and coin collecting/numismatics.
 2. If asked about unrelated topics, politely redirect.
-3. Be concise — 2-4 sentences unless detail is genuinely needed.
+3. Be concise - 2-4 sentences unless detail is genuinely needed.
 4. If you cannot help, say: "For further help, email support@pedigreecoins.com"
 5. Never make up features that aren't described above.`
 
@@ -95,7 +95,7 @@ function getPageContext(pathname: string): string {
   if (pathname === '/profile') {
     return 'User is editing their profile.'
   }
-  // Single listing page — match after the more-specific patterns above
+  // Single listing page - match after the more-specific patterns above
   if (/^\/listings\/[^/]+$/.test(pathname)) {
     return 'User is viewing a specific coin listing. They may have questions about buying, bidding, or the verification.'
   }

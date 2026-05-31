@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     if (error.code === '23505') {
-      // Already exists — return existing conversation
+      // Already exists - return existing conversation
       const { data: existing } = await supabase
         .from('conversations')
         .select('id')

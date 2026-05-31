@@ -10,10 +10,24 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { COIN_CATALOG } from '@/lib/coins/catalog'
+import { COIN_DATES } from '@/lib/coins/coin-dates'
 import { CoinSelector } from './coin-selector'
 import { CoinScanModal } from './coin-scan-modal'
 import { CoinDetailModal } from './coin-detail-modal'
 import { WishlistEditModal } from './wishlist-edit-modal'
+
+// Look up the catalog image for a collection item using series_slug + price_row_label.
+// Returns null if no match found.
+function getCatalogImage(seriesSlug: string | null, priceRowLabel: string | null): string | null {
+  if (!seriesSlug) return null
+  const seriesData = COIN_DATES[seriesSlug]
+  if (!seriesData?.priceRows) return null
+  if (priceRowLabel) {
+    const row = seriesData.priceRows.find((r: { label: string; imageUrl?: string | null }) => r.label === priceRowLabel)
+    if (row?.imageUrl) return row.imageUrl
+  }
+  return seriesData.priceRows.find((r: { imageUrl?: string | null }) => r.imageUrl)?.imageUrl ?? null
+}
 
 // Strip a trailing year (and optional mint mark) from a coin name so we can do
 // broader searches: "Morgan Dollar 1893-S" → "Morgan Dollar"
@@ -130,6 +144,7 @@ export interface CollectionItem {
   notes: string | null
   coin_profile: unknown | null
   series_slug: string | null
+  price_row_label: string | null
   created_at: string
   // canonical coin type from the linked listing (if auto-created from a listing)
   listing_coin_name?: string | null
@@ -146,7 +161,7 @@ const STATUS_DISPLAY: Record<OwnedStatus, { label: string; color: string; dot: s
   sold:     { label: 'Sold',          color: 'text-muted-foreground', dot: 'bg-muted-foreground' },
 }
 
-// Per-status leading indicator — icon for owned, coloured dot for the rest
+// Per-status leading indicator - icon for owned, coloured dot for the rest
 function StatusIcon({ status }: { status: OwnedStatus }) {
   if (status === 'owned') return <Coins className="h-3.5 w-3.5 text-foreground/50 flex-shrink-0" />
   const { dot } = STATUS_DISPLAY[status]
@@ -323,6 +338,7 @@ function OwnedCard({ item, onDelete, onUpdate, onClick, isDealer }: {
   const isSold = item.status === 'sold'
 
   const displayName = item.listing_coin_name ?? item.coin_name
+  const imageUrl = item.pcgs_image_url ?? getCatalogImage(item.series_slug, item.price_row_label)
 
   return (
     <div
@@ -330,8 +346,8 @@ function OwnedCard({ item, onDelete, onUpdate, onClick, isDealer }: {
       onClick={onClick}
     >
       <div className="aspect-square bg-muted/40 flex items-center justify-center overflow-hidden relative shrink-0">
-        {item.pcgs_image_url ? (
-          <Image src={item.pcgs_image_url} alt={displayName} fill sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw" className="object-contain mix-blend-multiply" />
+        {imageUrl ? (
+          <Image src={imageUrl} alt={displayName} fill sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw" className="object-contain" />
         ) : (
           <Coins className="h-12 w-12 text-muted-foreground/20" />
         )}
@@ -459,7 +475,7 @@ function WishlistCard({ item, onDelete, onMoveToOwned, onUpdate, onEdit, onClick
     >
       <div className="aspect-square bg-muted/40 flex items-center justify-center overflow-hidden relative">
         {item.pcgs_image_url ? (
-          <Image src={item.pcgs_image_url} alt={item.coin_name} fill sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw" className="object-contain mix-blend-multiply" />
+          <Image src={item.pcgs_image_url} alt={item.coin_name} fill sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw" className="object-contain" />
         ) : (
           <Star className="h-10 w-10 text-muted-foreground/20" />
         )}
@@ -731,7 +747,7 @@ export function CollectClient() {
     />
   )
 
-  // Show skeleton while SWR is loading — prevents blank-screen flash
+  // Show skeleton while SWR is loading - prevents blank-screen flash
   if (!data) {
     return (
       <div>

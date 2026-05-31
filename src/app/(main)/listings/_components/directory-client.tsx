@@ -61,7 +61,7 @@ export function DirectoryClient({ categories }: { categories: CategoryRow[] }) {
               onClick={() => toggle(cat.slug)}
               className="w-full group flex items-center gap-5 px-5 py-5 cursor-pointer"
             >
-              {/* Thumbnail — only visible when open */}
+              {/* Thumbnail - only visible when open */}
               <div
                 className={`shrink-0 rounded-xl overflow-hidden bg-white dark:bg-zinc-50 border border-border/40 transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                   isOpen

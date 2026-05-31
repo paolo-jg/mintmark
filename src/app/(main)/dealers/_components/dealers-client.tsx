@@ -102,7 +102,7 @@ export function DealersClient() {
     keepPreviousData: true,
   })
 
-  // Redirect if session is gone — handled server-side by proxy in production,
+  // Redirect if session is gone - handled server-side by proxy in production,
   // but SWR may catch it client-side on direct navigation.
   useEffect(() => {
     if (data?.unauthorized) router.replace('/auth/login')
@@ -118,7 +118,7 @@ export function DealersClient() {
       </div>
 
       {!data ? (
-        // Skeleton — renders instantly while SWR loads
+        // Skeleton - renders instantly while SWR loads
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="rounded-2xl border border-border bg-card p-5 animate-pulse space-y-3">

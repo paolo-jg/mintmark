@@ -4,50 +4,35 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import { SlidersHorizontal, X } from 'lucide-react'
 
-function FilterSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground mb-2.5">
-        {title}
-      </p>
-      {children}
-    </div>
-  )
+const MINT_LABELS: Record<string, string> = {
+  P: 'Philadelphia (P)',
+  D: 'Denver (D)',
+  S: 'San Francisco (S)',
+  O: 'New Orleans (O)',
+  CC: 'Carson City (CC)',
+  W: 'West Point (W)',
+  C: 'Charlotte (C)',
+  D_dahlonega: 'Dahlonega (D)',
+  none: 'Philadelphia',
 }
 
-function FilterLink({
-  label,
-  active,
-  onClick,
-}: {
-  label: string
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`block w-full text-left text-sm py-1 px-2 rounded-md transition-colors ${
-        active
-          ? 'bg-foreground text-background font-medium'
-          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-      }`}
-    >
-      {label}
-    </button>
-  )
+function mintLabel(mark: string | null): string {
+  if (!mark) return 'Philadelphia'
+  return MINT_LABELS[mark] ?? mark
 }
 
 type SeriesSidebarProps = {
-  availableYears: number[]
   availableMintMarks: (string | null)[]
-  availableServices: string[]
+  catalogYears: number[]
+  yearCounts: Record<number, number>
+  mintCounts: Record<string, number>
 }
 
 export function SeriesSidebar({
-  availableYears,
   availableMintMarks,
-  availableServices,
+  catalogYears,
+  yearCounts,
+  mintCounts,
 }: SeriesSidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -56,9 +41,6 @@ export function SeriesSidebar({
 
   const year = searchParams.get('year') ?? 'all'
   const mint = searchParams.get('mint') ?? 'all'
-  const service = searchParams.get('service') ?? 'all'
-  const listingType = searchParams.get('type') ?? 'all'
-  const sort = searchParams.get('sort') ?? 'newest'
 
   const updateParam = useCallback(
     (key: string, value: string | null) => {
@@ -69,23 +51,18 @@ export function SeriesSidebar({
         params.set(key, value)
       }
       const qs = params.toString()
-      router.push(qs ? `${pathname}?${qs}` : pathname)
+      router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
     },
     [router, pathname, searchParams]
   )
 
-  const hasActiveFilters =
-    year !== 'all' || mint !== 'all' || service !== 'all' || listingType !== 'all' || sort !== 'newest'
-
+  const hasActiveFilters = year !== 'all' || mint !== 'all'
   const clearAll = () => {
-    router.push(pathname)
-  }
-
-  const sortedYears = [...availableYears].sort((a, b) => b - a)
-
-  const mintMarkLabel = (mark: string | null) => {
-    if (!mark) return 'None (Philadelphia)'
-    return mark
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('year')
+    params.delete('mint')
+    const qs = params.toString()
+    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
 
   const sidebarContent = (
@@ -96,117 +73,73 @@ export function SeriesSidebar({
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           <X className="h-3 w-3" />
-          Clear all filters
+          Clear filters
         </button>
       )}
 
-      {/* Sort */}
-      <FilterSection title="Sort By">
-        <div className="space-y-0.5">
-          {[
-            { label: 'Newest Listed', value: 'newest' },
-            { label: 'Price: Low to High', value: 'price-asc' },
-            { label: 'Price: High to Low', value: 'price-desc' },
-            { label: 'Year: Newest', value: 'year-desc' },
-            { label: 'Year: Oldest', value: 'year-asc' },
-          ].map(opt => (
-            <FilterLink
-              key={opt.value}
-              label={opt.label}
-              active={sort === opt.value}
-              onClick={() => updateParam('sort', opt.value)}
+      {/* Mint marks */}
+      {availableMintMarks.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground mb-3">
+            Mint
+          </p>
+          <div className="space-y-0.5">
+            <MintRow
+              label="All Mints"
+              count={Object.values(mintCounts).reduce((a, b) => a + b, 0)}
+              active={mint === 'all'}
+              onClick={() => updateParam('mint', 'all')}
+              showCount={mint !== 'all'}
             />
-          ))}
-        </div>
-      </FilterSection>
-
-      <div className="h-px bg-border" />
-
-      {/* Listing Type */}
-      <FilterSection title="Listing Type">
-        <div className="space-y-0.5">
-          {[
-            { label: 'All Listings', value: 'all' },
-            { label: 'Buy Now', value: 'fixed' },
-            { label: 'Auction', value: 'auction' },
-          ].map(opt => (
-            <FilterLink
-              key={opt.value}
-              label={opt.label}
-              active={listingType === opt.value}
-              onClick={() => updateParam('type', opt.value)}
-            />
-          ))}
-        </div>
-      </FilterSection>
-
-      {availableServices.length > 0 && (
-        <>
-          <div className="h-px bg-border" />
-          <FilterSection title="Grading Service">
-            <div className="space-y-0.5">
-              <FilterLink
-                label="All Services"
-                active={service === 'all'}
-                onClick={() => updateParam('service', 'all')}
-              />
-              {availableServices.map(svc => (
-                <FilterLink
-                  key={svc}
-                  label={svc}
-                  active={service === svc}
-                  onClick={() => updateParam('service', svc)}
+            {availableMintMarks.map(mark => {
+              const key = mark ?? 'none'
+              const count = mintCounts[key] ?? 0
+              return (
+                <MintRow
+                  key={key}
+                  label={mintLabel(mark)}
+                  count={count}
+                  active={mint === key}
+                  onClick={() => updateParam('mint', key)}
+                  showCount
                 />
-              ))}
-            </div>
-          </FilterSection>
-        </>
+              )
+            })}
+          </div>
+        </div>
       )}
 
-      {sortedYears.length > 0 && (
-        <>
-          <div className="h-px bg-border" />
-          <FilterSection title="Mint Year">
-            <div className="space-y-0.5 max-h-48 overflow-y-auto pr-1">
-              <FilterLink
-                label="All Years"
-                active={year === 'all'}
-                onClick={() => updateParam('year', 'all')}
-              />
-              {sortedYears.map(y => (
-                <FilterLink
+      {/* Years */}
+      {catalogYears.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold tracking-widest uppercase text-muted-foreground mb-3">
+            Year
+          </p>
+          <div className="space-y-0.5 max-h-72 overflow-y-auto pr-1">
+            <YearRow
+              label="All Years"
+              count={Object.values(yearCounts).reduce((a, b) => a + b, 0)}
+              active={year === 'all'}
+              hasListings
+              onClick={() => updateParam('year', 'all')}
+              showCount={year !== 'all'}
+            />
+            {catalogYears.map(y => {
+              const count = yearCounts[y] ?? 0
+              return (
+                <YearRow
                   key={y}
                   label={String(y)}
+                  count={count}
                   active={year === String(y)}
+                  hasListings={count > 0}
                   onClick={() => updateParam('year', String(y))}
+                  showCount
                 />
-              ))}
-            </div>
-          </FilterSection>
-        </>
-      )}
-
-      {availableMintMarks.length > 0 && (
-        <>
-          <div className="h-px bg-border" />
-          <FilterSection title="Mint Mark">
-            <div className="space-y-0.5">
-              <FilterLink
-                label="All Mints"
-                active={mint === 'all'}
-                onClick={() => updateParam('mint', 'all')}
-              />
-              {availableMintMarks.map(mark => (
-                <FilterLink
-                  key={mark ?? 'none'}
-                  label={mintMarkLabel(mark)}
-                  active={mint === (mark ?? 'none')}
-                  onClick={() => updateParam('mint', mark ?? 'none')}
-                />
-              ))}
-            </div>
-          </FilterSection>
-        </>
+              )
+            })}
+          </div>
+        </div>
       )}
     </div>
   )
@@ -220,7 +153,7 @@ export function SeriesSidebar({
           className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border text-sm font-medium hover:border-foreground/40 transition-colors"
         >
           <SlidersHorizontal className="h-4 w-4" />
-          Filters & Sort
+          Mint &amp; Year
           {hasActiveFilters && (
             <span className="ml-1 rounded-full bg-foreground text-background text-[10px] font-bold px-1.5 py-0.5">
               ON
@@ -241,5 +174,55 @@ export function SeriesSidebar({
         </div>
       </aside>
     </>
+  )
+}
+
+function MintRow({
+  label, count, active, onClick, showCount,
+}: {
+  label: string; count: number; active: boolean; onClick: () => void; showCount: boolean
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center justify-between w-full text-left text-sm py-1.5 px-2 rounded-md transition-colors ${
+        active
+          ? 'bg-foreground text-background font-medium'
+          : 'text-foreground hover:bg-muted'
+      }`}
+    >
+      <span className="truncate">{label}</span>
+      {showCount && count > 0 && (
+        <span className={`ml-2 text-xs flex-shrink-0 ${active ? 'text-background/70' : 'text-muted-foreground'}`}>
+          {count}
+        </span>
+      )}
+    </button>
+  )
+}
+
+function YearRow({
+  label, count, active, hasListings, onClick, showCount,
+}: {
+  label: string; count: number; active: boolean; hasListings: boolean; onClick: () => void; showCount: boolean
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center justify-between w-full text-left text-sm py-1 px-2 rounded-md transition-colors ${
+        active
+          ? 'bg-foreground text-background font-medium'
+          : hasListings
+            ? 'text-foreground hover:bg-muted'
+            : 'text-muted-foreground/50 hover:bg-muted hover:text-muted-foreground'
+      }`}
+    >
+      <span>{label}</span>
+      {showCount && count > 0 && (
+        <span className={`ml-2 text-xs flex-shrink-0 ${active ? 'text-background/70' : 'text-muted-foreground'}`}>
+          {count}
+        </span>
+      )}
+    </button>
   )
 }

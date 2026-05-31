@@ -454,7 +454,7 @@ export function SellClient() {
   }
 
   if (!data) {
-    // No data — proxy handles the auth redirect; just render nothing
+    // No data - proxy handles the auth redirect; just render nothing
     return null
   }
 
@@ -536,7 +536,7 @@ export function SellClient() {
         </div>
       )}
 
-      {/* Seller onboarding — blocks the sell page until setup is complete.
+      {/* Seller onboarding - blocks the sell page until setup is complete.
           Modal is z-40; navbar is z-50 so navigation away is still possible. */}
       {needsOnboarding && (
         <SellerOnboardingModal
@@ -565,12 +565,6 @@ export function SellClient() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          {tier === 'dealer' && (
-            <Button variant="outline" onClick={() => router.push('/dashboard/import')}>
-              <Upload className="h-4 w-4 mr-1.5" />
-              Import CSV
-            </Button>
-          )}
           {tier === 'dealer' && tab === 'active' && (
             <Button variant="outline" onClick={() => { setSelectMode(v => !v); setSelectedListings(new Set()) }}>
               {selectMode ? 'Cancel' : 'Bulk Reprice'}
@@ -725,12 +719,12 @@ export function SellClient() {
         </div>
       </div>
 
-      {/* Needs tracking — payout blocked */}
+      {/* Needs tracking - payout blocked */}
       {awaitingTracking.length > 0 && (
         <div className="rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50/60 dark:bg-amber-950/20 overflow-hidden mb-8">
           <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-amber-200 dark:border-amber-800">
             <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
-            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">Tracking required — payout on hold</p>
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">Tracking required - payout on hold</p>
             <p className="text-xs text-amber-700 dark:text-amber-400 ml-auto hidden sm:block">Add a tracking number to release your payout</p>
           </div>
           <div className="divide-y divide-amber-200 dark:divide-amber-800">
@@ -873,93 +867,106 @@ export function SellClient() {
             const isAuction = listing.listing_type === 'auction'
             const auc = listing.auction
             const currentBid = auc?.current_bid ?? null
-            const startPrice = auc?.start_price ?? null
             const reservePrice = auc?.reserve_price ?? null
             const reserveMet = reservePrice !== null && currentBid !== null && currentBid >= reservePrice
-            const isSelectable = selectMode && listing.status === 'active'
+            const auctionEnded = isAuction && auc != null && new Date(auc.end_time) <= new Date()
+            const displayStatus = auctionEnded ? 'expired' : listing.status
+            const isSelectable = selectMode && displayStatus === 'active'
             const isSelected = selectedListings.has(listing.id)
+
+            const gradeMeta = (() => {
+              const parts: string[] = []
+              if (listing.grading_service) parts.push(listing.grading_service)
+              if (listing.grade) parts.push(listing.grade.replace(/^([A-Za-z]+)(\d+)$/, '$1-$2'))
+              if (!listing.grading_service && !listing.grade) parts.push('Ungraded')
+              if (listing.year) parts.push(`${listing.year}${listing.mint_mark ? `-${listing.mint_mark}` : ''}`)
+              return parts.join(' · ')
+            })()
+
+            const priceDisplay = !isAuction && listing.price
+              ? formatCents(listing.price)
+              : isAuction && auc
+              ? formatCents(currentBid ?? auc.start_price)
+              : null
+
             const rowContent = (
               <>
-              {isSelectable && (
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  readOnly
-                  className="h-4 w-4 flex-shrink-0 rounded border-border accent-foreground cursor-pointer"
-                />
-              )}
-              {/* Thumbnail */}
-              <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0 relative">
-                {listing.images?.[0] ? (
-                  <Image src={listing.images[0]} alt={listing.title} fill sizes="48px" className="object-cover" />
-                ) : (
-                  <div className="h-full w-full flex items-center justify-center">
-                    <Package className="h-5 w-5 text-muted-foreground/30" />
-                  </div>
+                {isSelectable && (
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    readOnly
+                    className="h-4 w-4 flex-shrink-0 rounded border-border accent-foreground cursor-pointer"
+                  />
                 )}
-              </div>
 
-              {/* Title + meta */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate">{listing.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {(() => {
-                    const parts: string[] = []
-                    if (listing.grading_service) parts.push(listing.grading_service)
-                    if (listing.grade) parts.push(listing.grade.replace(/^([A-Za-z]+)(\d+)$/, '$1-$2'))
-                    if (!listing.grading_service && !listing.grade) parts.push('Ungraded')
-                    if (listing.year) parts.push(`${listing.year}${listing.mint_mark ? `-${listing.mint_mark}` : ''}`)
-                    return parts.join(' · ')
-                  })()}
+                {/* Thumbnail */}
+                <div className="h-14 w-14 rounded-lg overflow-hidden bg-muted border border-border flex-shrink-0 relative">
+                  {listing.images?.[0] ? (
+                    <Image src={listing.images[0]} alt={listing.title} fill sizes="56px" className="object-cover" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center">
+                      <Package className="h-5 w-5 text-muted-foreground/30" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Title + auction details - grows to fill space */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate leading-snug">{listing.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{gradeMeta}</p>
+                  {isAuction && auc && (
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1.5">
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Gavel className="h-3 w-3" />
+                        {currentBid != null
+                          ? <><span className="font-semibold text-foreground">{formatCents(currentBid)}</span> ({auc.bid_count} bid{auc.bid_count !== 1 ? 's' : ''})</>
+                          : <>start {formatCents(auc.start_price)}</>
+                        }
+                      </span>
+                      {reservePrice !== null && (
+                        <span className={`text-xs font-medium ${reserveMet ? 'text-emerald-600' : 'text-amber-600'}`}>
+                          Reserve {reserveMet ? 'met' : 'not met'}
+                        </span>
+                      )}
+                      {listing.price && (
+                        <span className="text-xs text-muted-foreground">
+                          BIN: <span className="font-medium text-foreground">{formatCents(listing.price)}</span>
+                        </span>
+                      )}
+                      {listing.accept_offers && (
+                        <span className="text-xs text-muted-foreground">Offers ok</span>
+                      )}
+                      <span className="text-xs">
+                        {auctionEnded
+                          ? <span className="text-destructive font-medium">Ended</span>
+                          : <span className="text-muted-foreground">Ends: <AuctionCountdown endTime={auc.end_time} className="text-xs" /></span>
+                        }
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Type - fixed width column */}
+                <p className="text-xs text-muted-foreground w-24 text-right flex-shrink-0 hidden sm:block">
+                  {listing.listing_type === 'fixed' ? 'Buy It Now' : listing.listing_type === 'auction' ? 'Auction' : ''}
                 </p>
 
-                {/* Auction detail row */}
-                {isAuction && auc && (
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5">
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Gavel className="h-3 w-3" />
-                      {currentBid != null
-                        ? <><span className="font-semibold text-foreground">{formatCents(currentBid)}</span> current bid ({auc.bid_count} bid{auc.bid_count !== 1 ? 's' : ''})</>
-                        : <><span className="font-medium">No bids</span> · start {formatCents(auc.start_price)}</>
-                      }
-                    </span>
-                    {reservePrice !== null && (
-                      <span className={`text-xs font-medium ${reserveMet ? 'text-emerald-600' : 'text-amber-600'}`}>
-                        Reserve {reserveMet ? 'met' : 'not met'}
-                      </span>
-                    )}
-                    {listing.price && (
-                      <span className="text-xs text-muted-foreground">
-                        BIN: <span className="font-medium text-foreground">{formatCents(listing.price)}</span>
-                      </span>
-                    )}
-                    {listing.accept_offers && (
-                      <span className="text-xs text-muted-foreground">· Offers accepted</span>
-                    )}
-                    <span className="text-xs text-muted-foreground">
-                      Ends: <AuctionCountdown endTime={auc.end_time} className="text-xs" />
-                    </span>
-                  </div>
-                )}
-              </div>
+                {/* Price - fixed width column */}
+                <p className="text-sm font-bold tabular-nums w-28 text-right flex-shrink-0">
+                  {priceDisplay ?? ''}
+                </p>
 
-              {/* Type */}
-              <p className="text-xs text-muted-foreground hidden sm:block flex-shrink-0">
-                {listing.listing_type === 'fixed' ? 'Buy It Now' : 'Auction'}
-              </p>
+                {/* Status - fixed width column */}
+                <div className="w-20 flex justify-end flex-shrink-0">
+                  <Badge variant={STATUS_VARIANT[displayStatus] ?? 'secondary'} className="text-xs">
+                    {STATUS_LABEL[displayStatus] ?? displayStatus}
+                  </Badge>
+                </div>
 
-              {/* Price (fixed only) */}
-              <p className="text-sm font-semibold tabular-nums flex-shrink-0 w-24 text-right">
-                {!isAuction && listing.price ? formatCents(listing.price) : isAuction ? '' : '—'}
-              </p>
-
-              {/* Status / CTA */}
-              <div className="flex-shrink-0">
-                {listing.status === 'draft' ? (
-                  <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                    <span className="text-xs font-medium px-2.5 py-1 rounded-lg border border-border bg-muted whitespace-nowrap">
-                      Continue editing
-                    </span>
+                {/* Action - fixed width column, always present for alignment */}
+                <div className="w-16 flex justify-end flex-shrink-0" onClick={e => e.stopPropagation()}>
+                  {listing.status === 'draft' ? (
                     <button
                       onClick={e => handleDeleteDraft(e, listing.id)}
                       disabled={deletingId === listing.id}
@@ -971,28 +978,19 @@ export function SellClient() {
                         : <Trash2 className="h-3.5 w-3.5" />
                       }
                     </button>
-                  </div>
-                ) : (listing.status === 'expired' || listing.status === 'sold') ? (
-                  <div className="flex items-center gap-2">
-                    <Badge variant={STATUS_VARIANT[listing.status]} className="text-xs">
-                      {STATUS_LABEL[listing.status]}
-                    </Badge>
+                  ) : (displayStatus === 'expired' || displayStatus === 'sold') ? (
                     <button
                       onClick={e => openRelistModal(e, listing.id)}
-                      className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-lg border border-border bg-muted hover:bg-muted/60 transition-colors whitespace-nowrap"
+                      className="flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-muted hover:bg-muted/60 transition-colors whitespace-nowrap"
                     >
                       <RotateCcw className="h-3 w-3" />
                       Relist
                     </button>
-                  </div>
-                ) : (
-                  <Badge variant={STATUS_VARIANT[listing.status]} className="text-xs">
-                    {STATUS_LABEL[listing.status]}
-                  </Badge>
-                )}
-              </div>
+                  ) : null}
+                </div>
               </>
             )
+
             return isSelectable ? (
               <div
                 key={listing.id}

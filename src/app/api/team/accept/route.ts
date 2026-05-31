@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   if (existing) return NextResponse.json({ error: 'You are already on this team' }, { status: 409 })
 
-  // Create member + mark invite accepted (in sequence — service role bypasses RLS)
+  // Create member + mark invite accepted (in sequence - service role bypasses RLS)
   const { error: memberError } = await serviceClient
     .from('team_members')
     .insert({

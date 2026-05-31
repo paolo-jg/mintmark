@@ -94,7 +94,7 @@ export default async function ListingPage({
             <h1 className="text-2xl font-bold leading-snug tracking-tight">{listing.title}</h1>
           </div>
 
-          {/* Price — fixed-price listings only; auctions render live inside ListingActions */}
+          {/* Price - fixed-price listings only; auctions render live inside ListingActions */}
           {listing.listing_type !== 'auction' && (
             <div>
               <p className="text-3xl font-bold">{formatCents(listing.price)}</p>

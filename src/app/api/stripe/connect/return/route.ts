@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
       const account = await stripe.accounts.retrieve(accountId)
       isComplete = account.details_submitted === true && account.payouts_enabled === true
     } else {
-      // Test mode: trust that Stripe returned the user — skip API check entirely
+      // Test mode: trust that Stripe returned the user - skip API check entirely
       // (details_submitted and payouts_enabled are unreliable with dummy test data)
       isComplete = true
     }

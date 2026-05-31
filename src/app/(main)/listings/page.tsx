@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { ListingsPageClient } from './_components/listings-page-client'
 
 export const metadata = {
-  title: 'Explore Listings — Pedigree Coins',
+  title: 'Explore Listings | Pedigree Coins',
 }
 
 // Suspense required because ListingsPageClient uses useSearchParams()

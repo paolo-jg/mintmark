@@ -27,13 +27,19 @@ export async function POST(req: NextRequest) {
 
   const db = getServiceDb()
 
-  const { data: profile } = await db
-    .from('profiles')
-    .select('stripe_customer_id, email')
-    .eq('id', user.id)
-    .single()
+  const [{ data: profile }, { data: referralRecord }] = await Promise.all([
+    db.from('profiles')
+      .select('stripe_customer_id, email, subscription_free_until, subscription_credit_months')
+      .eq('id', user.id)
+      .single(),
+    db.from('referrals')
+      .select('id')
+      .eq('referred_id', user.id)
+      .maybeSingle(),
+  ])
 
   let customerId = profile?.stripe_customer_id as string | null
+  const isNewCustomer = !customerId
 
   if (!customerId) {
     const { data: authUser } = await db.auth.admin.getUserById(user.id)
@@ -45,10 +51,36 @@ export async function POST(req: NextRequest) {
     await db.from('profiles').update({ stripe_customer_id: customerId }).eq('id', user.id)
   }
 
+  // Determine trial days:
+  // 1. Active referral credit → 30 days (consumes the credit)
+  // 2. Ever received referral credit (as referee or referrer) → no trial
+  // 3. Never subscribed before → 14-day trial
+  // 4. Returning subscriber → no trial
+  const freeUntilRaw = profile?.subscription_free_until as string | null
+  const hasFreeMonth = freeUntilRaw ? new Date(freeUntilRaw).getTime() > Date.now() : false
+  const hasReferralHistory = !!referralRecord || (profile?.subscription_credit_months ?? 0) > 0
+
+  let trialDays = 0
+  if (hasFreeMonth) {
+    trialDays = 30
+  } else if (!hasReferralHistory) {
+    if (isNewCustomer) {
+      trialDays = 14
+    } else {
+      const prior = await stripe.subscriptions.list({ customer: customerId, limit: 1, status: 'all' })
+      if (prior.data.length === 0) trialDays = 14
+    }
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
-  const successUrl = return_url
-    ? `${appUrl}${return_url}?upgraded=1`
-    : `${appUrl}/sell?upgraded=1`
+  const baseSuccess = new URL(return_url ?? '/sell', appUrl || 'http://localhost:3000')
+  baseSuccess.searchParams.set('upgraded', '1')
+  const successUrl = baseSuccess.toString()
+
+  // Consume referral credit so it can't be reused on a future subscription
+  if (hasFreeMonth) {
+    await db.from('profiles').update({ subscription_free_until: null }).eq('id', user.id)
+  }
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
@@ -65,6 +97,7 @@ export async function POST(req: NextRequest) {
         supabase_user_id: user.id,
         target_tier: tier,
       },
+      ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
     },
     allow_promotion_codes: true,
   })

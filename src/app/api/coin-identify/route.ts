@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   // Strip data URL prefix to get raw base64 + media type
   const parseDataUrl = (dataUrl: string): { data: string; mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' } => {
     const match = dataUrl.match(/^data:(image\/(?:jpeg|png|gif|webp));base64,(.+)$/)
-    if (!match) throw new Error('Invalid image format — only JPEG, PNG, GIF, WEBP are supported')
+    if (!match) throw new Error('Invalid image format. Only JPEG, PNG, GIF, WEBP are supported.')
     return { mediaType: match[1] as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp', data: match[2] }
   }
 
@@ -50,9 +50,9 @@ export async function POST(req: NextRequest) {
 
 You will be shown two images of a coin: the obverse (front) and reverse (back). Your job is to identify the coin and extract all relevant information.
 
-**IMPORTANT — Graded slabs**: If the coin is encapsulated in a graded holder (PCGS blue holder, NGC green holder, ANACS, ICG, etc.), carefully read the label on the holder. It will contain the grading service name, grade (e.g. MS-65, VF-30), certification/cert number, and coin description. Use the label data — it is authoritative.
+**IMPORTANT - Graded slabs**: If the coin is encapsulated in a graded holder (PCGS blue holder, NGC green holder, ANACS, ICG, etc.), carefully read the label on the holder. It will contain the grading service name, grade (e.g. MS-65, VF-30), certification/cert number, and coin description. Use the label data - it is authoritative.
 
-**For raw (ungraded) coins**: Identify from visual features — design type, date, mint mark (small letter near the date or on the reverse), and denomination.
+**For raw (ungraded) coins**: Identify from visual features - design type, date, mint mark (small letter near the date or on the reverse), and denomination.
 
 Here are the known series slugs you must match against:
 ${SERIES_LIST}

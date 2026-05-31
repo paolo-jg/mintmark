@@ -18,7 +18,7 @@ export interface CoinEducation {
 
 export const COIN_EDUCATION: Record<string, CoinEducation> = {
   'liberty-cap-half-cent': {
-    description: "The Liberty Cap Half Cent (1793–1797) is America's first half-cent denomination and one of the rarest early US series, produced in tiny quantities at the fledgling Philadelphia Mint. The obverse portrays Liberty with a pole-topped cap — a potent symbol of freedom borrowed from the French Revolution — in two distinct orientations: head facing left in 1793 and head facing right from 1794 onward. Collectors prize the single-year 1793 head-left type, the scarce 1796 \"With Pole\" variety, and the challenging no-pole variants; assembling a complete date-and-variety set is a lifetime pursuit.",
+    description: "The Liberty Cap Half Cent (1793–1797) is America's first half-cent denomination and one of the rarest early US series, produced in tiny quantities at the fledgling Philadelphia Mint. The obverse portrays Liberty with a pole-topped cap - a potent symbol of freedom borrowed from the French Revolution - in two distinct orientations: head facing left in 1793 and head facing right from 1794 onward. Collectors prize the single-year 1793 head-left type, the scarce 1796 \"With Pole\" variety, and the challenging no-pole variants; assembling a complete date-and-variety set is a lifetime pursuit.",
     designer: "Robert Scot",
     composition: "100% Copper",
     diameter: "23.5 mm",
@@ -49,7 +49,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$612 – $1107.8k",
   },
   'draped-bust-half-cent': {
-    description: "The Draped Bust Half Cent (1800–1808) replaced the Liberty Cap design with Robert Scot's elegant portrait of Liberty — said to be modeled after socialite Ann Willing Bingham — her hair loosely draped over her shoulder. Struck only in Philadelphia from pure copper, the series is notable for its 1802 \"2 Over 0\" overdate and the extremely rare 1804 \"Spiked Chin\" variety, both eagerly sought by early American specialists. The denomination's limited mintages and nearly 220-year age make high-grade survivors genuinely scarce across the board.",
+    description: "The Draped Bust Half Cent (1800–1808) replaced the Liberty Cap design with Robert Scot's elegant portrait of Liberty - said to be modeled after socialite Ann Willing Bingham - her hair loosely draped over her shoulder. Struck only in Philadelphia from pure copper, the series is notable for its 1802 \"2 Over 0\" overdate and the extremely rare 1804 \"Spiked Chin\" variety, both eagerly sought by early American specialists. The denomination's limited mintages and nearly 220-year age make high-grade survivors genuinely scarce across the board.",
     designer: "Robert Scot",
     composition: "100% Copper",
     diameter: "23.5 mm",
@@ -78,7 +78,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$117 – $593.7k",
   },
   'classic-head-half-cent': {
-    description: "John Reich's Classic Head Half Cent (1809–1836) is admired for its neoclassical portrait of Liberty wearing a headband inscribed LIBERTY, a motif drawn from ancient Greek and Roman coinage. The series includes several proof-only dates in the 1820s and 1830s — the 1831 and 1836 originals and restrikes — which are among the most coveted items in all of early American numismatics. Because the half cent was unpopular in commerce, many dates saw low circulation and survived in surprisingly high grades, making this an accessible yet fascinating series for type collectors.",
+    description: "John Reich's Classic Head Half Cent (1809–1836) is admired for its neoclassical portrait of Liberty wearing a headband inscribed LIBERTY, a motif drawn from ancient Greek and Roman coinage. The series includes several proof-only dates in the 1820s and 1830s - the 1831 and 1836 originals and restrikes - which are among the most coveted items in all of early American numismatics. Because the half cent was unpopular in commerce, many dates saw low circulation and survived in surprisingly high grades, making this an accessible yet fascinating series for type collectors.",
     designer: "John Reich",
     composition: "100% Copper",
     diameter: "23.5 mm",
@@ -114,7 +114,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$91 – $92.7k",
   },
   'braided-hair-half-cent': {
-    description: "Christian Gobrecht's Braided Hair Half Cent (1840–1857) is the final type of America's smallest denomination, distinguished by a refined portrait of Liberty with her hair gathered in a braided coronet. The series is split between circulation strikes (1849–1857) and proof-only \"original\" and \"restrike\" issues for earlier dates, the latter produced by the Mint to satisfy collector demand — a practice that makes date attribution an interesting challenge. When Congress abolished the half cent in 1857, it became the first US coin denomination to be discontinued, giving the series a place of honor in American monetary history.",
+    description: "Christian Gobrecht's Braided Hair Half Cent (1840–1857) is the final type of America's smallest denomination, distinguished by a refined portrait of Liberty with her hair gathered in a braided coronet. The series is split between circulation strikes (1849–1857) and proof-only \"original\" and \"restrike\" issues for earlier dates, the latter produced by the Mint to satisfy collector demand - a practice that makes date attribution an interesting challenge. When Congress abolished the half cent in 1857, it became the first US coin denomination to be discontinued, giving the series a place of honor in American monetary history.",
     designer: "Christian Gobrecht",
     composition: "100% Copper",
     diameter: "23 mm",
@@ -140,7 +140,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$61 – $2.5k",
   },
   'flowing-hair-cent': {
-    description: "The Flowing Hair Chain Cent of 1793 is America's very first one-cent piece, struck for only a few weeks before public outcry over the obverse portrait — deemed unflattering — forced a hasty redesign. The reverse famously features a chain of 15 interlinked links representing the states, which critics mocked as a symbol of slavery rather than union. With a total mintage under 37,000, it is one of the rarest and most historically significant coins in the entire US series, commanding six-figure prices even in circulated grades.",
+    description: "The Flowing Hair Chain Cent of 1793 is America's very first one-cent piece, struck for only a few weeks before public outcry over the obverse portrait - deemed unflattering - forced a hasty redesign. The reverse famously features a chain of 15 interlinked links representing the states, which critics mocked as a symbol of slavery rather than union. With a total mintage under 37,000, it is one of the rarest and most historically significant coins in the entire US series, commanding six-figure prices even in circulated grades.",
     designer: "Henry Voigt",
     composition: "100% Copper",
     diameter: "27 mm",
@@ -162,7 +162,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$4.9k – $1714.0k",
   },
   'liberty-cap-cent': {
-    description: "The Liberty Cap Large Cent (1793–1796) succeeded the Chain Cent within the same year, offering an improved portrait of Liberty with a flowing hair and a liberty-pole cap on the reverse wreath design. Three distinct head-style varieties — the \"Flowing Hair\" Wreath Cent (1793), and the subsequent Liberty Cap types with head facing right — provide ample variety for specialists who collect by Sheldon die variety number. High-grade survivors are extremely rare; most examples show the honest wear expected of nearly 230-year-old copper coins.",
+    description: "The Liberty Cap Large Cent (1793–1796) succeeded the Chain Cent within the same year, offering an improved portrait of Liberty with a flowing hair and a liberty-pole cap on the reverse wreath design. Three distinct head-style varieties - the \"Flowing Hair\" Wreath Cent (1793), and the subsequent Liberty Cap types with head facing right - provide ample variety for specialists who collect by Sheldon die variety number. High-grade survivors are extremely rare; most examples show the honest wear expected of nearly 230-year-old copper coins.",
     designer: "Joseph Wright",
     composition: "100% Copper",
     diameter: "29 mm",
@@ -193,7 +193,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$498 – $1094.1k",
   },
   'draped-bust-cent': {
-    description: "The Draped Bust Large Cent (1796–1807) brought Robert Scot's elegant Liberty portrait — the same used on silver coinage of the era — to the copper cent, lending the denomination a more refined aesthetic. The series encompasses two distinct reverse designs: the \"Reverse of 1794\" (small eagle) and the dominant \"Reverse of 1795\" (heraldic wreath), and is collected extensively by variety using the Sheldon numbering system. The 1799, with a mintage under 1,000 certified examples known, is one of the great US date rarities and a benchmark coin for serious early American collectors.",
+    description: "The Draped Bust Large Cent (1796–1807) brought Robert Scot's elegant Liberty portrait - the same used on silver coinage of the era - to the copper cent, lending the denomination a more refined aesthetic. The series encompasses two distinct reverse designs: the \"Reverse of 1794\" (small eagle) and the dominant \"Reverse of 1795\" (heraldic wreath), and is collected extensively by variety using the Sheldon numbering system. The 1799, with a mintage under 1,000 certified examples known, is one of the great US date rarities and a benchmark coin for serious early American collectors.",
     designer: "Robert Scot",
     composition: "100% Copper",
     diameter: "29 mm",
@@ -225,7 +225,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$103 – $-Infinity",
   },
   'classic-head-cent': {
-    description: "John Reich's Classic Head Large Cent (1808–1814) features a bold, neoclassical portrait of Liberty wearing a ribbon inscribed LIBERTY, providing a striking departure from the earlier draped bust style. The series is relatively short — only seven dates — and is collected by die variety using the Newcomb reference, with many scarce varieties rewarding careful attribution work. The 1809 is considered the key date in circulated grades, while high-grade Mint State examples of any Classic Head cent are genuinely rare.",
+    description: "John Reich's Classic Head Large Cent (1808–1814) features a bold, neoclassical portrait of Liberty wearing a ribbon inscribed LIBERTY, providing a striking departure from the earlier draped bust style. The series is relatively short - only seven dates - and is collected by die variety using the Newcomb reference, with many scarce varieties rewarding careful attribution work. The 1809 is considered the key date in circulated grades, while high-grade Mint State examples of any Classic Head cent are genuinely rare.",
     designer: "John Reich",
     composition: "100% Copper",
     diameter: "29 mm",
@@ -273,7 +273,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$30 – $120.1k",
   },
   'braided-hair-cent': {
-    description: "The Braided Hair Large Cent (1839–1857) is the final type of the large copper cent, featuring Christian Gobrecht's elegant portrait of Liberty with her hair braided into a coronet — a design also used on half cents of the same era. The series produced several famous rarities, including the 1844 \"44 Over 81\" blundered die, the 1856 with its minuscule mintage, and the final-year 1857 with production cut short when Congress replaced the large cent with the small Flying Eagle cent. Like its predecessors, it is catalogued by Newcomb die variety numbers, and assembling a complete variety set is a demanding lifetime endeavor.",
+    description: "The Braided Hair Large Cent (1839–1857) is the final type of the large copper cent, featuring Christian Gobrecht's elegant portrait of Liberty with her hair braided into a coronet - a design also used on half cents of the same era. The series produced several famous rarities, including the 1844 \"44 Over 81\" blundered die, the 1856 with its minuscule mintage, and the final-year 1857 with production cut short when Congress replaced the large cent with the small Flying Eagle cent. Like its predecessors, it is catalogued by Newcomb die variety numbers, and assembling a complete variety set is a demanding lifetime endeavor.",
     designer: "Christian Gobrecht",
     composition: "100% Copper",
     diameter: "28.5 mm",
@@ -300,7 +300,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$30 – $6.3k",
   },
   'flying-eagle-cent': {
-    description: "The Flying Eagle Cent (1856–1858) was the United States' first small cent, replacing the unwieldy large copper coin with a lighter 88% copper–12% nickel composition that fit more comfortably in the pocket. James B. Longacre's design features a bold eagle in full flight on the obverse — adapted from Christian Gobrecht's Gobrecht Dollar eagle — and an agricultural wreath on the reverse. The 1856 is technically a pattern coin struck in proof to win congressional approval, but its ~2,000 survivors are universally collected as a regular issue and represent one of the most prized 19th-century US rarities.",
+    description: "The Flying Eagle Cent (1856–1858) was the United States' first small cent, replacing the unwieldy large copper coin with a lighter 88% copper–12% nickel composition that fit more comfortably in the pocket. James B. Longacre's design features a bold eagle in full flight on the obverse - adapted from Christian Gobrecht's Gobrecht Dollar eagle - and an agricultural wreath on the reverse. The 1856 is technically a pattern coin struck in proof to win congressional approval, but its ~2,000 survivors are universally collected as a regular issue and represent one of the most prized 19th-century US rarities.",
     designer: "James B Longacre",
     composition: "88% Copper - 12% Nickel",
     diameter: "19 mm",
@@ -318,7 +318,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$38 – $30.6k",
   },
   'indian-head-cent': {
-    description: "The Indian Head Cent (1859–1909) is one of the most beloved 19th-century American coins, designed by James B. Longacre and featuring Liberty wearing a Native American headdress — a design that is, in fact, a non-Native figure in a borrowed war bonnet. The series spans two compositions (copper-nickel 1859–1864, then bronze 1864–1909) and includes legendary rarities such as the 1877 and the 1909-S, the latter produced in the final year before the Lincoln cent replaced it. With 50 years of dates and mintmarks, the Indian Head cent is a cornerstone of US type and date collecting.",
+    description: "The Indian Head Cent (1859–1909) is one of the most beloved 19th-century American coins, designed by James B. Longacre and featuring Liberty wearing a Native American headdress - a design that is, in fact, a non-Native figure in a borrowed war bonnet. The series spans two compositions (copper-nickel 1859–1864, then bronze 1864–1909) and includes legendary rarities such as the 1877 and the 1909-S, the latter produced in the final year before the Lincoln cent replaced it. With 50 years of dates and mintmarks, the Indian Head cent is a cornerstone of US type and date collecting.",
     designer: "James B Longacre",
     composition: "95% Copper - 5% Tin and Zinc",
     diameter: "19 mm",
@@ -355,7 +355,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$3 – $79.5k",
   },
   'lincoln-wheat-cent': {
-    description: "The Lincoln Wheat Cent (1909–1958) was the first US circulating coin to depict a real person, designed by Victor D. Brenner to celebrate the centennial of Abraham Lincoln's birth. The reverse features two graceful wheat stalks flanking the words ONE CENT — a design that became instantly iconic — while the obverse carries Brenner's initials, removed after public controversy and restored only in 1918. The series contains dozens of key and semi-key dates (1909-S VDB, 1914-D, 1922 Plain, 1943 copper cents struck in error) that drive an enormous collector market nearly a century after production ended.",
+    description: "The Lincoln Wheat Cent (1909–1958) was the first US circulating coin to depict a real person, designed by Victor D. Brenner to celebrate the centennial of Abraham Lincoln's birth. The reverse features two graceful wheat stalks flanking the words ONE CENT - a design that became instantly iconic - while the obverse carries Brenner's initials, removed after public controversy and restored only in 1918. The series contains dozens of key and semi-key dates (1909-S VDB, 1914-D, 1922 Plain, 1943 copper cents struck in error) that drive an enormous collector market nearly a century after production ended.",
     designer: "Victor D Brenner",
     composition: "95% Copper - 5% Tin and Zinc",
     diameter: "19 mm",
@@ -391,7 +391,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$0 – $2469.1k",
   },
   'lincoln-memorial-cent': {
-    description: "The Lincoln Memorial Cent (1959–2008) updated the Lincoln obverse — unchanged since 1909 — with a Frank Gasparro reverse depicting the Lincoln Memorial, making Lincoln the only person to appear on both sides of a US circulating coin (his statue is visible inside the Memorial). The series spans the transition from 95% copper (1959–1982) to copper-plated zinc (1982–2008) and includes the rare 1969-S doubled-die, the 1972 doubled-die, and the notorious 1983 \"copper\" cents struck on transitional planchets — error coins that command substantial premiums. Over 300 billion were struck across nearly five decades, yet mint-state examples in high grades remain surprisingly scarce for many dates.",
+    description: "The Lincoln Memorial Cent (1959–2008) updated the Lincoln obverse - unchanged since 1909 - with a Frank Gasparro reverse depicting the Lincoln Memorial, making Lincoln the only person to appear on both sides of a US circulating coin (his statue is visible inside the Memorial). The series spans the transition from 95% copper (1959–1982) to copper-plated zinc (1982–2008) and includes the rare 1969-S doubled-die, the 1972 doubled-die, and the notorious 1983 \"copper\" cents struck on transitional planchets - error coins that command substantial premiums. Over 300 billion were struck across nearly five decades, yet mint-state examples in high grades remain surprisingly scarce for many dates.",
     designer: "Frank Gasparro",
     composition: "97.5% Zinc - 2.5% Copper after 1982",
     diameter: "19 mm",
@@ -427,7 +427,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'lincoln-shield-cent': {
-    description: "The Lincoln Shield Cent (2010–present) introduced by designer Lyndall Bass features a Union shield on the reverse — representing Lincoln's preservation of the United States as a single unified nation — replacing the four Bicentennial reverses. The shield's 13 vertical stripes reference the original colonies and are bound together by a horizontal bar, a deliberate visual metaphor for national unity. Early strikes of the 2009 and 2010 transition years attract collector interest, and the series continues to be actively pursued by date-and-mintmark collectors building complete sets.",
+    description: "The Lincoln Shield Cent (2010–present) introduced by designer Lyndall Bass features a Union shield on the reverse - representing Lincoln's preservation of the United States as a single unified nation - replacing the four Bicentennial reverses. The shield's 13 vertical stripes reference the original colonies and are bound together by a horizontal bar, a deliberate visual metaphor for national unity. Early strikes of the 2009 and 2010 transition years attract collector interest, and the series continues to be actively pursued by date-and-mintmark collectors building complete sets.",
     designer: "Frank Gasparro",
     composition: "97.5% Zinc - 2.5% Copper",
     diameter: "19 mm",
@@ -482,7 +482,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$54 – $7.3k",
   },
   'three-cent-nickel': {
-    description: "The Three-Cent Nickel (1865–1889) was introduced as a more durable companion to the Three-Cent Silver, struck in 75% copper–25% nickel — the same alloy as the Shield Nickel — and featuring a minimal, portrait-free design by James B. Longacre. The obverse bears a Roman numeral III within a circle of stars, while the reverse carries the Roman numeral III in a decorative wreath — one of the simplest designs in US coinage. The 1877 and 1878 are proof-only dates, and several late-series dates have mintages under 10,000, making the complete set a challenge that belies the coin's modest face value.",
+    description: "The Three-Cent Nickel (1865–1889) was introduced as a more durable companion to the Three-Cent Silver, struck in 75% copper–25% nickel - the same alloy as the Shield Nickel - and featuring a minimal, portrait-free design by James B. Longacre. The obverse bears a Roman numeral III within a circle of stars, while the reverse carries the Roman numeral III in a decorative wreath - one of the simplest designs in US coinage. The 1877 and 1878 are proof-only dates, and several late-series dates have mintages under 10,000, making the complete set a challenge that belies the coin's modest face value.",
     designer: "James B Longacre",
     composition: "75% Copper - 25% Nickel",
     diameter: "17.9 mm",
@@ -511,7 +511,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$26 – $8.6k",
   },
   'flowing-hair-half-dime': {
-    description: "The Flowing Hair Half Dime (1794–1795) was among the very first coins struck at the Philadelphia Mint, sharing its design with the Flowing Hair dollar and half dollar — Robert Scot's Liberty with windswept hair on the obverse and a small eagle on the reverse. As one of the earliest products of the fledgling US Mint, surviving examples in all grades are genuinely scarce, and Mint State coins are true rarities that routinely bring five-figure prices at auction. Two die varieties are known for 1794 and several for 1795, offering specialists a focused variety-collecting pursuit.",
+    description: "The Flowing Hair Half Dime (1794–1795) was among the very first coins struck at the Philadelphia Mint, sharing its design with the Flowing Hair dollar and half dollar - Robert Scot's Liberty with windswept hair on the obverse and a small eagle on the reverse. As one of the earliest products of the fledgling US Mint, surviving examples in all grades are genuinely scarce, and Mint State coins are true rarities that routinely bring five-figure prices at auction. Two die varieties are known for 1794 and several for 1795, offering specialists a focused variety-collecting pursuit.",
     designer: "Robert Scot",
     composition: "89% Silver - 11% Copper",
     diameter: "16.5 mm",
@@ -523,7 +523,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$1.7k – $39.4k",
   },
   'draped-bust-half-dime': {
-    description: "The Draped Bust Half Dime (1796–1805) carries Robert Scot's refined Liberty portrait — the same used across the silver coinage of the era — in two reverse types: the Small Eagle (1796–1797) and the Heraldic Eagle (1800–1805). The 1796 and 1797 are the only years with the Small Eagle reverse, and both feature low mintages that ensure their status as coveted early American rarities. The 1802, struck in minuscule numbers (only about 3,060 coins), is one of the most famous and expensive dates in all of early US coinage.",
+    description: "The Draped Bust Half Dime (1796–1805) carries Robert Scot's refined Liberty portrait - the same used across the silver coinage of the era - in two reverse types: the Small Eagle (1796–1797) and the Heraldic Eagle (1800–1805). The 1796 and 1797 are the only years with the Small Eagle reverse, and both feature low mintages that ensure their status as coveted early American rarities. The 1802, struck in minuscule numbers (only about 3,060 coins), is one of the most famous and expensive dates in all of early US coinage.",
     designer: "Robert Scot",
     composition: "89% Silver - 11% Copper",
     diameter: "16.5 mm",
@@ -554,7 +554,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$1.4k – $118.8k",
   },
   'capped-bust-half-dime': {
-    description: "The Capped Bust Half Dime (1829–1837) was the first half dime with a standardized, mechanically consistent design — John Reich's portrait of Liberty in a cloth cap flanked by stars — produced on the Mint's new close-collar press that gave every coin a uniform diameter and reeded edge. The series is relatively compact at just nine dates, all struck only in Philadelphia, and is widely collected as part of a Capped Bust type set alongside the matching quarter and half dollar. Mint State examples are scarcer than their mintage figures suggest, as the era's banking and commerce practices often resulted in coins being spent rather than saved.",
+    description: "The Capped Bust Half Dime (1829–1837) was the first half dime with a standardized, mechanically consistent design - John Reich's portrait of Liberty in a cloth cap flanked by stars - produced on the Mint's new close-collar press that gave every coin a uniform diameter and reeded edge. The series is relatively compact at just nine dates, all struck only in Philadelphia, and is widely collected as part of a Capped Bust type set alongside the matching quarter and half dollar. Mint State examples are scarcer than their mintage figures suggest, as the era's banking and commerce practices often resulted in coins being spent rather than saved.",
     designer: "William Kneass",
     composition: "89% Silver - 11% Copper",
     diameter: "15.5 mm",
@@ -573,7 +573,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$83 – $3.4k",
   },
   'liberty-seated-half-dime': {
-    description: "The Liberty Seated Half Dime (1837–1873) is the longest-running half dime design, featuring Christian Gobrecht's iconic seated Liberty — shield at her side, pole with a liberty cap overhead — in several major design varieties over its 36-year run. Collectors recognize distinct types including the No Stars obverse (1837–1838), Stars Added (1838–1840), Drapery Added (1840–1859), Arrows at Date (1853–1855), and Legend on Obverse (1860–1873), providing a rewarding type set within a single denomination. The series includes numerous New Orleans, San Francisco, and Carson City mint issues, and the 1870-S — struck in an unknown quantity and possibly unique — is one of the great legends of US numismatics.",
+    description: "The Liberty Seated Half Dime (1837–1873) is the longest-running half dime design, featuring Christian Gobrecht's iconic seated Liberty - shield at her side, pole with a liberty cap overhead - in several major design varieties over its 36-year run. Collectors recognize distinct types including the No Stars obverse (1837–1838), Stars Added (1838–1840), Drapery Added (1840–1859), Arrows at Date (1853–1855), and Legend on Obverse (1860–1873), providing a rewarding type set within a single denomination. The series includes numerous New Orleans, San Francisco, and Carson City mint issues, and the 1870-S - struck in an unknown quantity and possibly unique - is one of the great legends of US numismatics.",
     designer: "Christian Gobrecht",
     composition: "90% Silver - 10% Copper",
     diameter: "15.5 mm",
@@ -610,7 +610,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$32 – $4373.5k",
   },
   'shield-nickel': {
-    description: "The Shield Nickel (1866–1883) was the first five-cent piece struck in the now-standard 75% copper–25% nickel composition, introduced to provide a durable, non-hoarded small-change coin after the Civil War drove silver and gold from circulation. James B. Longacre's bold shield design — the same patriotic motif as the two-cent piece — carries no portrait of Liberty, an unusual choice that gives the series a distinctive look. Two reverse varieties exist: Rays Between Stars (1866–1867), which proved difficult to strike, and the cleaner No Rays design (1867–1883), the latter far more common; the 1877 and 1878 are proof-only dates.",
+    description: "The Shield Nickel (1866–1883) was the first five-cent piece struck in the now-standard 75% copper–25% nickel composition, introduced to provide a durable, non-hoarded small-change coin after the Civil War drove silver and gold from circulation. James B. Longacre's bold shield design - the same patriotic motif as the two-cent piece - carries no portrait of Liberty, an unusual choice that gives the series a distinctive look. Two reverse varieties exist: Rays Between Stars (1866–1867), which proved difficult to strike, and the cleaner No Rays design (1867–1883), the latter far more common; the 1877 and 1878 are proof-only dates.",
     designer: "James B Longacre",
     composition: "75% Copper - 25% Nickel",
     diameter: "20.5 mm",
@@ -639,7 +639,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$25 – $30.9k",
   },
   'liberty-head-nickel': {
-    description: "The Liberty Head Nickel (1883–1912), designed by Charles Barber, is perhaps best known for its debut-year scandal: the 1883 \"No CENTS\" variety omitted the word CENTS from the reverse, enabling fraudsters to gold-plate coins and pass them as $5 gold pieces. The Mint quickly added CENTS, creating the \"With CENTS\" variety in the same year — a two-variety first-year combination that every collector wants. The 1913 Liberty Head Nickel, produced clandestinely by a Mint employee after the Buffalo Nickel replaced the design, is one of the five most famous US coins; only five specimens exist and each has sold for millions of dollars.",
+    description: "The Liberty Head Nickel (1883–1912), designed by Charles Barber, is perhaps best known for its debut-year scandal: the 1883 \"No CENTS\" variety omitted the word CENTS from the reverse, enabling fraudsters to gold-plate coins and pass them as $5 gold pieces. The Mint quickly added CENTS, creating the \"With CENTS\" variety in the same year - a two-variety first-year combination that every collector wants. The 1913 Liberty Head Nickel, produced clandestinely by a Mint employee after the Buffalo Nickel replaced the design, is one of the five most famous US coins; only five specimens exist and each has sold for millions of dollars.",
     designer: "Charles E Barber",
     composition: "75% Copper - 25% Nickel",
     diameter: "21.2 mm",
@@ -659,7 +659,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$3 – $4.2k",
   },
   'buffalo-nickel': {
-    description: "The Buffalo Nickel (1913–1938), sculpted by James Earle Fraser, is universally regarded as one of the most artistically powerful coins in US history, featuring a composite portrait of three Native American chiefs on the obverse and a massively built American bison (modeled on \"Black Diamond\" of the Central Park Zoo) on the reverse. The high-relief design was beautiful but impractical: the date and FIVE CENTS denomination wore off quickly, producing the ubiquitous dateless Buffalo Nickel that fills junk boxes today. Key dates include the 1913-S Type 2, 1916 Doubled Die Obverse, 1918/17-D overdate, 1926-S, and the legendary 1937-D \"Three-Legged\" bison — a famous die-polishing error that commands strong premiums.",
+    description: "The Buffalo Nickel (1913–1938), sculpted by James Earle Fraser, is universally regarded as one of the most artistically powerful coins in US history, featuring a composite portrait of three Native American chiefs on the obverse and a massively built American bison (modeled on \"Black Diamond\" of the Central Park Zoo) on the reverse. The high-relief design was beautiful but impractical: the date and FIVE CENTS denomination wore off quickly, producing the ubiquitous dateless Buffalo Nickel that fills junk boxes today. Key dates include the 1913-S Type 2, 1916 Doubled Die Obverse, 1918/17-D overdate, 1926-S, and the legendary 1937-D \"Three-Legged\" bison - a famous die-polishing error that commands strong premiums.",
     designer: "James Earle Fraser",
     composition: "75% Copper - 25% Nickel",
     diameter: "21.2 mm",
@@ -690,7 +690,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$1 – $154.8k",
   },
   'jefferson-nickel': {
-    description: "The Jefferson Nickel (1938–2003, 2006–present) replaced the Buffalo Nickel with Felix Schlag's portrait of Thomas Jefferson and his Monticello home — both based on existing portraits and architectural renderings — winning a national design competition. The series is best known to collectors for the 1942–1945 \"Wartime\" nickels, struck in 35% silver (with a large mintmark above Monticello) to conserve nickel for the war effort, and for the notoriously elusive \"Full Steps\" designation applied to coins showing complete steps on Monticello's portico. The 1950-D had a mintage of under 2.7 million — the lowest of any regular-issue Jefferson Nickel — and was heavily hoarded upon release.",
+    description: "The Jefferson Nickel (1938–2003, 2006–present) replaced the Buffalo Nickel with Felix Schlag's portrait of Thomas Jefferson and his Monticello home - both based on existing portraits and architectural renderings - winning a national design competition. The series is best known to collectors for the 1942–1945 \"Wartime\" nickels, struck in 35% silver (with a large mintmark above Monticello) to conserve nickel for the war effort, and for the notoriously elusive \"Full Steps\" designation applied to coins showing complete steps on Monticello's portico. The 1950-D had a mintage of under 2.7 million - the lowest of any regular-issue Jefferson Nickel - and was heavily hoarded upon release.",
     designer: "Felix Schlag",
     composition: "75% Copper - 25% Nickel",
     diameter: "21.2 mm",
@@ -727,7 +727,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$0 – $7.3k",
   },
   'draped-bust-dime': {
-    description: "The Draped Bust Dime (1796–1807) was the first ten-cent piece struck by the United States Mint, sharing Robert Scot's Draped Bust Liberty portrait with the dollar, half dollar, and half dime of the same era. Two reverse types distinguish the series: the rare Small Eagle reverse of 1796–1797 and the Heraldic Eagle reverse of 1798–1807; both types are actively collected by early American specialists. The 1804 is a famous rarity — only about a dozen are known — and the 1804 \"13 Stars\" variety commands extraordinary premiums, ranking among the great dates of early US numismatics.",
+    description: "The Draped Bust Dime (1796–1807) was the first ten-cent piece struck by the United States Mint, sharing Robert Scot's Draped Bust Liberty portrait with the dollar, half dollar, and half dime of the same era. Two reverse types distinguish the series: the rare Small Eagle reverse of 1796–1797 and the Heraldic Eagle reverse of 1798–1807; both types are actively collected by early American specialists. The 1804 is a famous rarity - only about a dozen are known - and the 1804 \"13 Stars\" variety commands extraordinary premiums, ranking among the great dates of early US numismatics.",
     designer: "Robert Scot",
     composition: "89% Silver - 11% Copper",
     diameter: "19 mm",
@@ -789,7 +789,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$54 – $42.8k",
   },
   'liberty-seated-dime': {
-    description: "The Liberty Seated Dime (1837–1891) is one of the most variety-rich series in 19th-century US coinage, with major design changes — No Stars, Stars Added, Drapery Added, Arrows at Date, and Legend Obverse types — providing a natural collecting framework across 54 years of production. Christian Gobrecht's seated Liberty design is considered a masterpiece of American numismatic art, and the series includes coins from eight different mint facilities including the rare Carson City and New Orleans issues. The 1873-CC No Arrows is the legendary key date, with only one example known, while the 1894-S — with only 24 struck, reportedly as presentation pieces — is among the most valuable coins in US numismatics.",
+    description: "The Liberty Seated Dime (1837–1891) is one of the most variety-rich series in 19th-century US coinage, with major design changes - No Stars, Stars Added, Drapery Added, Arrows at Date, and Legend Obverse types - providing a natural collecting framework across 54 years of production. Christian Gobrecht's seated Liberty design is considered a masterpiece of American numismatic art, and the series includes coins from eight different mint facilities including the rare Carson City and New Orleans issues. The 1873-CC No Arrows is the legendary key date, with only one example known, while the 1894-S - with only 24 struck, reportedly as presentation pieces - is among the most valuable coins in US numismatics.",
     designer: "Christian Gobrecht",
     composition: "90% Silver - 10% Copper",
     diameter: "17.9 mm",
@@ -826,7 +826,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$23 – $3737.5k",
   },
   'barber-dime': {
-    description: "The Barber Dime (1892–1916), designed by Chief Engraver Charles E. Barber, features a right-facing Liberty head wearing a laurel wreath and Phrygian cap — a design shared with the Barber Quarter and Barber Half Dollar of the same era. The series is a favorite with date-and-mintmark collectors because a complete set in circulated grades is challenging but achievable, with key dates including the 1895-O (only 440,000 struck), 1896-S, 1901-S, and 1903-S. Most Barber Dimes in circulation were worn nearly smooth, so examples in Very Fine or better condition attract strong collector premiums.",
+    description: "The Barber Dime (1892–1916), designed by Chief Engraver Charles E. Barber, features a right-facing Liberty head wearing a laurel wreath and Phrygian cap - a design shared with the Barber Quarter and Barber Half Dollar of the same era. The series is a favorite with date-and-mintmark collectors because a complete set in circulated grades is challenging but achievable, with key dates including the 1895-O (only 440,000 struck), 1896-S, 1901-S, and 1903-S. Most Barber Dimes in circulation were worn nearly smooth, so examples in Very Fine or better condition attract strong collector premiums.",
     designer: "Charles E Barber",
     composition: "90% Silver - 10% Copper",
     diameter: "17.9 mm",
@@ -853,7 +853,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$11 – $15.3k",
   },
   'mercury-dime': {
-    description: "The Mercury Dime (1916–1945), officially the Winged Liberty Head Dime and designed by Adolph A. Weinman, is widely considered the most beautiful dime in US coinage history: the winged cap — representing freedom of thought, not the Roman god Mercury — and the fasces-and-olive-branch reverse are masterpieces of the American Renaissance. The 1916-D is the legendary key date, with fewer than 265,000 struck and most found in heavily worn condition; a Fine or better 1916-D is a meaningful acquisition. Collectors also prize the \"Full Split Bands\" (FSB) designation — indicating complete separation of the horizontal bands on the reverse fasces — which can multiply the value of any date tenfold or more.",
+    description: "The Mercury Dime (1916–1945), officially the Winged Liberty Head Dime and designed by Adolph A. Weinman, is widely considered the most beautiful dime in US coinage history: the winged cap - representing freedom of thought, not the Roman god Mercury - and the fasces-and-olive-branch reverse are masterpieces of the American Renaissance. The 1916-D is the legendary key date, with fewer than 265,000 struck and most found in heavily worn condition; a Fine or better 1916-D is a meaningful acquisition. Collectors also prize the \"Full Split Bands\" (FSB) designation - indicating complete separation of the horizontal bands on the reverse fasces - which can multiply the value of any date tenfold or more.",
     designer: "Adolph A Weinman",
     composition: "90% Silver - 10% Copper",
     diameter: "17.9 mm",
@@ -873,7 +873,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$7 – $32.7k",
   },
   'roosevelt-dime': {
-    description: "The Roosevelt Dime (1946–present), designed by John R. Sinnock and introduced shortly after Franklin D. Roosevelt's death to honor the founder of the March of Dimes, is the most widely collected dime series by volume because nearly every American has handled one. Pre-1965 issues were struck in 90% silver and are collected for both their silver content and their numismatic value, while post-1964 clad issues are sought in high grade with \"Full Torch Bands\" — complete horizontal lines on the reverse torch — as the key quality designation. The 1950 and 1950-S proof issues and the 1996-W (released only in Mint sets for the 50th anniversary) are standout collector coins within the modern series.",
+    description: "The Roosevelt Dime (1946–present), designed by John R. Sinnock and introduced shortly after Franklin D. Roosevelt's death to honor the founder of the March of Dimes, is the most widely collected dime series by volume because nearly every American has handled one. Pre-1965 issues were struck in 90% silver and are collected for both their silver content and their numismatic value, while post-1964 clad issues are sought in high grade with \"Full Torch Bands\" - complete horizontal lines on the reverse torch - as the key quality designation. The 1950 and 1950-S proof issues and the 1996-W (released only in Mint sets for the 50th anniversary) are standout collector coins within the modern series.",
     designer: "John R Sinnock",
     composition: "91.67% Copper - 8.33% Nickel",
     diameter: "17.9 mm",
@@ -908,7 +908,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$7 – $198",
   },
   'draped-bust-quarter': {
-    description: "The Draped Bust Quarter (1796–1807) encompasses only two years of production — 1796 and 1804–1807 — with a gap of eight years during which no quarters were struck, making a complete date set both small and extremely expensive. Robert Scot's Draped Bust Liberty appears with a Small Eagle reverse in 1796 (only 6,146 struck, making it one of the rarest early US coins) and a Heraldic Eagle reverse in 1804–1807. The 1796 quarter, often called the \"key to the Draped Bust series,\" is a true rarity in any grade and a landmark coin in early American numismatics.",
+    description: "The Draped Bust Quarter (1796–1807) encompasses only two years of production - 1796 and 1804–1807 - with a gap of eight years during which no quarters were struck, making a complete date set both small and extremely expensive. Robert Scot's Draped Bust Liberty appears with a Small Eagle reverse in 1796 (only 6,146 struck, making it one of the rarest early US coins) and a Heraldic Eagle reverse in 1804–1807. The 1796 quarter, often called the \"key to the Draped Bust series,\" is a true rarity in any grade and a landmark coin in early American numismatics.",
     designer: "Robert Scot",
     composition: "89% Silver - 11% Copper",
     diameter: "27.5 mm",
@@ -957,7 +957,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$134 – $339.0k",
   },
   'liberty-seated-quarter': {
-    description: "The Liberty Seated Quarter (1838–1891) is a sprawling series of 54 years, multiple mint facilities, and several major design types — including Drapery Added, Arrows and Rays, Arrows at Date, and Motto Added — that offer collectors a rich variety of type and date challenges. Several dates are major rarities: the 1842 Small Date, the 1850-O in high grade, and especially the 1873-CC No Arrows, of which only four or five are known. Gobrecht's seated Liberty design, with its allegorical elegance, is considered one of the finest artistic achievements of 19th-century American coinage.",
+    description: "The Liberty Seated Quarter (1838–1891) is a sprawling series of 54 years, multiple mint facilities, and several major design types - including Drapery Added, Arrows and Rays, Arrows at Date, and Motto Added - that offer collectors a rich variety of type and date challenges. Several dates are major rarities: the 1842 Small Date, the 1850-O in high grade, and especially the 1873-CC No Arrows, of which only four or five are known. Gobrecht's seated Liberty design, with its allegorical elegance, is considered one of the finest artistic achievements of 19th-century American coinage.",
     designer: "Christian Gobrecht",
     composition: "90% Silver - 10% Copper",
     diameter: "24.3 mm",
@@ -994,7 +994,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$45 – $563.2k",
   },
   'barber-quarter': {
-    description: "The Barber Quarter (1892–1916), sharing Charles Barber's Liberty Head obverse with the dime and half dollar of the same design, is the workhorse of 19th-to-early-20th-century American silver coinage and today a popular target for date-and-mintmark collectors. Key dates include the 1896-S (mintage ~188,000), 1901-S (72,000 — one of the rarest 20th-century US quarters in fine condition), and 1913-S, which is extremely elusive in grades above Very Fine. A complete circulated set represents a serious long-term collecting project, with high-grade examples of tough dates carrying substantial premiums.",
+    description: "The Barber Quarter (1892–1916), sharing Charles Barber's Liberty Head obverse with the dime and half dollar of the same design, is the workhorse of 19th-to-early-20th-century American silver coinage and today a popular target for date-and-mintmark collectors. Key dates include the 1896-S (mintage ~188,000), 1901-S (72,000 - one of the rarest 20th-century US quarters in fine condition), and 1913-S, which is extremely elusive in grades above Very Fine. A complete circulated set represents a serious long-term collecting project, with high-grade examples of tough dates carrying substantial premiums.",
     designer: "Charles E Barber",
     composition: "90% Silver - 10% Copper",
     diameter: "24.3 mm",
@@ -1010,7 +1010,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$23 – $62.6k",
   },
   'standing-liberty-quarter': {
-    description: "The Standing Liberty Quarter (1916–1930), designed by sculptor Hermon Atkins MacNeil, caused an immediate sensation: the original 1916–1917 Type 1 design depicted Liberty with an exposed right breast, which was modified in 1917 (Type 2) to show her in full chain-mail armor following public controversy. Collectors especially prize the \"Full Head\" designation — indicating Liberty's helmet with three distinct leaves fully struck — which is absent on the vast majority of examples due to the design's high relief. The 1916 (only 52,000 struck, essentially all in Type 1) is the paramount rarity; the 1918/17-S overdate and various 1923-S examples are other key treasures.",
+    description: "The Standing Liberty Quarter (1916–1930), designed by sculptor Hermon Atkins MacNeil, caused an immediate sensation: the original 1916–1917 Type 1 design depicted Liberty with an exposed right breast, which was modified in 1917 (Type 2) to show her in full chain-mail armor following public controversy. Collectors especially prize the \"Full Head\" designation - indicating Liberty's helmet with three distinct leaves fully struck - which is absent on the vast majority of examples due to the design's high relief. The 1916 (only 52,000 struck, essentially all in Type 1) is the paramount rarity; the 1918/17-S overdate and various 1923-S examples are other key treasures.",
     designer: "Hermon A MacNeil",
     composition: "90% Silver - 10% Copper",
     diameter: "24.3 mm",
@@ -1097,7 +1097,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'america-the-beautiful-quarters': {
-    description: "The America the Beautiful Quarters (2010–2021) followed the State Quarters with 56 new reverse designs honoring national parks and historic sites — five per year over 11 years — providing collectors another decade of new designs from some of America's most iconic landscapes, from Yosemite to Tuskegee Airmen National Historic Site. The US Mint also struck five-ounce .999 silver bullion versions of each design, which became enormously popular as large-format collector coins at 3 inches in diameter. The series concluded in 2021 with Tuskegee Airmen National Historic Site (Alabama), after which the American Women Quarters took over.",
+    description: "The America the Beautiful Quarters (2010–2021) followed the State Quarters with 56 new reverse designs honoring national parks and historic sites - five per year over 11 years - providing collectors another decade of new designs from some of America's most iconic landscapes, from Yosemite to Tuskegee Airmen National Historic Site. The US Mint also struck five-ounce .999 silver bullion versions of each design, which became enormously popular as large-format collector coins at 3 inches in diameter. The series concluded in 2021 with Tuskegee Airmen National Historic Site (Alabama), after which the American Women Quarters took over.",
     designer: "William Cousins",
     composition: "91.67% Copper - 8.33% Nickel",
     diameter: "24.3 mm",
@@ -1169,7 +1169,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'flowing-hair-half-dollar': {
-    description: "The Flowing Hair Half Dollar (1794–1795) is the first half dollar struck by the United States Mint, designed by Robert Scot with a wild-haired Liberty obverse and a small eagle reverse — the same design used on the dollar and half dime of the same period. With a combined two-year mintage of around 300,000, genuine Mint State survivors are extraordinary rarities; the 1794 half dollar in particular is regarded as one of the most important early American coins, rivaling the 1794 dollar in prestige. A complete two-coin date set in any grade represents a significant accomplishment in early American collecting.",
+    description: "The Flowing Hair Half Dollar (1794–1795) is the first half dollar struck by the United States Mint, designed by Robert Scot with a wild-haired Liberty obverse and a small eagle reverse - the same design used on the dollar and half dime of the same period. With a combined two-year mintage of around 300,000, genuine Mint State survivors are extraordinary rarities; the 1794 half dollar in particular is regarded as one of the most important early American coins, rivaling the 1794 dollar in prestige. A complete two-coin date set in any grade represents a significant accomplishment in early American collecting.",
     designer: "Robert Scot",
     composition: "89% Silver - 11% Copper",
     diameter: "32.5 mm",
@@ -1187,7 +1187,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$1.4k – $-Infinity",
   },
   'draped-bust-half-dollar': {
-    description: "The Draped Bust Half Dollar (1796–1807) continues Robert Scot's refined portrait of Liberty across two reverse types — the extremely rare Small Eagle (1796–1797, with the 1796 having only 3,918 struck) and the more common Heraldic Eagle (1801–1807). The 1796 and 1797 Small Eagle issues are among the most coveted early US coins; the 1796 \"16 Stars\" and \"15 Stars\" varieties are separately collected by specialists. The later Heraldic Eagle dates are more accessible and are a staple of advanced early American collections.",
+    description: "The Draped Bust Half Dollar (1796–1807) continues Robert Scot's refined portrait of Liberty across two reverse types - the extremely rare Small Eagle (1796–1797, with the 1796 having only 3,918 struck) and the more common Heraldic Eagle (1801–1807). The 1796 and 1797 Small Eagle issues are among the most coveted early US coins; the 1796 \"16 Stars\" and \"15 Stars\" varieties are separately collected by specialists. The later Heraldic Eagle dates are more accessible and are a staple of advanced early American collections.",
     designer: "Robert Scot",
     composition: "89% Silver - 11% Copper",
     diameter: "32.5 mm",
@@ -1310,7 +1310,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$49 – $54.4k",
   },
   'walking-liberty-half-dollar': {
-    description: "The Walking Liberty Half Dollar (1916–1947), designed by Adolph A. Weinman (who also designed the Mercury Dime), is widely acclaimed as the most beautiful US coin of the 20th century: a full-length Liberty striding toward the rising sun on the obverse and a majestic eagle about to take flight on the reverse. Key dates include the 1916 and 1916-D with mintmark on the obverse, the 1921 and 1921-D (both classic rarities with low mintages), and the 1938-D. The \"Full Head\" designation — showing complete detail in Liberty's cap and hair — commands significant premiums on most dates and has driven sophisticated registry set competition.",
+    description: "The Walking Liberty Half Dollar (1916–1947), designed by Adolph A. Weinman (who also designed the Mercury Dime), is widely acclaimed as the most beautiful US coin of the 20th century: a full-length Liberty striding toward the rising sun on the obverse and a majestic eagle about to take flight on the reverse. Key dates include the 1916 and 1916-D with mintmark on the obverse, the 1921 and 1921-D (both classic rarities with low mintages), and the 1938-D. The \"Full Head\" designation - showing complete detail in Liberty's cap and hair - commands significant premiums on most dates and has driven sophisticated registry set competition.",
     designer: "Adolph A Weinman",
     composition: "90% Silver - 10% Copper",
     diameter: "30.6 mm",
@@ -1327,7 +1327,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$38 – $38.9k",
   },
   'franklin-half-dollar': {
-    description: "The Franklin Half Dollar (1948–1963), designed by John R. Sinnock, features a portrait of Benjamin Franklin on the obverse — the only time a non-president appeared on a circulating US half dollar — with the Philadelphia Liberty Bell and a small eagle on the reverse (required by law). The series is collected both as a date-and-mintmark set and for \"Full Bell Lines\" (FBL) quality, indicating complete horizontal lines at the bottom of the Liberty Bell — a designation that dramatically narrows the number of coins qualifying in any given date and can multiply value tenfold. The 1955 \"Bugs Bunny\" variety — caused by clashing dies that gave Franklin a distinctive moustache — is a popular novelty variety.",
+    description: "The Franklin Half Dollar (1948–1963), designed by John R. Sinnock, features a portrait of Benjamin Franklin on the obverse - the only time a non-president appeared on a circulating US half dollar - with the Philadelphia Liberty Bell and a small eagle on the reverse (required by law). The series is collected both as a date-and-mintmark set and for \"Full Bell Lines\" (FBL) quality, indicating complete horizontal lines at the bottom of the Liberty Bell - a designation that dramatically narrows the number of coins qualifying in any given date and can multiply value tenfold. The 1955 \"Bugs Bunny\" variety - caused by clashing dies that gave Franklin a distinctive moustache - is a popular novelty variety.",
     designer: "John R Sinnock",
     composition: "90% Silver - 10% Copper",
     diameter: "30.6 mm",
@@ -1379,7 +1379,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$15 – $101",
   },
   'flowing-hair-dollar': {
-    description: "The Flowing Hair Dollar (1794–1795) is the first silver dollar struck by the United States Mint, and the 1794 specimen — with only 1,758 coins delivered — is arguably the most famous and valuable US coin of all, with the finest known example selling for over $10 million in 2013. Robert Scot's design features Liberty with flowing hair on the obverse and a small, somewhat ungainly eagle on the reverse, reflecting the technical limitations of the young Mint. The 1795 is more available and comes in numerous die varieties, including the \"3 Leaves\" and \"2 Leaves\" reverses documented by die variety specialists.",
+    description: "The Flowing Hair Dollar (1794–1795) is the first silver dollar struck by the United States Mint, and the 1794 specimen - with only 1,758 coins delivered - is arguably the most famous and valuable US coin of all, with the finest known example selling for over $10 million in 2013. Robert Scot's design features Liberty with flowing hair on the obverse and a small, somewhat ungainly eagle on the reverse, reflecting the technical limitations of the young Mint. The 1795 is more available and comes in numerous die varieties, including the \"3 Leaves\" and \"2 Leaves\" reverses documented by die variety specialists.",
     designer: "Robert Scot",
     composition: "89% Silver - 11% Copper",
     diameter: "39.5 mm",
@@ -1398,7 +1398,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$2.8k – $12907.8k",
   },
   'draped-bust-dollar': {
-    description: "The Draped Bust Dollar (1795–1804) carries Robert Scot's refined Liberty portrait in two reverse types — Small Eagle (1795–1798) and Heraldic Eagle (1798–1804) — and is capped by the legendary 1804 \"King of US Coins,\" actually a restrike made in the 1830s as diplomatic gifts and now one of the most valuable and storied coins in the world (approximately 15 known, each worth millions). The true 1804-dated dollars were all made well after that date; genuine circulation-strike Draped Bust Dollars from 1795–1803 are expensive rarities in their own right, with Mint State examples commanding extraordinary premiums.",
+    description: "The Draped Bust Dollar (1795–1804) carries Robert Scot's refined Liberty portrait in two reverse types - Small Eagle (1795–1798) and Heraldic Eagle (1798–1804) - and is capped by the legendary 1804 \"King of US Coins,\" actually a restrike made in the 1830s as diplomatic gifts and now one of the most valuable and storied coins in the world (approximately 15 known, each worth millions). The true 1804-dated dollars were all made well after that date; genuine circulation-strike Draped Bust Dollars from 1795–1803 are expensive rarities in their own right, with Mint State examples commanding extraordinary premiums.",
     designer: "Robert Scot",
     composition: "89% Silver - 11% Copper",
     diameter: "39.5 mm",
@@ -1435,7 +1435,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$1.2k – $1465.2k",
   },
   'gobrecht-dollar': {
-    description: "The Gobrecht Dollar (1836–1839) was a pattern and limited-issue coin designed by Christian Gobrecht to test new coinage machinery and the aesthetics of Gobrecht's seated Liberty motif before it was adopted for all denominations. The obverse features the first appearance of Liberty Seated — the design that would define American silver coinage for the next half-century — and the reverse displays a magnificent flying eagle later used on the Flying Eagle Cent. Original 1836 proofs and restrikes from later dates are carefully distinguished by specialists, and any genuine Gobrecht Dollar is a major trophy coin.",
+    description: "The Gobrecht Dollar (1836–1839) was a pattern and limited-issue coin designed by Christian Gobrecht to test new coinage machinery and the aesthetics of Gobrecht's seated Liberty motif before it was adopted for all denominations. The obverse features the first appearance of Liberty Seated - the design that would define American silver coinage for the next half-century - and the reverse displays a magnificent flying eagle later used on the Flying Eagle Cent. Original 1836 proofs and restrikes from later dates are carefully distinguished by specialists, and any genuine Gobrecht Dollar is a major trophy coin.",
     designer: "Christian Gobrecht",
     composition: "89% Silver - 11% Copper",
     diameter: "39.5 mm",
@@ -1459,7 +1459,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'liberty-seated-dollar': {
-    description: "The Liberty Seated Dollar (1840–1873) is a large and impressive silver dollar series produced across multiple mints including Philadelphia, New Orleans, San Francisco, and Carson City, with both proof and circulation strikes offering collectors a wide field of pursuit. Key rarities include the 1851, 1852, and the 1870-S (of which perhaps 12 are known, reportedly placed in the cornerstone of the San Francisco Mint). The series ended when the Coinage Act of 1873 — the \"Crime of 1873\" in the eyes of silver interests — demonetized the silver dollar, ending its production for domestic circulation.",
+    description: "The Liberty Seated Dollar (1840–1873) is a large and impressive silver dollar series produced across multiple mints including Philadelphia, New Orleans, San Francisco, and Carson City, with both proof and circulation strikes offering collectors a wide field of pursuit. Key rarities include the 1851, 1852, and the 1870-S (of which perhaps 12 are known, reportedly placed in the cornerstone of the San Francisco Mint). The series ended when the Coinage Act of 1873 - the \"Crime of 1873\" in the eyes of silver interests - demonetized the silver dollar, ending its production for domestic circulation.",
     designer: "Christian Gobrecht",
     composition: "90% Silver - 10% Copper",
     diameter: "38.1 mm",
@@ -1490,7 +1490,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$423 – $279.0k",
   },
   'trade-dollar': {
-    description: "The Trade Dollar (1873–1885) was the first US coin explicitly designed for export trade with Asia, struck in slightly heavier silver than the Liberty Seated Dollar to compete with the Mexican peso in Asian commerce, and bearing the denomination \"420 GRAINS, 900 FINE\" on the reverse. The coin was initially legal tender in the US but Congress revoked its domestic status in 1876, leading to embarrassing episodes of companies paying workers in trade dollars that merchants refused at face value. Several Carson City and San Francisco dates in the 1870s and 1880s are significant rarities, and the 1884 and 1885 issues were struck only in proof — each with a mintage of only 10 coins — making them among the most exclusive US issues ever produced.",
+    description: "The Trade Dollar (1873–1885) was the first US coin explicitly designed for export trade with Asia, struck in slightly heavier silver than the Liberty Seated Dollar to compete with the Mexican peso in Asian commerce, and bearing the denomination \"420 GRAINS, 900 FINE\" on the reverse. The coin was initially legal tender in the US but Congress revoked its domestic status in 1876, leading to embarrassing episodes of companies paying workers in trade dollars that merchants refused at face value. Several Carson City and San Francisco dates in the 1870s and 1880s are significant rarities, and the 1884 and 1885 issues were struck only in proof - each with a mintage of only 10 coins - making them among the most exclusive US issues ever produced.",
     designer: "William Barber",
     composition: "90% Silver - 10% Copper",
     diameter: "38.1 mm",
@@ -1559,7 +1559,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$78 – $726.6k",
   },
   'peace-dollar': {
-    description: "The Peace Dollar (1921–1935) was created to commemorate the end of World War I, designed by sculptor Anthony de Francisci with a high-relief 1921 first-year type that was reduced to lower relief in 1922 for practical minting. The design features a radiant Liberty wearing a tiara on the obverse and a proud eagle perched on a rock with the word PEACE below on the reverse — a message of post-war optimism. Key dates include the high-relief 1921, the rare 1928 (mintage only 360,649), and the 1934-S; the series ended abruptly in 1935 as the Depression curtailed silver dollar production, leaving collectors with a compact and historically meaningful 24-coin set.",
+    description: "The Peace Dollar (1921–1935) was created to commemorate the end of World War I, designed by sculptor Anthony de Francisci with a high-relief 1921 first-year type that was reduced to lower relief in 1922 for practical minting. The design features a radiant Liberty wearing a tiara on the obverse and a proud eagle perched on a rock with the word PEACE below on the reverse - a message of post-war optimism. Key dates include the high-relief 1921, the rare 1928 (mintage only 360,649), and the 1934-S; the series ended abruptly in 1935 as the Depression curtailed silver dollar production, leaving collectors with a compact and historically meaningful 24-coin set.",
     designer: "Anthony de Francisci",
     composition: "99.9% Fine Silver",
     diameter: "38.1 mm",
@@ -1580,7 +1580,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$72 – $28.1k",
   },
   'eisenhower-dollar': {
-    description: "The Eisenhower Dollar (1971–1978), designed by Frank Gasparro to honor both President Dwight D. Eisenhower and the first Moon landing, is the last large-diameter US dollar coin struck for circulation and one of the most casually collected modern series. The reverse depicts the Apollo 11 mission insignia — an eagle landing on the Moon — in a subtle tribute to the Space Age. Collector versions were struck in 40% silver for all years (the so-called \"Blue Ike\" uncirculated and \"Brown Ike\" proof sets), while the 1776–1976 Bicentennial reverse designed by Dennis R. Williams adds a type-collecting dimension; the 1972 \"Type 2\" reverse, with a clearer Earth relief, is the most sought-after variety.",
+    description: "The Eisenhower Dollar (1971–1978), designed by Frank Gasparro to honor both President Dwight D. Eisenhower and the first Moon landing, is the last large-diameter US dollar coin struck for circulation and one of the most casually collected modern series. The reverse depicts the Apollo 11 mission insignia - an eagle landing on the Moon - in a subtle tribute to the Space Age. Collector versions were struck in 40% silver for all years (the so-called \"Blue Ike\" uncirculated and \"Brown Ike\" proof sets), while the 1776–1976 Bicentennial reverse designed by Dennis R. Williams adds a type-collecting dimension; the 1972 \"Type 2\" reverse, with a clearer Earth relief, is the most sought-after variety.",
     designer: "Frank Gasparro",
     composition: "91.67% Copper - 8.33% Nickel",
     diameter: "38.1 mm",
@@ -1609,7 +1609,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'susan-b-anthony-dollar': {
-    description: "The Susan B. Anthony Dollar (1979–1981, 1999) was the first US circulating coin to depict a real woman, honoring the suffragist leader with a portrait by Frank Gasparro flanking a reduced version of the Eisenhower Eagle reverse. The coin was commercially unsuccessful — widely confused with the quarter due to its similar size and eleven-sided border — and production was suspended after 1981, with a small 1999 run struck only to meet a reported shortage before Sacagawea dollars arrived. The 1979-P \"Wide Rim\" (Near Date) variety is the series' key collectible, and the 1981 proof coins in all three finishes are actively collected.",
+    description: "The Susan B. Anthony Dollar (1979–1981, 1999) was the first US circulating coin to depict a real woman, honoring the suffragist leader with a portrait by Frank Gasparro flanking a reduced version of the Eisenhower Eagle reverse. The coin was commercially unsuccessful - widely confused with the quarter due to its similar size and eleven-sided border - and production was suspended after 1981, with a small 1999 run struck only to meet a reported shortage before Sacagawea dollars arrived. The 1979-P \"Wide Rim\" (Near Date) variety is the series' key collectible, and the 1981 proof coins in all three finishes are actively collected.",
     designer: "Frank Gasparro",
     composition: "91.67% Copper - 8.33% Nickel",
     diameter: "26.5 mm",
@@ -1628,7 +1628,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'sacagawea-dollar': {
-    description: "The Sacagawea Dollar (2000–present) replaced the SBA Dollar with a gold-colored manganese-brass coin honoring the Shoshone woman who guided Lewis and Clark, designed by Glenna Goodacre; her daughter served as the model for Sacagawea with infant Jean Baptiste Charbonneau. The reverse changed annually from 2009 onward as part of the Native American Dollar series, honoring contributions of Native Americans with designs selected in consultation with tribal representatives. The 2000-P \"Cheerios Dollar\" — distributed in Cheerios boxes for promotion — features a distinctive enhanced tail feathers reverse design that is a prized variety worth many times face value.",
+    description: "The Sacagawea Dollar (2000–present) replaced the SBA Dollar with a gold-colored manganese-brass coin honoring the Shoshone woman who guided Lewis and Clark, designed by Glenna Goodacre; her daughter served as the model for Sacagawea with infant Jean Baptiste Charbonneau. The reverse changed annually from 2009 onward as part of the Native American Dollar series, honoring contributions of Native Americans with designs selected in consultation with tribal representatives. The 2000-P \"Cheerios Dollar\" - distributed in Cheerios boxes for promotion - features a distinctive enhanced tail feathers reverse design that is a prized variety worth many times face value.",
     designer: "Glenna Goodacre",
     composition: "88.5% Copper - 6% Zinc - 3.5% Manganese - 2% Nickel",
     diameter: "26.5 mm",
@@ -1689,7 +1689,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'american-innovation-dollar': {
-    description: "The American Innovation Dollar series (2018–2032) is a 57-coin program honoring innovations and innovators from each US state, territory, and DC — four designs per year — with reverses developed in consultation with state officials to celebrate indigenous inventions ranging from the airplane (Ohio) to the Post-it Note (Minnesota). Struck only in collector formats (not released for general circulation), the coins are popular with type collectors and those building complete state sets. The series represents a modern take on the State Quarters concept, using the dollar platform to spotlight American ingenuity.",
+    description: "The American Innovation Dollar series (2018–2032) is a 57-coin program honoring innovations and innovators from each US state, territory, and DC - four designs per year - with reverses developed in consultation with state officials to celebrate indigenous inventions ranging from the airplane (Ohio) to the Post-it Note (Minnesota). Struck only in collector formats (not released for general circulation), the coins are popular with type collectors and those building complete state sets. The series represents a modern take on the State Quarters concept, using the dollar platform to spotlight American ingenuity.",
     designer: "Justin Kunz",
     composition: "88.5% Copper - 6% Zinc - 3.5% Manganese - 2% Nickel",
     diameter: "26.5 mm",
@@ -1725,7 +1725,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'liberty-head-gold-dollar': {
-    description: "The Liberty Head Gold Dollar (1849–1854) was the United States' smallest gold coin, introduced after the California Gold Rush made gold plentiful and cheap enough to mint tiny one-dollar pieces in the precious metal. James B. Longacre's small-diameter Type 1 Liberty portrait proved difficult to strike and even harder to handle — the coins were tiny and thin — prompting design changes within five years. Several dates, particularly the early New Orleans and Charlotte Mint issues, carry significant premiums, and any high-grade example with strong design details is a genuine rarity given the fragile nature of the planchet.",
+    description: "The Liberty Head Gold Dollar (1849–1854) was the United States' smallest gold coin, introduced after the California Gold Rush made gold plentiful and cheap enough to mint tiny one-dollar pieces in the precious metal. James B. Longacre's small-diameter Type 1 Liberty portrait proved difficult to strike and even harder to handle - the coins were tiny and thin - prompting design changes within five years. Several dates, particularly the early New Orleans and Charlotte Mint issues, carry significant premiums, and any high-grade example with strong design details is a genuine rarity given the fragile nature of the planchet.",
     designer: "James B Longacre",
     composition: "90% Gold - 10% Copper",
     diameter: "13 mm",
@@ -1754,7 +1754,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'indian-princess-gold-dollar': {
-    description: "The Indian Princess Gold Dollar (1854–1889) replaced the Type 1 Liberty with a new design: an Indian princess (or Native American) in a feathered headdress in two sizes — the Small Indian Head Type 2 (1854–1856) and the enlarged Large Indian Head Type 3 (1856–1889). The Type 2 is one of the most challenging short series in US gold coinage, with numerous scarce dates and the notoriously difficult 1856 Slanted 5 variety; the Type 3, while spanning 33 years, includes multiple branch mint issues from Charlotte, Dahlonega, New Orleans, and San Francisco that are legitimate rarities in Mint State. The series ended in 1889 when gold dollar production was finally discontinued.",
+    description: "The Indian Princess Gold Dollar (1854–1889) replaced the Type 1 Liberty with a new design: an Indian princess (or Native American) in a feathered headdress in two sizes - the Small Indian Head Type 2 (1854–1856) and the enlarged Large Indian Head Type 3 (1856–1889). The Type 2 is one of the most challenging short series in US gold coinage, with numerous scarce dates and the notoriously difficult 1856 Slanted 5 variety; the Type 3, while spanning 33 years, includes multiple branch mint issues from Charlotte, Dahlonega, New Orleans, and San Francisco that are legitimate rarities in Mint State. The series ended in 1889 when gold dollar production was finally discontinued.",
     designer: "James B Longacre",
     composition: "90% Gold - 10% Copper",
     diameter: "15 mm",
@@ -1812,7 +1812,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'capped-bust-quarter-eagle': {
-    description: "The Capped Bust Quarter Eagle encompasses two distinct design periods: John Reich's early Capped Bust design (1808) — produced for only one year with a single variety — and the later Capped Head to Left design (1821–1834), the latter further divided into Large and Reduced diameter types. The 1808 is a single-year type coin with a mintage of 2,710, making it intensely sought after by type collectors and date specialists alike. Several dates in the 1820s–1830s have mintages under 10,000 and are rarely seen in the marketplace.",
+    description: "The Capped Bust Quarter Eagle encompasses two distinct design periods: John Reich's early Capped Bust design (1808) - produced for only one year with a single variety - and the later Capped Head to Left design (1821–1834), the latter further divided into Large and Reduced diameter types. The 1808 is a single-year type coin with a mintage of 2,710, making it intensely sought after by type collectors and date specialists alike. Several dates in the 1820s–1830s have mintages under 10,000 and are rarely seen in the marketplace.",
     designer: "John Reich",
     composition: "92% Gold - 8% Silver and Copper",
     diameter: "18.2 mm",
@@ -1838,7 +1838,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'classic-head-quarter-eagle': {
-    description: "The Classic Head Quarter Eagle (1834–1839) was introduced as part of a broader redesign of US gold coinage following an 1834 law that reduced the gold content of coins to keep them in circulation rather than being melted. William Kneass's portrait of Liberty without the cap — a \"Classic Head\" derived from Reich's earlier cent design — is found on a short six-date set including the key 1834 \"Plain 4\" and \"Crosslet 4\" varieties. Charlotte (C) and Dahlonega (D) Mint issues from 1838–1839 are legitimate rarities reflecting the early output of the Southern branch mints established to process locally mined gold.",
+    description: "The Classic Head Quarter Eagle (1834–1839) was introduced as part of a broader redesign of US gold coinage following an 1834 law that reduced the gold content of coins to keep them in circulation rather than being melted. William Kneass's portrait of Liberty without the cap - a \"Classic Head\" derived from Reich's earlier cent design - is found on a short six-date set including the key 1834 \"Plain 4\" and \"Crosslet 4\" varieties. Charlotte (C) and Dahlonega (D) Mint issues from 1838–1839 are legitimate rarities reflecting the early output of the Southern branch mints established to process locally mined gold.",
     designer: "William Kneass",
     composition: "90% Gold - 10% Silver and Copper",
     diameter: "18.2 mm",
@@ -1895,7 +1895,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'indian-head-quarter-eagle': {
-    description: "The Indian Head Quarter Eagle (1908–1929), designed by Bela Lyon Pratt using an incuse (sunken relief) motif adapted from Augustus Saint-Gaudens' sketches, was controversial upon release: critics complained that the recessed design would harbor germs and dirt. Pratt's design — a Native American head wearing a war bonnet, in incuse relief — was strikingly different from any previous US coin and gives this series a unique visual identity shared only with the Indian Head Half Eagle. The 1911-D is the undisputed key date, with a mintage of only 55,680, while the 1914 and 1925-D are also significantly scarce.",
+    description: "The Indian Head Quarter Eagle (1908–1929), designed by Bela Lyon Pratt using an incuse (sunken relief) motif adapted from Augustus Saint-Gaudens' sketches, was controversial upon release: critics complained that the recessed design would harbor germs and dirt. Pratt's design - a Native American head wearing a war bonnet, in incuse relief - was strikingly different from any previous US coin and gives this series a unique visual identity shared only with the Indian Head Half Eagle. The 1911-D is the undisputed key date, with a mintage of only 55,680, while the 1914 and 1925-D are also significantly scarce.",
     designer: "Bela Lyon Pratt",
     composition: "90% Gold - 10% Copper",
     diameter: "18 mm",
@@ -1906,7 +1906,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'indian-princess-three-dollar-gold': {
-    description: "The Indian Princess Three Dollar Gold Piece (1854–1889) was an unusual denomination whose practical justification — paying for 100 three-cent stamps — was always tenuous, and the coin never achieved widespread commercial use. James B. Longacre's Indian princess design is elegant and consistent across the series, with Philadelphia, Dahlonega, New Orleans, and San Francisco issues providing variety for branch-mint specialists. The 1870-S is the great rarity of the series — reportedly only one is known — and several Philadelphia proof-only dates from the 1870s and 1880s are among the most coveted 19th-century US proofs.",
+    description: "The Indian Princess Three Dollar Gold Piece (1854–1889) was an unusual denomination whose practical justification - paying for 100 three-cent stamps - was always tenuous, and the coin never achieved widespread commercial use. James B. Longacre's Indian princess design is elegant and consistent across the series, with Philadelphia, Dahlonega, New Orleans, and San Francisco issues providing variety for branch-mint specialists. The 1870-S is the great rarity of the series - reportedly only one is known - and several Philadelphia proof-only dates from the 1870s and 1880s are among the most coveted 19th-century US proofs.",
     designer: "James B Longacre",
     composition: "90% Gold - 10% Copper",
     diameter: "20.5 mm",
@@ -1949,7 +1949,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'coiled-hair-stella': {
-    description: "The Coiled Hair Stella ($4 Gold Pattern, 1879–1880) is the rarer companion to the Flowing Hair type, featuring an alternate portrait of Liberty designed by Charles Barber with her hair tightly coiled — a more formal, classical presentation. With estimated mintages of around 10 examples for 1879 and 10 for 1880, the Coiled Hair Stella is one of the rarest US coin types that can still occasionally be acquired at auction, each appearance being a major numismatic event. The four Stella varieties (two designs × two dates) represent the pinnacle of US pattern coin collecting and regularly set price records.",
+    description: "The Coiled Hair Stella ($4 Gold Pattern, 1879–1880) is the rarer companion to the Flowing Hair type, featuring an alternate portrait of Liberty designed by Charles Barber with her hair tightly coiled - a more formal, classical presentation. With estimated mintages of around 10 examples for 1879 and 10 for 1880, the Coiled Hair Stella is one of the rarest US coin types that can still occasionally be acquired at auction, each appearance being a major numismatic event. The four Stella varieties (two designs × two dates) represent the pinnacle of US pattern coin collecting and regularly set price records.",
     designer: "Charles E Barber",
     composition: "85% Gold - 15% Silver and Copper",
     diameter: "22 mm",
@@ -2000,7 +2000,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'capped-bust-half-eagle': {
-    description: "The Capped Bust Half Eagle (1807–1834) spans two generations of the Capped Bust design — the early John Reich version (1807–1812) and the later refined Capped Head type (1813–1834) — and includes coins from both Philadelphia and the very first US branch mints. The series is a favorite among gold specialists because of its impressive size, beautiful design, and the significant number of date and die varieties available. The 1815 is among the rarest regular-issue US gold coins, with a mintage of only 635, and several 1820s dates are known only in tiny quantities.",
+    description: "The Capped Bust Half Eagle (1807–1834) spans two generations of the Capped Bust design - the early John Reich version (1807–1812) and the later refined Capped Head type (1813–1834) - and includes coins from both Philadelphia and the very first US branch mints. The series is a favorite among gold specialists because of its impressive size, beautiful design, and the significant number of date and die varieties available. The 1815 is among the rarest regular-issue US gold coins, with a mintage of only 635, and several 1820s dates are known only in tiny quantities.",
     designer: "John Reich",
     composition: "92% Gold - 8% Silver and Copper",
     diameter: "23.8 mm",
@@ -2036,7 +2036,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'classic-head-half-eagle': {
-    description: "The Classic Head Half Eagle (1834–1838) was William Kneass's redesign of the half eagle following the 1834 reduction in gold standard weight, intended to end the chronic melting and hoarding of pre-1834 gold coins. The design features Liberty without a cap in a classical style, struck at Philadelphia and at the new Charlotte (C) and Dahlonega (D) branch mints in 1838 — the first year of Southern branch mint production. Charlotte and Dahlonega 1838 issues are genuine first-year branch-mint rarities that attract strong collector premiums.",
+    description: "The Classic Head Half Eagle (1834–1838) was William Kneass's redesign of the half eagle following the 1834 reduction in gold standard weight, intended to end the chronic melting and hoarding of pre-1834 gold coins. The design features Liberty without a cap in a classical style, struck at Philadelphia and at the new Charlotte (C) and Dahlonega (D) branch mints in 1838 - the first year of Southern branch mint production. Charlotte and Dahlonega 1838 issues are genuine first-year branch-mint rarities that attract strong collector premiums.",
     designer: "William Kneass",
     composition: "90% Gold - 10% Silver and Copper",
     diameter: "22.5 mm",
@@ -2088,7 +2088,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'indian-head-half-eagle': {
-    description: "The Indian Head Half Eagle (1908–1929), designed by Bela Lyon Pratt in incuse (sunken) relief — matching the quarter eagle of the same design — was part of Theodore Roosevelt's ambitious gold coinage beautification program and represents the only incuse-relief design on a US circulating gold coin. The recessed design attracted the same germ-harboring criticism as the quarter eagle, but the coin's striking artistic quality has won over modern collectors. Key dates include the 1909-O (only 34,200 struck, the sole New Orleans issue), the 1911-D, and the 1929, the last year of the series, struck just before Roosevelt's executive order ended the circulation of US gold coins.",
+    description: "The Indian Head Half Eagle (1908–1929), designed by Bela Lyon Pratt in incuse (sunken) relief - matching the quarter eagle of the same design - was part of Theodore Roosevelt's ambitious gold coinage beautification program and represents the only incuse-relief design on a US circulating gold coin. The recessed design attracted the same germ-harboring criticism as the quarter eagle, but the coin's striking artistic quality has won over modern collectors. Key dates include the 1909-O (only 34,200 struck, the sole New Orleans issue), the 1911-D, and the 1929, the last year of the series, struck just before Roosevelt's executive order ended the circulation of US gold coins.",
     designer: "Bela Lyon Pratt",
     composition: "90% Gold - 10% Copper",
     diameter: "21.6 mm",
@@ -2102,7 +2102,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'draped-bust-eagle': {
-    description: "The Draped Bust Eagle ($10 gold piece, 1795–1804) was the highest denomination struck at the early Philadelphia Mint, and its early Small Eagle reverse issues (1795–1797) are among the most breathtaking and expensive of all early American coins. Robert Scot's Draped Bust Liberty with Heraldic Eagle reverse (1797–1804) continued until 1804, when the Mint suspended eagle production as the coins were being exported and melted for their gold content. The famous 1804 Draped Bust Eagle is a proof restrike made in the 1830s — like its dollar counterpart — and each of the approximately 4 known specimens is worth millions.",
+    description: "The Draped Bust Eagle ($10 gold piece, 1795–1804) was the highest denomination struck at the early Philadelphia Mint, and its early Small Eagle reverse issues (1795–1797) are among the most breathtaking and expensive of all early American coins. Robert Scot's Draped Bust Liberty with Heraldic Eagle reverse (1797–1804) continued until 1804, when the Mint suspended eagle production as the coins were being exported and melted for their gold content. The famous 1804 Draped Bust Eagle is a proof restrike made in the 1830s - like its dollar counterpart - and each of the approximately 4 known specimens is worth millions.",
     designer: "Robert Scot",
     composition: "90% Gold - 10% Copper",
     diameter: "33 mm",
@@ -2172,7 +2172,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'indian-head-eagle': {
-    description: "The Indian Head Eagle ($10, 1907–1933) is Augustus Saint-Gaudens' masterpiece — widely considered the most beautiful US coin ever struck — with a stunning high-relief 1907 first-year design later reduced in relief for practical minting. The obverse shows a Native American war-bonnet Liberty, and the reverse features an eagle in flight over a rising sun; the design radiates energy and classical grandeur unlike anything else in US coinage. Key dates include the 1907 High Relief in both Wire Rim and Rounded Rim varieties, the 1920-S, 1930-S, 1933 (most melted under FDR's gold recall order), and the 1907 Rolled Edge proof — a breathtaking issue of only 42 coins.",
+    description: "The Indian Head Eagle ($10, 1907–1933) is Augustus Saint-Gaudens' masterpiece - widely considered the most beautiful US coin ever struck - with a stunning high-relief 1907 first-year design later reduced in relief for practical minting. The obverse shows a Native American war-bonnet Liberty, and the reverse features an eagle in flight over a rising sun; the design radiates energy and classical grandeur unlike anything else in US coinage. Key dates include the 1907 High Relief in both Wire Rim and Rounded Rim varieties, the 1920-S, 1930-S, 1933 (most melted under FDR's gold recall order), and the 1907 Rolled Edge proof - a breathtaking issue of only 42 coins.",
     designer: "Augustus Saint Gaudens",
     composition: "90% Gold - 10% Copper",
     diameter: "27 mm",
@@ -2234,7 +2234,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'saint-gaudens-double-eagle': {
-    description: "The Saint-Gaudens Double Eagle ($20 gold piece, 1907–1933) is universally recognized as the greatest coin in US history: Theodore Roosevelt commissioned sculptor Augustus Saint-Gaudens to redesign American gold coinage, and the result — a striding Liberty with a torch and olive branch on the obverse, an eagle in flight against a rising sun on the reverse — stands as a pinnacle of American art. The 1907 High Relief Ultra High Relief proof is perhaps the single most prized US coin type; 20 known examples each sell for millions. The 1933 Saint-Gaudens is the most famous rare coin in the world: gold recall melted nearly all 445,500 struck, and the one legally privatized example sold for $18.9 million in 2021.",
+    description: "The Saint-Gaudens Double Eagle ($20 gold piece, 1907–1933) is universally recognized as the greatest coin in US history: Theodore Roosevelt commissioned sculptor Augustus Saint-Gaudens to redesign American gold coinage, and the result - a striding Liberty with a torch and olive branch on the obverse, an eagle in flight against a rising sun on the reverse - stands as a pinnacle of American art. The 1907 High Relief Ultra High Relief proof is perhaps the single most prized US coin type; 20 known examples each sell for millions. The 1933 Saint-Gaudens is the most famous rare coin in the world: gold recall melted nearly all 445,500 struck, and the one legally privatized example sold for $18.9 million in 2021.",
     designer: "Augustus Saint Gaudens",
     composition: "99.99% Gold",
     diameter: "27 mm",
@@ -2267,7 +2267,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'american-silver-eagle': {
-    description: "The American Silver Eagle (1986–present) is the official silver bullion coin of the United States, struck in one troy ounce of .999 fine silver, and consistently ranks as the world's best-selling silver bullion coin. John Mercanti's heraldic eagle reverse (1986–2021) was replaced in 2021 with a new reverse designed by Emily Damstra featuring a close-up eagle with a redesigned neck and tail, while Adolph A. Weinman's iconic Walking Liberty obverse — adapted from his 1916 half dollar — has graced every issue. Collectors pursue date sets in both bullion and proof formats, with key issues including the proof 1995-W (only 30,125 struck), the 2019-S Enhanced Reverse Proof, and the entire 2021 reverse changeover type set.",
+    description: "The American Silver Eagle (1986–present) is the official silver bullion coin of the United States, struck in one troy ounce of .999 fine silver, and consistently ranks as the world's best-selling silver bullion coin. John Mercanti's heraldic eagle reverse (1986–2021) was replaced in 2021 with a new reverse designed by Emily Damstra featuring a close-up eagle with a redesigned neck and tail, while Adolph A. Weinman's iconic Walking Liberty obverse - adapted from his 1916 half dollar - has graced every issue. Collectors pursue date sets in both bullion and proof formats, with key issues including the proof 1995-W (only 30,125 struck), the 2019-S Enhanced Reverse Proof, and the entire 2021 reverse changeover type set.",
     designer: "Adolph A Weinman",
     composition: "99.93% Silver - 0.07% Copper",
     diameter: "40.6 mm",
@@ -2301,7 +2301,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'american-gold-eagle': {
-    description: "The American Gold Eagle (1986–present) is the official gold bullion coin of the United States, struck in four sizes (1 oz, 1/2 oz, 1/4 oz, 1/10 oz) in 22-karat (91.67%) gold — the same alloy used for US gold coinage from 1837–1933 — with copper and silver added for durability. Augustus Saint-Gaudens' Liberty and Miley Busiek's (now Miley Tucker-Frost's) family of eagles design the coin, which is popular both as a bullion investment and in proof format for collectors. The 2021 Type 2 reverse redesign — replacing the original Miley Busiek family eagles with a new design by Jennie Norris — created a collectible two-type year that drove strong demand for both varieties.",
+    description: "The American Gold Eagle (1986–present) is the official gold bullion coin of the United States, struck in four sizes (1 oz, 1/2 oz, 1/4 oz, 1/10 oz) in 22-karat (91.67%) gold - the same alloy used for US gold coinage from 1837–1933 - with copper and silver added for durability. Augustus Saint-Gaudens' Liberty and Miley Busiek's (now Miley Tucker-Frost's) family of eagles design the coin, which is popular both as a bullion investment and in proof format for collectors. The 2021 Type 2 reverse redesign - replacing the original Miley Busiek family eagles with a new design by Jennie Norris - created a collectible two-type year that drove strong demand for both varieties.",
     designer: "Augustus Saint-Gaudens",
     composition: "91.67% Gold - 3% Silver - 5.33% Copper",
     diameter: "32.7 mm",
@@ -2337,7 +2337,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'american-platinum-eagle': {
-    description: "The American Platinum Eagle (1997–present) is the first platinum bullion coin produced by the US Mint, struck in one troy ounce (also 1/2, 1/4, and 1/10 oz sizes) of .9995 fine platinum — making it one of the purest precious-metal coins in US history. The obverse features John Mercanti's Statue of Liberty portrait, while the proof reverses have changed annually with thematic series depicting concepts from the Preamble to the Constitution and, since 2009, the Bill of Rights. Platinum Eagles are collected both as precious-metal investments and for the annual proof reverse designs, which are sought by type collectors building thematic sets.",
+    description: "The American Platinum Eagle (1997–present) is the first platinum bullion coin produced by the US Mint, struck in one troy ounce (also 1/2, 1/4, and 1/10 oz sizes) of .9995 fine platinum - making it one of the purest precious-metal coins in US history. The obverse features John Mercanti's Statue of Liberty portrait, while the proof reverses have changed annually with thematic series depicting concepts from the Preamble to the Constitution and, since 2009, the Bill of Rights. Platinum Eagles are collected both as precious-metal investments and for the annual proof reverse designs, which are sought by type collectors building thematic sets.",
     designer: "John M Mercanti",
     composition: "99.95% Platinum",
     diameter: "32.7 mm",
@@ -2367,7 +2367,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'american-palladium-eagle': {
-    description: "The American Palladium Eagle (2017–present) was authorized by the American Eagle Palladium Bullion Coin Act of 2010 and finally struck beginning in 2017, making palladium the fourth precious metal with an official US bullion coin program. The obverse reproduces Adolph A. Weinman's Mercury Dime portrait — his Winged Liberty Head — and the reverse uses his fasces and olive branch design from the same coin, giving the Palladium Eagle a direct artistic connection to one of America's most admired early 20th-century coins. Production is intermittent based on metal availability and demand; proof issues have been struck in most but not all years, and mintages are generally low, lending each issue collector significance.",
+    description: "The American Palladium Eagle (2017–present) was authorized by the American Eagle Palladium Bullion Coin Act of 2010 and finally struck beginning in 2017, making palladium the fourth precious metal with an official US bullion coin program. The obverse reproduces Adolph A. Weinman's Mercury Dime portrait - his Winged Liberty Head - and the reverse uses his fasces and olive branch design from the same coin, giving the Palladium Eagle a direct artistic connection to one of America's most admired early 20th-century coins. Production is intermittent based on metal availability and demand; proof issues have been struck in most but not all years, and mintages are generally low, lending each issue collector significance.",
     designer: "Adolph A Weinman",
     composition: "99.95% Palladium",
     diameter: "34.036 mm",
@@ -2393,7 +2393,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     ],
   },
   'american-gold-buffalo': {
-    description: "The American Gold Buffalo (2006–present) was the United States' first .9999 fine (24-karat) gold bullion coin, struck in response to demand for a US coin to compete with Canada's Maple Leaf and other pure gold world bullion coins. The design faithfully reproduces James Earle Fraser's Buffalo Nickel — the Native American portrait on the obverse and the massive bison on the reverse — in a larger, more impressive format. The 2008 fractional-ounce issues (1/2, 1/4, 1/10 oz) were produced for only one year, making them highly sought by collectors who want a complete date-and-size set, and the 2006-W proof in its first year of issue is an instant classic of the modern bullion era.",
+    description: "The American Gold Buffalo (2006–present) was the United States' first .9999 fine (24-karat) gold bullion coin, struck in response to demand for a US coin to compete with Canada's Maple Leaf and other pure gold world bullion coins. The design faithfully reproduces James Earle Fraser's Buffalo Nickel - the Native American portrait on the obverse and the massive bison on the reverse - in a larger, more impressive format. The 2008 fractional-ounce issues (1/2, 1/4, 1/10 oz) were produced for only one year, making them highly sought by collectors who want a complete date-and-size set, and the 2006-W proof in its first year of issue is an instant classic of the modern bullion era.",
     designer: "James Earle Fraser",
     composition: "99.99% Fine Gold",
     diameter: "32.7 mm",
@@ -2442,7 +2442,7 @@ export const COIN_EDUCATION: Record<string, CoinEducation> = {
     valueRange: "$25 – $3.6k",
   },
   'twenty-cent-piece': {
-    description: "The Twenty-Cent Piece (1875–1878) was a short-lived denomination intended to ease making change in the West, where Spanish real coinage had created pricing confusion, but it was fatally hampered by its near-identical appearance to the quarter dollar. William Barber's design uses the same Liberty Seated obverse as contemporary quarters and dimes, distinguished only by a plain (rather than reeded) edge and slightly smaller size — a recipe for chronic confusion in commerce. Only the 1875 and 1875-S were struck in quantity; the 1876-CC is a major rarity with approximately 18 known, and the 1877 and 1878 are proof-only issues.",
+    description: "The Twenty-Cent Piece (1875–1878) was a short-lived denomination intended to ease making change in the West, where Spanish real coinage had created pricing confusion, but it was fatally hampered by its near-identical appearance to the quarter dollar. William Barber's design uses the same Liberty Seated obverse as contemporary quarters and dimes, distinguished only by a plain (rather than reeded) edge and slightly smaller size - a recipe for chronic confusion in commerce. Only the 1875 and 1875-S were struck in quantity; the 1876-CC is a major rarity with approximately 18 known, and the 1877 and 1878 are proof-only issues.",
     designer: "Christian Gobrecht",
     composition: "90% Silver - 10% Copper",
     diameter: "22 mm",

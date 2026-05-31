@@ -2,7 +2,7 @@
 
 import useSWR from 'swr'
 import Link from 'next/link'
-import { Gavel, ChevronLeft, ShoppingBag } from 'lucide-react'
+import { Gavel, ChevronLeft, ShoppingBag, Package } from 'lucide-react'
 import { COIN_CATALOG, type CoinSeries } from '@/lib/coins/catalog'
 import { ExploreFilters } from './explore-filters'
 import { DirectoryClient } from './directory-client'
@@ -115,13 +115,14 @@ interface RawListing {
   coin_name: string | null
   price: number | null
   listing_type: string | null
+  series_slug: string | null
 }
 
 async function fetchListingsData(): Promise<RawListing[]> {
   const supabase = createClient()
   const { data } = await supabase
     .from('listings')
-    .select('coin_name, price, listing_type')
+    .select('coin_name, price, listing_type, series_slug')
     .eq('status', 'active')
   return (data ?? []) as RawListing[]
 }
@@ -136,34 +137,54 @@ export function ListingsPageClient() {
 
   const { data: rawListings } = useSWR('listings-directory', fetchListingsData, { keepPreviousData: true })
 
-  const fixedCountMap = new Map<string, number>()
-  const auctionCountMap = new Map<string, number>()
-  const minPriceMap = new Map<string, number>()
+  // Slug-keyed maps (primary - listings with series_slug set)
+  const slugFixed = new Map<string, number>()
+  const slugAuction = new Map<string, number>()
+  const slugMinPrice = new Map<string, number>()
+  // Name-keyed maps (fallback - legacy listings without series_slug)
+  const nameFixed = new Map<string, number>()
+  const nameAuction = new Map<string, number>()
+  const nameMinPrice = new Map<string, number>()
+
   for (const row of rawListings ?? []) {
-    if (!row.coin_name) continue
-    const key = row.coin_name.toLowerCase().trim()
-    if (row.listing_type === 'auction') {
-      auctionCountMap.set(key, (auctionCountMap.get(key) ?? 0) + 1)
-    } else {
-      fixedCountMap.set(key, (fixedCountMap.get(key) ?? 0) + 1)
-    }
-    if (row.price != null) {
-      const prev = minPriceMap.get(key)
-      if (prev === undefined || row.price < prev) minPriceMap.set(key, row.price)
+    const isAuction = row.listing_type === 'auction'
+    if (row.series_slug) {
+      const k = row.series_slug
+      if (isAuction) slugAuction.set(k, (slugAuction.get(k) ?? 0) + 1)
+      else slugFixed.set(k, (slugFixed.get(k) ?? 0) + 1)
+      if (row.price != null) {
+        const prev = slugMinPrice.get(k)
+        if (prev === undefined || row.price < prev) slugMinPrice.set(k, row.price)
+      }
+    } else if (row.coin_name) {
+      const k = row.coin_name.toLowerCase().trim()
+      if (isAuction) nameAuction.set(k, (nameAuction.get(k) ?? 0) + 1)
+      else nameFixed.set(k, (nameFixed.get(k) ?? 0) + 1)
+      if (row.price != null) {
+        const prev = nameMinPrice.get(k)
+        if (prev === undefined || row.price < prev) nameMinPrice.set(k, row.price)
+      }
     }
   }
 
   function seriesStats(series: CoinSeries): { count: number; fixedCount: number; auctionCount: number; minPrice: number | null } {
-    let fixedCount = 0
-    let auctionCount = 0
-    let minPrice: number | null = null
+    // Slug-matched (exact)
+    const sFixed = slugFixed.get(series.slug) ?? 0
+    const sAuction = slugAuction.get(series.slug) ?? 0
+    let minPrice: number | null = slugMinPrice.get(series.slug) ?? null
+
+    // Name-matched fallback (legacy listings without series_slug)
+    let nFixed = 0, nAuction = 0
     for (const name of series.coinNames) {
-      const key = name.toLowerCase().trim()
-      fixedCount += fixedCountMap.get(key) ?? 0
-      auctionCount += auctionCountMap.get(key) ?? 0
-      const p = minPriceMap.get(key)
-      if (p !== undefined && (minPrice === null || p < minPrice)) minPrice = p
+      const k = name.toLowerCase().trim()
+      nFixed += nameFixed.get(k) ?? 0
+      nAuction += nameAuction.get(k) ?? 0
+      const p = nameMinPrice.get(k)
+      if (p != null && (minPrice === null || p < minPrice)) minPrice = p
     }
+
+    const fixedCount = sFixed + nFixed
+    const auctionCount = sAuction + nAuction
     return { count: fixedCount + auctionCount, fixedCount, auctionCount, minPrice }
   }
 
@@ -291,6 +312,13 @@ export function ListingsPageClient() {
           >
             <Gavel className="h-4 w-4" />
             Live Auctions
+          </Link>
+          <Link
+            href="/orders"
+            className="flex-none flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-base font-bold text-foreground hover:border-foreground/40 hover:bg-muted transition-colors whitespace-nowrap"
+          >
+            <Package className="h-4 w-4" />
+            My Orders
           </Link>
         </div>
       </div>
@@ -422,14 +450,6 @@ export function ListingsPageClient() {
           </>
         )}
 
-        <div className="mt-16 text-center">
-          <p className="text-sm text-muted-foreground">
-            Don&apos;t see your coin?{' '}
-            <Link href="/listings/new" className="underline underline-offset-4 hover:text-foreground">
-              List it now
-            </Link>
-          </p>
-        </div>
       </main>
     </div>
   )

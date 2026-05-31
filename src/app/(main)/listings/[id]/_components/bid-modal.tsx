@@ -43,12 +43,12 @@ export function BidModal({ auctionId, currentBid, endTime, onClose, onBidPlaced 
 
       const { error: stripeError } = await stripe.confirmCardSetup(client_secret, {
         payment_method: {
-          card: { token: '' } as never, // placeholder — triggers Stripe's hosted card input
+          card: { token: '' } as never, // placeholder - triggers Stripe's hosted card input
         },
       })
 
       if (stripeError) throw new Error(stripeError.message)
-      toast.success('Card saved — you can now place your bid')
+      toast.success('Card saved - you can now place your bid')
       setShowCardSetup(false)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Card setup failed')
@@ -87,7 +87,7 @@ export function BidModal({ auctionId, currentBid, endTime, onClose, onBidPlaced 
       const { bid_placed, end_time, bid_count, sniped } = json.data
 
       if (sniped) {
-        toast.success('Bid placed — auction extended to 15 seconds!', {
+        toast.success('Bid placed - auction extended to 15 seconds!', {
           description: 'Your bid triggered anti-sniping protection.',
         })
       } else {

@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
         await stripe.paymentIntents.cancel(prevBid.stripe_payment_intent_id)
         await db.from('bids').update({ hold_status: 'cancelled' }).eq('id', prevBid.id)
       } catch {
-        // Non-fatal — hold may have already expired
+        // Non-fatal - hold may have already expired
       }
     }
   }
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
     paymentIntentId = pi.id
   } catch {
     holdStatus = 'failed'
-    // Still record the bid but mark hold as failed — admin can decide how to handle
+    // Still record the bid but mark hold as failed - admin can decide how to handle
   }
 
   // ── Insert bid record ─────────────────────────────────────────────────────

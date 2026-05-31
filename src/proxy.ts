@@ -24,7 +24,11 @@ function isAppDomain(req: NextRequest) {
 
 function isMarketingDomain(req: NextRequest) {
   const host = req.headers.get('host') ?? ''
-  return host === new URL(MARKETING_URL).host
+  // Any production domain that isn't the app subdomain is the marketing site.
+  // This handles bare domain, www., and any other variant without relying on
+  // exact env-var matching.
+  if (isLocalDev(req)) return false
+  return !isAppDomain(req)
 }
 
 function isLocalDev(req: NextRequest) {
@@ -33,7 +37,7 @@ function isLocalDev(req: NextRequest) {
 }
 
 /**
- * Lightweight session check — no Supabase SDK, no network calls.
+ * Lightweight session check - no Supabase SDK, no network calls.
  * Just looks for the Supabase auth token cookie in the request.
  */
 function hasSession(req: NextRequest): boolean {
@@ -79,7 +83,7 @@ async function onboardingGate(
       maxAge: 60 * 60 * 24 * 365,
     })
   } catch {
-    // Fail open — never block a page load due to a Supabase error
+    // Fail open - never block a page load due to a Supabase error
   }
 
   return null
@@ -106,7 +110,7 @@ async function checkOnboarding(request: NextRequest): Promise<'pass' | 'redirect
     .eq('id', session.user.id)
     .single()
 
-  if (profileError) return 'pass' // DB error — fail open
+  if (profileError) return 'pass' // DB error - fail open
 
   if (!profile?.onboarding_completed) return 'redirect'
 
@@ -118,7 +122,7 @@ async function checkOnboarding(request: NextRequest): Promise<'pass' | 'redirect
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Static assets and API routes — pass through immediately
+  // Static assets and API routes - pass through immediately
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -127,7 +131,7 @@ export async function proxy(request: NextRequest) {
     return updateSession(request)
   }
 
-  // Local dev — no subdomain logic, just refresh session + onboarding gate
+  // Local dev - no subdomain logic, just refresh session + onboarding gate
   if (isLocalDev(request)) {
     const response = await updateSession(request).catch(() => NextResponse.next())
     return (await onboardingGate(request, response)) ?? response
@@ -140,7 +144,7 @@ export async function proxy(request: NextRequest) {
   // ── On pedigreecoins.com ──────────────────────────────────────────────────
   if (onMarketingDomain) {
     // pedigreecoins.com is STRICTLY the marketing landing page.
-    // Only these paths are served here — everything else (including /auth/*)
+    // Only these paths are served here - everything else (including /auth/*)
     // is redirected to my.pedigreecoins.com so auth always happens on the app domain.
     const MARKETING_SERVE_PATHS = ['/', '/pricing', '/terms', '/privacy', '/ref/']
     const isMarketingPath = MARKETING_SERVE_PATHS.some(p =>
@@ -153,7 +157,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(target)
     }
 
-    // Serve marketing paths without session processing — never show auth state here
+    // Serve marketing paths without session processing - never show auth state here
     return NextResponse.next()
   }
 
@@ -171,7 +175,7 @@ export async function proxy(request: NextRequest) {
     return (await onboardingGate(request, response)) ?? response
   }
 
-  // Unknown domain (e.g. Vercel preview URLs) — refresh session + onboarding gate
+  // Unknown domain (e.g. Vercel preview URLs) - refresh session + onboarding gate
   const response = await updateSession(request).catch(() => NextResponse.next())
   return (await onboardingGate(request, response)) ?? response
 }

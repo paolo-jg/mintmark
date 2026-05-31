@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Maximum 500 rows per import' }, { status: 400 })
   }
 
-  // Validate all rows — collect errors but don't abort early
+  // Validate all rows - collect errors but don't abort early
   const validRows: ParsedRow[] = []
   const allErrors: RowError[] = []
 

@@ -232,7 +232,7 @@ function AccountTab({ email, displayName, userId }: { email: string; displayName
       if (json.error) { toast.error(json.error); setDeleting(false); return }
       const supabase = createClient()
       await supabase.auth.signOut()
-      router.push('/')
+      window.location.href = process.env.NEXT_PUBLIC_MARKETING_URL || '/'
     } catch { toast.error('Something went wrong'); setDeleting(false) }
   }
 
@@ -313,7 +313,7 @@ function AccountTab({ email, displayName, userId }: { email: string; displayName
         </div>
         <div className="p-5 space-y-4">
           <p className="text-sm text-muted-foreground">
-            Permanently delete your account and all associated data — listings, orders, and collection items. This cannot be undone.
+            Permanently delete your account and all associated data: listings, orders, and collection items. This cannot be undone.
           </p>
           <div className="space-y-1.5">
             <Label htmlFor="deleteConfirm" className="text-destructive/80">

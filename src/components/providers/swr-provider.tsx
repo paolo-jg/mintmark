@@ -8,7 +8,7 @@ export function SWRProvider({ children }: { children: React.ReactNode }) {
       value={{
         revalidateOnFocus: false,
         revalidateOnReconnect: false,
-        dedupingInterval: 30_000, // 30s — same key won't re-fetch within this window
+        dedupingInterval: 30_000, // 30s - same key won't re-fetch within this window
       }}
     >
       {children}

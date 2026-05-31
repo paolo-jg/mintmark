@@ -113,7 +113,7 @@ export function WishlistEditModal({ item, onClose, onSaved }: Props) {
             </Select>
           </div>
 
-          {/* Grade — chip picker */}
+          {/* Grade - chip picker */}
           <div className="space-y-3">
             <Label>Grade</Label>
 

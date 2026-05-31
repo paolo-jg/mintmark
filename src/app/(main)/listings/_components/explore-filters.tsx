@@ -28,7 +28,6 @@ const CATEGORIES = [
   { label: 'Bullion', value: 'bullion' },
   { label: 'Proof & Mint Sets', value: 'proof-mint-sets' },
   { label: 'Colonial & Early American', value: 'colonial' },
-  { label: 'Pattern Coins', value: 'patterns' },
 ]
 
 const COMPOSITIONS = [

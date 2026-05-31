@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { Clock, Search, Flame, Heart, Gavel } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { Card, CardContent } from '@/components/ui/card'
+import { AuctionCountdown } from '@/components/ui/auction-countdown'
 
 export async function fetchAuctionsData() {
   const supabase = createClient()
@@ -83,84 +85,86 @@ function timeLeft(endTime: string): { label: string; urgent: boolean } {
 // ── Card ─────────────────────────────────────────────────────────────────────
 function AuctionCard({ auction, hot = false, wishlistCounts }: { auction: AuctionRow; hot?: boolean; wishlistCounts: Record<string, number> }) {
   const { listing } = auction
-  const currentPrice = auction.current_bid ?? auction.start_price
+  const currentBid = auction.current_bid
+  const currentPrice = currentBid ?? auction.start_price
   const [, setTick] = useState(0)
 
-  // Tick every second so timeLeft() re-evaluates with a fresh Date.now()
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(id)
   }, [])
 
   const { label, urgent } = timeLeft(auction.end_time)
-  const isVerified = listing.verification_status === 'verified'
   const hasBids = auction.bid_count > 0
-  const wishCount = wishlistCounts[auction.listing.series_slug ?? ''] ?? 0
+  const reserveNotMet = auction.reserve_price != null && currentPrice < auction.reserve_price
+  const wishCount = wishlistCounts[listing.series_slug ?? ''] ?? 0
+
+  const gradeParts = [listing.grading_service, listing.grade].filter(Boolean).join(' · ')
+  const yearPart = listing.year
+    ? `${listing.year}${listing.mint_mark ? `-${listing.mint_mark}` : ''}`
+    : null
 
   return (
-    <Link href={`/listings/${listing.id}`} className="group block">
-      {/* Image */}
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted mb-3">
-        {listing.images?.[0] ? (
-          <img
-            src={listing.images[0]}
-            alt={listing.title}
-            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 text-xs">
-            No photo
-          </div>
-        )}
+    <Link href={`/listings/${listing.id}`} className="group block h-full">
+      <Card className="overflow-hidden hover:shadow-xl hover:border-foreground/20 transition-all h-full bg-background">
+        <div className="aspect-square relative overflow-hidden bg-zinc-50 dark:bg-zinc-900">
+          {listing.images?.[0] ? (
+            <img
+              src={listing.images[0]}
+              alt={listing.title}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground/40 text-xs">
+              No photo
+            </div>
+          )}
 
-        {/* Time badge */}
-        <div className={`absolute bottom-2 left-2 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm ${
-          urgent ? 'bg-red-500/90 text-white' : 'bg-black/60 text-white'
-        }`}>
-          <Clock className="h-3 w-3" />
-          {label}
-        </div>
-
-        {/* Wishlist badge */}
-        {wishCount >= 3 && (
-          <div className="absolute top-2 right-2 flex items-center gap-1 bg-rose-500/90 text-white rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
-            <Heart className="h-2.5 w-2.5" fill="currentColor" />
-            {wishCount} want this
+          {/* Time badge */}
+          <div className={`absolute top-2 left-2 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm ${
+            urgent ? 'bg-red-500/90 text-white' : 'bg-black/60 text-white'
+          }`}>
+            <Clock className="h-3 w-3" />
+            <AuctionCountdown endTime={auction.end_time} className="text-[11px]" />
           </div>
-        )}
 
-        {/* Hot badge */}
-        {hot && (
-          <div className="absolute top-2 left-2 flex items-center gap-1 bg-orange-500/90 text-white rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
-            <Flame className="h-2.5 w-2.5" />
-            Hot
-          </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div>
-        <p className="text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground/60 mb-1">
-          {listing.grading_service} · {listing.grade}
-          {listing.year && <span className="font-mono normal-case tracking-normal"> · {listing.year}{listing.mint_mark ? `-${listing.mint_mark}` : ''}</span>}
-        </p>
-        <p className="text-[15px] font-semibold leading-snug line-clamp-2 text-foreground mb-2">
-          {listing.title}
-        </p>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[14px] text-muted-foreground/70">
-              {hasBids ? `${auction.bid_count} bid${auction.bid_count !== 1 ? 's' : ''}` : 'No bids yet'}
-            </p>
-            <p className="text-[17px] font-bold text-foreground tabular-nums">
-              {formatCents(currentPrice)}
-            </p>
-          </div>
-          {auction.reserve_price && currentPrice < auction.reserve_price && (
-            <p className="text-[14px] text-amber-600 font-medium">Reserve not met</p>
+          {hot && (
+            <div className="absolute top-2 right-2 flex items-center gap-1 bg-orange-500/90 text-white rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
+              <Flame className="h-2.5 w-2.5" />
+              Hot
+            </div>
+          )}
+          {!hot && wishCount >= 3 && (
+            <div className="absolute top-2 right-2 flex items-center gap-1 bg-rose-500/90 text-white rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur-sm">
+              <Heart className="h-2.5 w-2.5" fill="currentColor" />
+              {wishCount} want this
+            </div>
           )}
         </div>
-      </div>
+
+        <CardContent className="p-3 border-t border-border">
+          <p className="text-xs text-muted-foreground mb-0.5">
+            {[gradeParts, yearPart].filter(Boolean).join(' · ')}
+          </p>
+          <p className="text-sm font-medium leading-snug line-clamp-2 mb-2">{listing.title}</p>
+          <div className="space-y-0.5">
+            <p className="text-sm font-bold tabular-nums">
+              {formatCents(currentPrice)}
+              {currentBid != null && (
+                <span className="text-xs font-normal text-muted-foreground ml-1.5">
+                  ({auction.bid_count} bid{auction.bid_count !== 1 ? 's' : ''})
+                </span>
+              )}
+              {currentBid == null && (
+                <span className="text-xs font-normal text-muted-foreground ml-1.5">starting</span>
+              )}
+            </p>
+            {reserveNotMet && (
+              <p className="text-xs text-amber-600 font-medium">Reserve not met</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </Link>
   )
 }
@@ -230,11 +234,11 @@ export function AuctionsClient() {
             <div key={label} className="h-9 bg-muted rounded w-28" />
           ))}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-2xl border border-border overflow-hidden">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-border overflow-hidden">
               <div className="aspect-square bg-muted/60 relative">
-                <div className="absolute bottom-2 left-2 h-6 bg-muted/80 rounded-full w-20" />
+                <div className="absolute top-2 left-2 h-6 bg-muted/80 rounded-full w-20" />
               </div>
               <div className="p-4 space-y-2">
                 <div className="h-2.5 bg-muted rounded w-2/3" />
@@ -324,7 +328,7 @@ export function AuctionsClient() {
 
       {/* Grid */}
       {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map(auction => (
             <AuctionCard
               key={auction.id}

@@ -9,6 +9,7 @@ import { Star, Store, Package, ShieldCheck } from 'lucide-react'
 import { ReviewSection } from './_components/review-section'
 import { StorefrontListings } from './_components/storefront-listings'
 import type { Review, ReviewableOrder } from './_components/review-section'
+import { SetNavSection } from '@/components/layout/nav-context'
 
 const TIER_LABEL: Record<string, string> = {
   collector_basic:    'Free',
@@ -93,6 +94,7 @@ export default async function SellerPage({
   if (isDealer) {
     return (
       <div className="min-h-screen">
+        <SetNavSection section="leaderboard" />
         {/* Hero banner */}
         <div className="relative w-full h-48 sm:h-64 bg-gradient-to-br from-muted to-muted/60 overflow-hidden">
           {profile.dealer_banner_url ? (
@@ -108,7 +110,7 @@ export default async function SellerPage({
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
         </div>
 
-        {/* Header card — overlaps banner */}
+        {/* Header card - overlaps banner */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="-mt-16 relative z-10 mb-8">
             <div className="flex items-end gap-5">
@@ -199,14 +201,11 @@ export default async function SellerPage({
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <SetNavSection section="leaderboard" />
 
       {/* Profile header */}
       <div className="rounded-2xl border border-border bg-card p-6 mb-8">
         <div className="flex items-start gap-5">
-          <div className="h-16 w-16 rounded-xl overflow-hidden bg-muted border border-border flex-shrink-0 flex items-center justify-center">
-            <Store className="h-7 w-7 text-muted-foreground/30" />
-          </div>
-
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold tracking-tight truncate">{name}</h1>

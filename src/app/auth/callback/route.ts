@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error && data.user) {
-      // Check onboarding status directly — more reliable than the new=1 param
+      // Check onboarding status directly - more reliable than the new=1 param
       const { data: profile } = await supabase
         .from('profiles')
         .select('onboarding_completed')

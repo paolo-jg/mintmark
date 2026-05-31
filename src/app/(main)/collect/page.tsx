@@ -2,7 +2,7 @@ import { CollectClient } from './_components/collect-client'
 import { DevBanner } from '@/components/dev/dev-banner'
 
 export const metadata = {
-  title: 'My Collection — Pedigree Coins',
+  title: 'My Collection | Pedigree Coins',
 }
 
 export default function CollectPage() {

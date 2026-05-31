@@ -10,6 +10,7 @@ export async function GET() {
   const { data: orders } = await db
     .from('orders')
     .select('amount, seller_payout_cents, platform_fee_cents, transfer_released, status')
+    .limit(50000)
 
   if (!orders) return NextResponse.json({ error: 'Failed to load' }, { status: 500 })
 

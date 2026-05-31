@@ -35,12 +35,6 @@ const DEALER_TIERS = [
   },
 ]
 
-const COMPETITORS = [
-  { name: 'Pedigree Coins', plan: 'Free tier', sellerFee: '7%', listingFee: '$0.50', buyerPremium: 'None', highlight: true },
-  { name: 'eBay', plan: 'Coins Category', sellerFee: '~12.35%', listingFee: '$0.35', buyerPremium: 'None', highlight: false },
-  { name: 'Heritage Auctions', plan: 'All tiers', sellerFee: 'varies', listingFee: 'None', buyerPremium: '20%+', highlight: false },
-  { name: 'PCGS Coin Exchange', plan: 'Marketplace', sellerFee: 'varies', listingFee: 'varies', buyerPremium: 'None', highlight: false },
-]
 
 function fmt(price: number | null): string {
   if (price === null) return 'Free'
@@ -119,39 +113,6 @@ export function PricingSection() {
         {[...COLLECTOR_TIERS, ...DEALER_TIERS].map(tier => <TierCard key={tier.name} tier={tier} />)}
       </div>
 
-      {/* Comparison table */}
-      <div className="rounded-2xl border border-border bg-muted/30 p-8">
-        <div className="mb-6">
-          <h3 className="text-xl font-semibold mb-1">How we compare</h3>
-          <p className="text-sm text-muted-foreground">
-            Based on publicly available rates. Competitor fees may vary.
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left font-semibold pb-3 pr-4">Platform</th>
-                <th className="text-left font-semibold pb-3 pr-4">Plan</th>
-                <th className="text-left font-semibold pb-3 pr-4">Seller Fee</th>
-                <th className="text-left font-semibold pb-3 pr-4">Listing Fee</th>
-                <th className="text-left font-semibold pb-3">Buyer Premium</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {COMPETITORS.map((c) => (
-                <tr key={c.name} className={c.highlight ? 'bg-foreground/5' : ''}>
-                  <td className="py-3 pr-4 font-semibold">{c.name}</td>
-                  <td className="py-3 pr-4 text-muted-foreground">{c.plan}</td>
-                  <td className="py-3 pr-4">{c.sellerFee}</td>
-                  <td className="py-3 pr-4">{c.listingFee}</td>
-                  <td className="py-3">{c.buyerPremium}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
     </section>
   )
 }

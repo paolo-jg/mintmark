@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Landmark, ArrowRight, Loader2, Lock } from 'lucide-react'
+import { Landmark, Loader2, Lock } from 'lucide-react'
 
 type Tier = 'collector_basic' | 'collector_premium' | 'dealer'
 
@@ -39,7 +39,7 @@ export function SellerOnboardingModal({ onComplete: _onComplete }: Props) {
             <h2 className="text-xl font-bold mb-1.5">Connect your bank</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Link your bank account to receive payouts when your coins sell.
-              Takes about 2 minutes.
+              This usually only takes a few minutes.
             </p>
           </div>
 
@@ -53,7 +53,7 @@ export function SellerOnboardingModal({ onComplete: _onComplete }: Props) {
             disabled={loading}
             className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-foreground text-background text-sm font-semibold h-11 px-4 hover:opacity-90 transition-opacity disabled:opacity-60"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             {loading ? 'Redirecting to Stripe…' : 'Link bank account'}
           </button>
         </div>

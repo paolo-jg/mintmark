@@ -177,14 +177,14 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
     const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1 && e.deltaY > 0
 
     if (!atTop && !atBottom) {
-      // Scrolling inside table — clear any pending ready timer and reset
+      // Scrolling inside table - clear any pending ready timer and reset
       if (boundaryTimer.current) { clearTimeout(boundaryTimer.current); boundaryTimer.current = null }
       boundaryState.current = 'none'
       return
     }
 
     if (boundaryState.current === 'none') {
-      // First boundary hit — pause and start a ONE-SHOT timer (never reset by momentum)
+      // First boundary hit - pause and start a ONE-SHOT timer (never reset by momentum)
       boundaryState.current = 'paused'
       boundaryTimer.current = setTimeout(() => {
         boundaryState.current = 'ready'
@@ -194,12 +194,12 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
     }
 
     if (boundaryState.current === 'paused') {
-      // Momentum / same gesture still arriving — just absorb, timer is already running
+      // Momentum / same gesture still arriving - just absorb, timer is already running
       return
     }
 
     if (boundaryState.current === 'ready') {
-      // New gesture after the pause — chain every event to the parent panel
+      // New gesture after the pause - chain every event to the parent panel
       let parent = el.parentElement
       while (parent) {
         const oy = window.getComputedStyle(parent).overflowY
@@ -301,10 +301,10 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
     setAnyGradeSelected(false)
     setSelectedGrades([])
     if (s) {
-      // Service selected — go to grade step
+      // Service selected - go to grade step
       setWizardStep('grade')
     } else {
-      // Ungraded — skip grade and go straight to confirm
+      // Ungraded - skip grade and go straight to confirm
       setWizardStep('confirm')
     }
   }
@@ -501,7 +501,7 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
 
   const leftPanel = (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Back button — above search when inside a category */}
+      {/* Back button - above search when inside a category */}
       {selectedCategory && !search.trim() && (
         <div className="px-5 pt-4 pb-1 flex-shrink-0">
           <button
@@ -578,7 +578,7 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
             })}
           </>
         ) : (
-          // Category list — styled as prominent cards
+          // Category list - styled as prominent cards
           <div className="space-y-1 pt-1">
             {COIN_CATALOG.map((cat) => (
               <button
@@ -624,7 +624,7 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
           </button>
         </div>
 
-        {/* Coin images — only shown when image exists */}
+        {/* Coin images - only shown when image exists */}
         {selectedSeries.image && (
           <div className="flex items-center justify-center gap-2 flex-shrink-0">
             <img
@@ -644,7 +644,7 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
       </div>
 
       <div className="px-8 py-6 space-y-7 pb-10">
-        {/* Educational description — hidden in pick mode */}
+        {/* Educational description - hidden in pick mode */}
         {mode !== 'pick' && education?.description && (
           <div>
             <p className="text-[13px] leading-relaxed text-foreground/80">{stripEmDashes(education.description)}</p>
@@ -729,7 +729,7 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
           </div>
         )}
 
-        {/* Fun fact — hidden in pick mode */}
+        {/* Fun fact - hidden in pick mode */}
         {mode !== 'pick' && education?.funFact && (
           <div className="rounded-xl bg-muted/40 border border-border px-4 py-3 flex gap-3">
             <Info className="h-4 w-4 text-foreground/50 flex-shrink-0 mt-0.5" />
@@ -876,7 +876,7 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
                     />
                   </div>
                   <div className="mb-4">
-                    {/* Any chip — hidden in pick mode */}
+                    {/* Any chip - hidden in pick mode */}
                     {!coinSearch && mode !== 'pick' && (
                       <div className="flex items-start gap-3 py-1.5 border-b border-border mb-2">
                         <button
@@ -1104,7 +1104,7 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
               {/* ── Confirm ── */}
               {wizardStep === 'confirm' && (
                 <div className="space-y-4">
-                  {/* Entry count — prominent standalone at top */}
+                  {/* Entry count - prominent standalone at top */}
                   {(() => {
                     const count = (selectedCoins.length || 1) * (selectedGrades.length || 1)
                     return (
@@ -1130,7 +1130,7 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
                       </div>
                     </div>
                   )}
-                  {/* Service row — always shown */}
+                  {/* Service row - always shown */}
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-widest text-foreground/50 mb-2">Service</p>
                     <div className="rounded-lg border border-border bg-muted/40 px-3 py-1.5 inline-block">
@@ -1138,7 +1138,7 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
                     </div>
                   </div>
 
-                  {/* Grade row — always shown */}
+                  {/* Grade row - always shown */}
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-widest text-foreground/50 mb-2">
                       {mode === 'wishlist' ? 'Target Grades' : 'Grade'}
@@ -1181,7 +1181,7 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
                     </div>
                   )}
 
-                  {/* Max price — wishlist only */}
+                  {/* Max price - wishlist only */}
                   {mode === 'wishlist' && (
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-widest text-foreground/50 mb-2">Max price <span className="font-normal normal-case tracking-normal">(optional)</span></p>
@@ -1214,7 +1214,7 @@ export function CoinSelector({ mode = 'wishlist', onClose, onAdded, onCoinPicked
               )}
             </div>
 
-            {/* Sticky footer — action button */}
+            {/* Sticky footer - action button */}
             {wizardStep !== 'service' && !(mode === 'pick' && wizardStep === 'coin') && (
               <div className="px-8 py-4 border-t border-border">
                 {wizardStep === 'coin' && (

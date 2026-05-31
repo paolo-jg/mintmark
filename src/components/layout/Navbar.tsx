@@ -24,7 +24,6 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  const supabase = createClient()
   const { sectionOverride } = useNavContext()
 
   function isActive(href: string) {
@@ -39,18 +38,31 @@ export default function Navbar() {
       if (sectionOverride === 'sell') return false
       return pathname.startsWith('/listings') && !pathname.startsWith('/listings/new') && !/^\/listings\/[^/]+\/edit/.test(pathname)
     }
+    if (href === '/leaderboard') {
+      if (sectionOverride === 'leaderboard') return true
+    }
     return pathname.startsWith(href)
   }
 
   useEffect(() => {
+    // Never show auth state on the marketing domain - only my.pedigreecoins.com is the app
+    const host = window.location.hostname
+    const isAppDomain = host.startsWith('my.') || host === 'localhost' || host.startsWith('127.')
+    if (!isAppDomain) return
+
+    const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+      if (event === 'SIGNED_OUT') {
+        window.location.href = process.env.NEXT_PUBLIC_MARKETING_URL || '/'
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
 
   const signOut = async () => {
+    const supabase = createClient()
     await supabase.auth.signOut()
     const marketingUrl = process.env.NEXT_PUBLIC_MARKETING_URL
     window.location.href = marketingUrl || '/'
@@ -61,14 +73,14 @@ export default function Navbar() {
   return (
     <header className="border-b border-border bg-background sticky top-0 z-50">
       <div className="relative flex items-center h-20 px-4 sm:px-6 lg:px-8">
-          {/* Logo — absolute left edge */}
+          {/* Logo - absolute left edge */}
           <div className="absolute left-4">
             <Link href="/" className="flex items-center w-fit">
               <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="object-contain h-14 w-auto" />
             </Link>
           </div>
 
-          {/* Desktop nav — true center */}
+          {/* Desktop nav - true center */}
           <nav className="hidden md:flex items-center gap-2 mx-auto">
             {[
               { href: '/', label: 'Home' },
@@ -94,7 +106,7 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Desktop actions — absolute right edge */}
+          {/* Desktop actions - absolute right edge */}
           <div className="absolute right-4 sm:right-6 lg:right-8 hidden md:flex items-center gap-3">
             {user ? (
               <>
@@ -122,10 +134,10 @@ export default function Navbar() {
               </>
             ) : (
               <>
-                <Button variant="ghost" size="sm" render={<Link href="/auth/login" />}>
+                <Button variant="ghost" render={<Link href="/auth/login" />} className="h-10 px-5 text-sm">
                   Sign In
                 </Button>
-                <Button size="sm" render={<Link href="/auth/register" />}>
+                <Button render={<Link href="/auth/register" />} className="h-10 px-5 text-sm">
                   Get Started
                 </Button>
               </>
@@ -189,8 +201,8 @@ export default function Navbar() {
             </>
           ) : (
             <div className="flex gap-2 pt-2">
-              <Button variant="ghost" size="sm" render={<Link href="/auth/login" />}>Sign In</Button>
-              <Button size="sm" render={<Link href="/auth/register" />}>Get Started</Button>
+              <Button variant="ghost" render={<Link href="/auth/login" />} className="h-10 px-5 text-sm">Sign In</Button>
+              <Button render={<Link href="/auth/register" />} className="h-10 px-5 text-sm">Get Started</Button>
             </div>
           )}
         </div>

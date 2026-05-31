@@ -28,6 +28,13 @@ export async function GET(req: NextRequest) {
 
   if (!auctions?.length) return NextResponse.json({ settled: 0 })
 
+  // Batch fetch all seller profiles to avoid N+1
+  const auctionSellerIds = [...new Set(auctions.map(a => (a.listing as { seller_id: string }).seller_id))]
+  const { data: auctionSellerProfiles } = auctionSellerIds.length
+    ? await db.from('profiles').select('id, stripe_account_id, stripe_onboarding_complete, subscription_tier').in('id', auctionSellerIds)
+    : { data: [] }
+  const auctionProfileMap = new Map((auctionSellerProfiles ?? []).map(p => [p.id, p]))
+
   let settled = 0
   const errors: string[] = []
 
@@ -43,7 +50,7 @@ export async function GET(req: NextRequest) {
         price_row_label: string | null; shipping_type: string | null; shipping_price_cents: number | null
       }
 
-      // No bids or reserve not met — relist
+      // No bids or reserve not met - relist
       const reserveMet = !auction.reserve_price || auction.current_bid >= auction.reserve_price
       if (!auction.high_bidder_id || !reserveMet) {
         await db.from('auctions').update({ status: 'cancelled' }).eq('id', auction.id)
@@ -64,19 +71,14 @@ export async function GET(req: NextRequest) {
         .single()
 
       if (!winBid?.stripe_payment_intent_id) {
-        // No valid hold — cancel all, mark auction cancelled
+        // No valid hold - cancel all, mark auction cancelled
         await db.from('auctions').update({ status: 'cancelled' }).eq('id', auction.id)
         await cancelAllHolds(db, auction.id)
         errors.push(`Auction ${auction.id}: no valid hold for winner`)
         continue
       }
 
-      // Fetch seller profile for payout details
-      const { data: sellerProfile } = await db
-        .from('profiles')
-        .select('stripe_account_id, stripe_onboarding_complete, subscription_tier')
-        .eq('id', listing.seller_id)
-        .single()
+      const sellerProfile = auctionProfileMap.get(listing.seller_id)
 
       const sellerFeeRate = sellerProfile?.subscription_tier === 'dealer' ? 0.00
         : sellerProfile?.subscription_tier === 'collector_premium' ? 0.019 : 0.07

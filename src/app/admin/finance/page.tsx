@@ -265,7 +265,7 @@ export default async function AdminFinancePage() {
 
       {/* ── Monthly Breakdown ───────────────────────────────────────────── */}
       <section>
-        <h2 className="text-xs font-semibold tracking-widest uppercase text-zinc-400 mb-4">Monthly Breakdown — Last 6 Months</h2>
+        <h2 className="text-xs font-semibold tracking-widest uppercase text-zinc-400 mb-4">Monthly Breakdown: Last 6 Months</h2>
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>

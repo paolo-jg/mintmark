@@ -33,7 +33,7 @@ export function MakeOfferModal({ listing, onClose, onSuccess }: Props) {
       return
     }
     if (listing.price && amountCents >= listing.price) {
-      toast.error('Your offer is at or above the asking price — just buy it now')
+      toast.error('Your offer is at or above the asking price - just buy it now')
       return
     }
     setSubmitting(true)

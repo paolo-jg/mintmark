@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — Pedigree Coins',
+  title: 'Terms of Service | Pedigree Coins',
   description: 'Terms of Service, Sellers Agreement, and Buyers Agreement for Pedigree Coins.',
 }
 
@@ -140,9 +140,9 @@ export default function TermsPage() {
             incorporated into these Terms by reference. The current Plans are:
           </p>
           <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li><strong>Collector Basic</strong> — Free; 7% buyer fee; 7% seller fee; $0.50 per listing; up to 10 active listings/month; unlimited purchases.</li>
-            <li><strong>Collector Premium</strong> — $9.99/month; 1.9% buyer fee; 1.9% seller fee; $0.40 per listing; up to 50 active listings/month; unlimited purchases.</li>
-            <li><strong>Dealer</strong> — $49.99/month; 1% buyer fee; 0% seller fee; $0 per listing; unlimited listings; unlimited purchases.</li>
+            <li><strong>Collector Basic</strong> - Free; 7% buyer fee; 7% seller fee; $0.50 per listing; up to 10 active listings/month; unlimited purchases.</li>
+            <li><strong>Collector Premium</strong> - $9.99/month; 1.9% buyer fee; 1.9% seller fee; $0.40 per listing; up to 50 active listings/month; unlimited purchases.</li>
+            <li><strong>Dealer</strong> - $49.99/month; 1% buyer fee; 0% seller fee; $0 per listing; unlimited listings; unlimited purchases.</li>
           </ul>
           <p className="mt-2">Pedigree Coins may change Plan pricing or features at any time on notice as described in Section 17.</p>
         </Subsection>
@@ -295,7 +295,7 @@ export default function TermsPage() {
           <p className="mt-2"><strong>(i) No Cancellation After Dispatch.</strong> Once a Seller has entered a tracking number, the Transaction is final and cannot be cancelled by either party except through the in-platform Dispute process. All sales are final once shipped.</p>
           <p className="mt-2"><strong>(j) Consequences of Non-Compliance.</strong> If a Seller ships in violation of any requirement of this Section 6.6 and the Coin is lost, stolen, damaged, or not delivered, the Seller bears 100% of the resulting loss.</p>
         </Subsection>
-        <Subsection title="6.7 All Sales Final — No Returns">
+        <Subsection title="6.7 All Sales Final - No Returns">
           <p>
             <strong>All sales on the Platform are final. Pedigree Coins operates a strict no-return, no-exchange policy platform-wide.</strong> Sellers are not required to accept returns, and Buyers may not demand them. This policy applies to all Listings regardless of condition, grade, or price.
           </p>

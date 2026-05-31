@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — Pedigree Coins',
+  title: 'Privacy Policy | Pedigree Coins',
   description: 'Privacy Policy for Pedigree Coins marketplace.',
 }
 

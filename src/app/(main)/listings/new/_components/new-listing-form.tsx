@@ -131,14 +131,14 @@ function identifyPcgsSeries(pcgsCoinName: string): string | null {
 }
 
 function crossReference(picked: PickedCoin, grade: Partial<CoinGrade>): string | null {
-  // 1. Denomination mismatch — always a hard type mismatch
+  // 1. Denomination mismatch - always a hard type mismatch
   const pickedDenom = normalizeDenom(picked.denomination)
   const gradeDenom = normalizeDenom(grade.denomination)
   if (pickedDenom && gradeDenom && pickedDenom !== gradeDenom) {
     return `Coin type mismatch: you selected "${picked.seriesName}" (${picked.denomination}) but PCGS returned "${grade.coinName}" (${grade.denomination}).`
   }
 
-  // 2. Keyword mismatch — classify severity using catalog date ranges
+  // 2. Keyword mismatch - classify severity using catalog date ranges
   if (grade.coinName && picked.seriesName && !keywordsMatch(picked.seriesName, grade.coinName)) {
     // Look up the selected series range
     const selectedRange = picked.seriesSlug ? getSeriesRange(picked.seriesSlug) : null
@@ -150,7 +150,7 @@ function crossReference(picked: PickedCoin, grade: Partial<CoinGrade>): string |
     const pcgsYear = grade.year ?? null
 
     // The key question: could the PCGS coin's year exist within the selected series?
-    // If yes → soft (same denomination, overlapping years — plausible mixup, e.g. 1921 Morgan vs 1921 Peace)
+    // If yes → soft (same denomination, overlapping years - plausible mixup, e.g. 1921 Morgan vs 1921 Peace)
     // If no  → hard (that year provably never belonged to this series, e.g. 1922 Peace vs Morgan 1878–1921)
     const pcgsYearInSelectedSeries = pcgsYear && selectedRange
       ? pcgsYear >= selectedRange[0] && pcgsYear <= selectedRange[1]
@@ -160,19 +160,19 @@ function crossReference(picked: PickedCoin, grade: Partial<CoinGrade>): string |
       return `Coin type mismatch: you selected "${picked.seriesName}" but PCGS returned "${grade.coinName}". These appear to be different series.`
     }
 
-    // PCGS year is within the selected series range — soft warning
+    // PCGS year is within the selected series range - soft warning
     const yearNote = pcgsYear && picked.year && pcgsYear === picked.year
       ? ` Both were issued in ${pcgsYear}.`
       : ''
     return `Coin series mismatch: you selected "${picked.seriesName}" but PCGS returned "${grade.coinName}".${yearNote} Verify this is the correct cert before proceeding.`
   }
 
-  // 3. Year mismatch — soft warning
+  // 3. Year mismatch - soft warning
   if (picked.year && grade.year && picked.year !== grade.year) {
     return `Year mismatch: you selected ${picked.year} but PCGS shows ${grade.year}.`
   }
 
-  // 4. Mint mark mismatch — soft warning
+  // 4. Mint mark mismatch - soft warning
   if (normalizeMint(picked.mintMark) !== normalizeMint(grade.mintMark)) {
     const sel = picked.mintMark || 'P'
     const pcgs = grade.mintMark || 'P'
@@ -193,7 +193,7 @@ function calcConvenienceFee(priceUsd: number): number {
   return (priceUsd * 0.029 + 0.30) / (1 - 0.029) + 0.30
 }
 
-const FREE_SHIPPING_MIN_CENTS = 25_000 // $250 — below this, minimum $3.99 flat rate required
+const FREE_SHIPPING_MIN_CENTS = 25_000 // $250 - below this, minimum $3.99 flat rate required
 const CONCIERGE_THRESHOLD_CENTS = 50_000_000 // $500,000
 const FLAT_RATE_MINIMUM_CENTS = 499    // $4.99
 
@@ -218,7 +218,7 @@ function parsePriceCents(v: string): number {
   return Math.round(parseFloat(v.replace(/,/g, '')) * 100)
 }
 
-// Live price input handler — formats with commas and restores cursor position
+// Live price input handler - formats with commas and restores cursor position
 function handlePriceInput(
   e: React.ChangeEvent<HTMLInputElement>,
   setter: (v: string) => void
@@ -431,7 +431,7 @@ export default function NewListingPage() {
   // ID of an existing draft to resume editing
   const draftId = searchParams.get('draft')
 
-  // Tier config — mirrors sell/page.tsx
+  // Tier config - mirrors sell/page.tsx
   const LISTING_LIMITS: Record<string, number | null> = {
     collector_basic:    10,
     collector_premium:  50,
@@ -698,7 +698,7 @@ export default function NewListingPage() {
         if (baseName) {
           setTitle(buildTitle(baseName, service, grade.grade))
         }
-        // Cross-reference against the coin selected in step 1 — warn only, don't block
+        // Cross-reference against the coin selected in step 1 - warn only, don't block
         if (pickedCoin) {
           setMismatchError(crossReference(pickedCoin, grade))
         }
@@ -809,7 +809,7 @@ export default function NewListingPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { toast.error('You must be signed in'); setSavingDraft(false); return }
 
-      // Resolve team context — team member saves draft on behalf of dealer
+      // Resolve team context - team member saves draft on behalf of dealer
       const { data: membership } = await supabase
         .from('team_members')
         .select('dealer_id')
@@ -967,7 +967,7 @@ export default function NewListingPage() {
 
     setUploadingImages(imageFiles.length > 0)
 
-    // Run image upload and cert check in parallel — don't block on collection item creation
+    // Run image upload and cert check in parallel - don't block on collection item creation
     const certCheckPromise = (certNumber.trim() && service !== 'Ungraded')
       ? supabase.from('listings').select('id, title').eq('cert_number', certNumber.trim()).eq('status', 'active').maybeSingle()
       : Promise.resolve({ data: null })
@@ -1119,6 +1119,15 @@ export default function NewListingPage() {
       })
     }
 
+    // Fire-and-forget steps email on every published listing (first or subsequent)
+    if (listing.status === 'active') {
+      fetch('/api/listings/steps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listing_id: listing.id, listing_title: listing.title ?? listing.coin_name ?? 'your listing' }),
+      }).catch(() => null)
+    }
+
     if (queueIndex < coinQueue.length - 1) {
       const nextIdx = queueIndex + 1
       setQueueIndex(nextIdx)
@@ -1150,7 +1159,7 @@ export default function NewListingPage() {
     <div className="max-w-2xl mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold tracking-tight mb-1">{draftListingId ? 'Edit Draft' : 'List a Coin'}</h1>
       <p className="text-muted-foreground text-sm mb-8">
-        {draftListingId ? 'Pick up where you left off — all fields are editable before you publish.' : 'Select the coin you are listing, add grading details, and set your price.'}
+        {draftListingId ? 'Pick up where you left off - all fields are editable before you publish.' : 'Select the coin you are listing, add grading details, and set your price.'}
       </p>
 
       {/* Step indicator */}
@@ -1287,13 +1296,13 @@ export default function NewListingPage() {
             <CardHeader>
               <CardTitle className="text-base">Grading &amp; Certification</CardTitle>
               <CardDescription>
-                {coinQueue.length > 1 ? `Coin ${queueIndex + 1} of ${coinQueue.length} — ` : ''}
+                {coinQueue.length > 1 ? `Coin ${queueIndex + 1} of ${coinQueue.length} - ` : ''}
                 {pickedCoin?.coinName}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
 
-              {/* Grading service — pill grid */}
+              {/* Grading service - pill grid */}
               <div className="space-y-2">
                 <Label>Grading Service</Label>
                 <div className="grid grid-cols-3 gap-2">
@@ -1346,7 +1355,7 @@ export default function NewListingPage() {
                 </div>
               )}
 
-              {/* Manual grade selector — non-PCGS only */}
+              {/* Manual grade selector - non-PCGS only */}
               {service !== 'PCGS' && service !== 'Ungraded' && (
                 <div className="space-y-2">
                   <Label>Grade</Label>
@@ -1469,7 +1478,7 @@ export default function NewListingPage() {
                 <CardTitle className="text-base">Listing Details</CardTitle>
                 {coinQueue.length > 1 && (
                   <CardDescription>
-                    {`Coin ${queueIndex + 1} of ${coinQueue.length} — `}{pickedCoin?.coinName}
+                    {`Coin ${queueIndex + 1} of ${coinQueue.length} - `}{pickedCoin?.coinName}
                   </CardDescription>
                 )}
               </CardHeader>
@@ -1616,7 +1625,7 @@ export default function NewListingPage() {
                       )
                     })()}
 
-                    {/* Convenience fee toggle — dealers only */}
+                    {/* Convenience fee toggle - dealers only */}
                     {sellerTier === 'dealer' && (
                       <label
                         htmlFor="convFee"
@@ -1790,7 +1799,7 @@ export default function NewListingPage() {
                   />
                 </label>
 
-                {/* Offer settings — visible when Accept Offers is on */}
+                {/* Offer settings - visible when Accept Offers is on */}
                 {acceptOffers && (
                   <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-4">
                     {/* Minimum offer */}

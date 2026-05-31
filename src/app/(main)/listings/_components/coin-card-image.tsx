@@ -37,7 +37,7 @@ export function CoinCardImage({ image, imageReverse, name, priority = false }: P
 
   const handleMouseEnter = useCallback(() => {
     wantsHover.current = true
-    // Only act if stable — otherwise wantsHover=true is checked on animation end
+    // Only act if stable - otherwise wantsHover=true is checked on animation end
     if (phaseRef.current === 'idle') {
       go('flipping')
     }
@@ -45,7 +45,7 @@ export function CoinCardImage({ image, imageReverse, name, priority = false }: P
 
   const handleMouseLeave = useCallback(() => {
     wantsHover.current = false
-    // Only act if stable — otherwise wantsHover=false is checked on animation end
+    // Only act if stable - otherwise wantsHover=false is checked on animation end
     if (phaseRef.current === 'showing') {
       startFadeBack()
     }
@@ -59,16 +59,16 @@ export function CoinCardImage({ image, imageReverse, name, priority = false }: P
     if (wantsHover.current) {
       go('showing')
     } else {
-      // User left during the flip — crossfade back once flip lands
+      // User left during the flip - crossfade back once flip lands
       startFadeBack()
     }
   }, [])
 
-  // No reverse — just show obverse, no interaction needed
+  // No reverse - just show obverse, no interaction needed
   if (!imageReverse) {
     return (
       <div className="aspect-square overflow-hidden bg-white dark:bg-zinc-50 relative">
-        <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} unoptimized />
+        <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} />
       </div>
     )
   }
@@ -81,7 +81,7 @@ export function CoinCardImage({ image, imageReverse, name, priority = false }: P
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* 3D flip container — always stays at 180deg once flipped, never flips back */}
+      {/* 3D flip container - always stays at 180deg once flipped, never flips back */}
       <div
         onTransitionEnd={handleTransitionEnd}
         className="absolute inset-0"
@@ -94,18 +94,18 @@ export function CoinCardImage({ image, imageReverse, name, priority = false }: P
       >
         {/* Obverse */}
         <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden' }}>
-          <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} unoptimized />
+          <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} />
         </div>
         {/* Reverse */}
         <div
           className="absolute inset-0"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
-          <Image src={imageReverse} alt={`${name} reverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} unoptimized />
+          <Image src={imageReverse} alt={`${name} reverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} />
         </div>
       </div>
 
-      {/* Crossfade overlay — obverse fades in on mouse-leave, instant hide otherwise */}
+      {/* Crossfade overlay - obverse fades in on mouse-leave, instant hide otherwise */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -113,7 +113,7 @@ export function CoinCardImage({ image, imageReverse, name, priority = false }: P
           transition: phase === 'fading' ? 'opacity 0.4s ease-in-out' : 'none',
         }}
       >
-        <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} unoptimized />
+        <Image src={image} alt={`${name} obverse`} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain p-3" priority={priority} />
       </div>
     </div>
   )

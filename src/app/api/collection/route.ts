@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
-// Service role client bypasses RLS — auth is enforced at the route level instead
+// Service role client bypasses RLS - auth is enforced at the route level instead
 function getServiceClient() {
   return createServiceClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,7 +23,7 @@ export async function GET() {
   const db = getServiceClient()
   const { data, error } = await db
     .from('collection_items')
-    .select('*')
+    .select('id, type, status, coin_name, grade, grading_service, year, mint_mark, denomination, cert_number, series_slug, price_row_label, pcgs_image_url, max_price, coin_profile, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 

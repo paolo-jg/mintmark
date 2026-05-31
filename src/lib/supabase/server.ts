@@ -36,7 +36,7 @@ export async function createClient() {
               })
             )
           } catch {
-            // Server component — cookies can't be set, middleware handles this
+            // Server component - cookies can't be set, middleware handles this
           }
         },
       },

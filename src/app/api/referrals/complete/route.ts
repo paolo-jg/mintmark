@@ -47,20 +47,23 @@ export async function POST(req: NextRequest) {
     subscription_free_until: refereeFreeUntil,
   }).eq('id', user.id)
 
-  // Referrer gets 1 free month of their current tier.
-  // collector_basic → bumped to collector_premium; dealer stays dealer.
-  const referrerRewardTier = referrer.subscription_tier === 'dealer' ? 'dealer' : 'collector_premium'
-  // Start from the later of now or their current free_until so months always accumulate.
-  const baseTime = referrer.subscription_free_until
-    ? Math.max(Date.now(), new Date(referrer.subscription_free_until).getTime())
-    : Date.now()
-  const newFreeUntil = new Date(baseTime + 30 * 24 * 60 * 60 * 1000).toISOString()
+  // Referrer gets 1 free month, capped at 12 total (1 year max).
+  const CAP = 12
+  const creditMonths = referrer.subscription_credit_months ?? 0
+  if (creditMonths < CAP) {
+    const referrerRewardTier = referrer.subscription_tier === 'dealer' ? 'dealer' : 'collector_premium'
+    const baseTime = referrer.subscription_free_until
+      ? Math.max(Date.now(), new Date(referrer.subscription_free_until).getTime())
+      : Date.now()
+    const newFreeUntil = new Date(baseTime + 30 * 24 * 60 * 60 * 1000).toISOString()
 
-  await db.from('profiles').update({
-    subscription_tier: referrerRewardTier,
-    subscription_credit_months: (referrer.subscription_credit_months ?? 0) + 1,
-    subscription_free_until: newFreeUntil,
-  }).eq('id', referrer.id)
+    await db.from('profiles').update({
+      subscription_tier: referrerRewardTier,
+      subscription_credit_months: creditMonths + 1,
+      subscription_free_until: newFreeUntil,
+    }).eq('id', referrer.id)
+  }
+  // If already at cap, referral is still recorded but no additional free months are granted.
 
   return NextResponse.json({ ok: true })
 }

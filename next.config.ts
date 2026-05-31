@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
       {
+        protocol: 'https',
+        hostname: 'jlelkunjjbyitnknzhpp.supabase.co',
+        pathname: '/storage/v1/render/image/public/**',
+      },
+      {
         // PCGS coin images (www + any CDN subdomain)
         protocol: 'https',
         hostname: '**.pcgs.com',

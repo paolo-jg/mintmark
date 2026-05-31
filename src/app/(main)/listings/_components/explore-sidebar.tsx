@@ -28,7 +28,6 @@ const CATEGORIES = [
   { label: 'Bullion', value: 'bullion' },
   { label: 'Proof & Mint Sets', value: 'proof-mint-sets' },
   { label: 'Colonial & Early American', value: 'colonial' },
-  { label: 'Pattern Coins', value: 'patterns' },
 ]
 
 const COMPOSITIONS = [
@@ -227,7 +226,7 @@ export function ExploreSidebar() {
         )}
       </div>
 
-      {/* Desktop sidebar — hover to expand */}
+      {/* Desktop sidebar - hover to expand */}
       <aside
         className="hidden lg:block flex-none sticky top-8 self-start overflow-hidden"
         style={{

@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  // Build the update object — only allow safe fields
+  // Build the update object - only allow safe fields
   const update: Record<string, string | null> = {}
 
   if ('display_name' in body) {
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     update.display_name = val || null
   }
 
-  // Dealer-only fields — safe to write regardless; the UI already guards access
+  // Dealer-only fields - safe to write regardless; the UI already guards access
   if ('dealer_logo_url' in body) {
     const val = (body.dealer_logo_url ?? '').trim()
     update.dealer_logo_url = val || null

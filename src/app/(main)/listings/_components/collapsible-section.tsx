@@ -24,7 +24,7 @@ export function CollapsibleSection({
         onClick={() => setOpen(o => !o)}
         className="w-full group flex items-center gap-3 px-3.5 py-2.5 mb-0 rounded-lg border border-border bg-muted/40 hover:bg-muted hover:border-foreground/20 transition-all duration-200 cursor-pointer"
       >
-        {/* Chevron — left-aligned so it's the first thing you see */}
+        {/* Chevron - left-aligned so it's the first thing you see */}
         <ChevronDown
           className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${
             open ? 'rotate-0' : '-rotate-90'

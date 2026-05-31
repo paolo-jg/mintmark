@@ -14,6 +14,7 @@ import {
   BarChart3,
   ScrollText,
   RotateCcw,
+  FileUp,
 } from 'lucide-react'
 
 const NAV = [
@@ -25,6 +26,7 @@ const NAV = [
   { href: '/admin/disputes', label: 'Disputes', icon: AlertTriangle },
   { href: '/admin/returns', label: 'Returns', icon: RotateCcw },
   { href: '/admin/listings', label: 'Listings', icon: Tag },
+  { href: '/admin/imports', label: 'Imports', icon: FileUp },
   { href: '/admin/audit-log', label: 'Audit Log', icon: ScrollText },
   { href: '/admin/platform', label: 'Platform', icon: Settings2 },
 ]

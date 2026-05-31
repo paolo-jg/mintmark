@@ -189,7 +189,7 @@ export function CoinDetailModal({ item, onClose }: Props) {
             </div>
           )}
 
-          {/* Price history chart — shown for all owned/graded coins */}
+          {/* Price history chart - shown for all owned/graded coins */}
           {item.grade && (
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-3">Sale Price History</p>

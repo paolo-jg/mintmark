@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // The original onboarding link expired — generate a fresh one
+    // The original onboarding link expired - generate a fresh one
     const baseUrl = req.nextUrl.origin
 
     const accountLink = await stripe.accountLinks.create({

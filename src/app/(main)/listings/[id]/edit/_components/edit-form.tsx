@@ -343,7 +343,7 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
           : null,
       }
 
-      // Offers — only update when no bidder has locked them
+      // Offers - only update when no bidder has locked them
       if (!hasBidder) {
         listingUpdate.accept_offers = acceptOffers
         listingUpdate.min_offer_amount = acceptOffers && minOfferAmount ? parsePriceCents(minOfferAmount) : null
@@ -354,9 +354,9 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
       if (listingType === 'fixed') {
         listingUpdate.price = parsePriceCents(price)
         listingUpdate.pass_convenience_fee = passConvenienceFee
-        // duration is locked — never written back
+        // duration is locked - never written back
       } else if (!hasBidder) {
-        // auction without bids — allow BIN price edit
+        // auction without bids - allow BIN price edit
         listingUpdate.auction_bin_price = auctionBinPrice ? parsePriceCents(auctionBinPrice) : null
       }
 
@@ -371,7 +371,7 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
         return
       }
 
-      // 4. Update auction row — only when no bidder
+      // 4. Update auction row - only when no bidder
       if (listingType === 'auction' && auction && !hasBidder) {
         const { error: auctionErr } = await supabase
           .from('auctions')
@@ -407,7 +407,7 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
 
       {isDraft && (
         <div className="rounded-xl border border-amber-400/40 bg-amber-50/60 dark:bg-amber-950/20 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
-          This listing is a <strong>draft</strong> — it won&apos;t be visible to buyers until you publish it. Add photos and complete any missing fields, then click <strong>Publish Listing</strong>.
+          This listing is a <strong>draft</strong> - it won&apos;t be visible to buyers until you publish it. Add photos and complete any missing fields, then click <strong>Publish Listing</strong>.
         </div>
       )}
 
@@ -417,7 +417,7 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
           <CardTitle className="text-base">Listing Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Coin meta — read-only */}
+          {/* Coin meta - read-only */}
           <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 space-y-1.5 text-sm">
             <div className="flex justify-between gap-4">
               <span className="text-muted-foreground shrink-0">Coin</span>
@@ -592,7 +592,7 @@ export function EditForm({ listing, auction, sellerTier }: Props) {
                 )
               })()}
 
-              {/* Convenience fee — dealers only */}
+              {/* Convenience fee - dealers only */}
               {sellerTier === 'dealer' && (
                 <label
                   htmlFor="convFee"

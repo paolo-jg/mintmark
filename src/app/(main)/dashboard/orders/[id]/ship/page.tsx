@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, use, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -84,7 +86,7 @@ export default function ShipOrderPage({ params }: { params: Promise<{ id: string
         toast.error(data.error ?? 'Failed to mark as shipped')
         return
       }
-      toast.success('Order marked as shipped — buyer notified')
+      toast.success('Order marked as shipped - buyer notified')
       router.push('/dashboard/sales')
     } catch {
       toast.error('Network error. Please try again.')

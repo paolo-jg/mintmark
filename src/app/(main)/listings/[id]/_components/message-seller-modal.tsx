@@ -89,7 +89,7 @@ export function MessageSellerModal({ listingId, sellerId, sellerPublicKeyJwk, on
           )
           if (!cancelled) setMessages(decrypted)
         } else {
-          // New conversation — generate AES key and wrap for both parties
+          // New conversation - generate AES key and wrap for both parties
           const sellerPubKey  = await importPublicKey(sellerPublicKeyJwk)
           const buyerPubKey   = await importPublicKey(buyerPublicKeyJwk)
           const convKey       = await generateConversationKey()

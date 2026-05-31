@@ -1,7 +1,7 @@
 import { PricingTabs } from './_components/pricing-tabs'
 
 export const metadata = {
-  title: 'Pricing — Pedigree Coins',
+  title: 'Pricing | Pedigree Coins',
 }
 
 const COMPETITORS = [

@@ -158,7 +158,7 @@ function WriteReviewModal({
               >
                 {orders.map(o => (
                   <option key={o.id} value={o.id}>
-                    {new Date(o.created_at).toLocaleDateString()} — ${(o.amount / 100).toFixed(0)}
+                    {new Date(o.created_at).toLocaleDateString()} - ${(o.amount / 100).toFixed(0)}
                   </option>
                 ))}
               </select>

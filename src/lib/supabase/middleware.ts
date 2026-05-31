@@ -47,7 +47,7 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // getSession reads from cookie — no network round-trip (fast)
+  // getSession reads from cookie - no network round-trip (fast)
   // Route protection is handled by the proxy at the subdomain level, not here
   await supabase.auth.getSession()
 

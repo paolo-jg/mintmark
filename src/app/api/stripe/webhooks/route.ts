@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import stripe from '@/lib/stripe'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { sendOrderConfirmationBuyer, sendNewOrderSeller, sendDisputeOpened, sendDisputeResolved } from '@/lib/resend'
+import { sendOrderConfirmationBuyer, sendNewOrderSeller, sendDisputeOpened, sendDisputeResolved, sendFirstPurchaseCongrats, sendPurchaseReminder, sendImportRequestReceived } from '@/lib/resend'
 
 function getServiceDb() {
   return createServiceClient(
@@ -42,6 +42,40 @@ export async function POST(req: NextRequest) {
       seller_payout_cents, platform_fee_cents, shipping_price_cents,
     } = meta
 
+    // listing_import payment
+    if (session.metadata?.type === 'listing_import') {
+      const importId = session.metadata.import_request_id
+      if (importId) {
+        const { data: importReq } = await db
+          .from('listing_import_requests')
+          .update({ status: 'pending', paid_at: new Date().toISOString() })
+          .eq('id', importId)
+          .select('dealer_id, row_count, notes, file_name')
+          .single()
+
+        if (importReq) {
+          const { data: dealerProfile } = await db
+            .from('profiles')
+            .select('email, display_name')
+            .eq('id', importReq.dealer_id)
+            .single()
+
+          const dealerName = dealerProfile?.display_name ?? dealerProfile?.email ?? 'Dealer'
+          const amountCents = session.amount_total ?? (importReq.row_count * 50)
+
+          await sendImportRequestReceived({
+            to: 'paolo@zypremit.com',
+            dealerName,
+            rowCount: importReq.row_count,
+            isFree: false,
+            amountCents,
+            notes: importReq.notes ?? undefined,
+          })
+        }
+      }
+      return NextResponse.json({ ok: true })
+    }
+
     if (!listing_id || !buyer_id) return NextResponse.json({ received: true })
 
     // Idempotency: only create once
@@ -63,7 +97,7 @@ export async function POST(req: NextRequest) {
           ? session.payment_intent
           : (session.payment_intent?.id ?? null)
 
-        await db.from('orders').insert({
+        const { data: newOrder } = await db.from('orders').insert({
           listing_id,
           buyer_id,
           seller_id,
@@ -80,7 +114,7 @@ export async function POST(req: NextRequest) {
           ship_to_country: 'US',
           status: 'awaiting_shipment',
           stripe_payment_intent_id: paymentIntentId,
-        })
+        }).select('id').single()
 
         await db.from('listings').update({ status: 'sold' }).eq('id', listing_id)
 
@@ -120,11 +154,12 @@ export async function POST(req: NextRequest) {
           price_row_label: listing.price_row_label,
         })
 
-        // Fire-and-forget confirmation emails
-        const orderId = listing_id // order tied to listing
-        const [buyerAuth, sellerAuth] = await Promise.all([
+        // Fire-and-forget confirmation + steps emails
+        const orderId = newOrder?.id ?? listing_id
+        const [buyerAuth, sellerAuth, { count: buyerOrderCount }] = await Promise.all([
           db.auth.admin.getUserById(buyer_id),
           db.auth.admin.getUserById(seller_id),
+          db.from('orders').select('id', { count: 'exact', head: true }).eq('buyer_id', buyer_id),
         ])
         const buyerEmail = buyerAuth.data.user?.email
         const sellerEmail = sellerAuth.data.user?.email
@@ -139,6 +174,12 @@ export async function POST(req: NextRequest) {
             listingTitle,
             amountCents: Number(amount ?? 0),
           }).catch(() => null)
+          const buyerName = buyerEmail.split('@')[0]
+          if ((buyerOrderCount ?? 0) <= 1) {
+            sendFirstPurchaseCongrats({ to: buyerEmail, buyerName, listingTitle, orderId }).catch(() => null)
+          } else {
+            sendPurchaseReminder({ to: buyerEmail, buyerName, listingTitle, orderId }).catch(() => null)
+          }
         }
         if (sellerEmail) {
           sendNewOrderSeller({
@@ -232,7 +273,11 @@ export async function POST(req: NextRequest) {
     const targetTier = sub.metadata?.target_tier
 
     if (userId && targetTier && sub.status === 'active') {
-      await db.from('profiles').update({ subscription_tier: targetTier }).eq('id', userId)
+      await db.from('profiles').update({
+        subscription_tier: targetTier,
+        onboarding_completed: true,
+        requires_plan_selection: false,
+      }).eq('id', userId)
     }
   }
 

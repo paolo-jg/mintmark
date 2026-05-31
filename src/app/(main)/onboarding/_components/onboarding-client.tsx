@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -17,8 +17,6 @@ interface Props {
   currentTier: string
   referralCode: string | null
 }
-
-const USERNAME_REGEX = /^[a-z0-9_]{3,30}$/
 
 const PLANS = [
   {
@@ -59,54 +57,69 @@ const PLANS = [
   },
 ]
 
-export function OnboardingClient({ initialUsername, referralCode }: Props) {
+export function OnboardingClient({ initialUsername, initialDisplayName, referralCode }: Props) {
   const router = useRouter()
   const supabase = createClient()
 
   const [step, setStep] = useState<Step>(1)
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [username, setUsername] = useState(initialUsername)
-  const [shopName, setShopName] = useState('')
-  const [usernameError, setUsernameError] = useState<string | null>(null)
+  const [displayName, setDisplayName] = useState(initialDisplayName)
+  const [displayNameError, setDisplayNameError] = useState<string | null>(null)
   const [tosAccepted, setTosAccepted] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  function validateUsernameFormat(value: string): string | null {
-    if (!value) return 'Username is required'
-    if (!USERNAME_REGEX.test(value))
-      return '3–30 characters: lowercase letters, numbers and underscores only'
-    return null
-  }
+  // On mount: handle Stripe return or resume from back-press
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
 
-  async function checkUsernameUnique(value: string): Promise<boolean> {
+    if (params.get('ob_done') === '1') {
+      // Stripe checkout completed - mark onboarding done and enter the app
+      localStorage.removeItem('pc_ob_pending')
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          supabase.from('profiles')
+            .update({ onboarding_completed: true })
+            .eq('id', user.id)
+            .then(() => router.replace('/listings'), () => router.replace('/listings'))
+        } else {
+          router.replace('/listings')
+        }
+      })
+      return
+    }
+
+    if (localStorage.getItem('pc_ob_pending') === '1') {
+      // User backed out of Stripe - resume at plan selection
+      setStep(3)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Auto-generate a unique username from display name
+  async function generateUsername(base: string): Promise<string> {
+    const slug = base.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 25) || 'user'
     const { data: { user } } = await supabase.auth.getUser()
     const { data: existing } = await supabase
       .from('profiles')
       .select('id')
-      .eq('username', value)
+      .eq('username', slug)
       .neq('id', user?.id ?? '')
       .maybeSingle()
-    return !existing
-  }
-
-  async function handleUsernameBlur() {
-    const err = validateUsernameFormat(username)
-    if (err) { setUsernameError(err); return }
-    const unique = await checkUsernameUnique(username)
-    setUsernameError(unique ? null : 'That username is already taken')
+    if (!existing) return slug
+    const suffix = Math.floor(1000 + Math.random() * 9000)
+    return `${slug}_${suffix}`
   }
 
   async function handleStep2Continue() {
-    const err = validateUsernameFormat(username)
-    if (err) { setUsernameError(err); return }
-    const unique = await checkUsernameUnique(username)
-    if (!unique) { setUsernameError('That username is already taken'); return }
-    setUsernameError(null)
+    const trimmed = displayName.trim()
+    if (!trimmed) { setDisplayNameError('Display name is required'); return }
+    if (trimmed.length < 2) { setDisplayNameError('Must be at least 2 characters'); return }
+    setDisplayNameError(null)
     setStep(3)
   }
 
-  async function saveAndRedirect(destination: string, planKey?: string) {
+  async function saveAndRedirect(planKey: string) {
     setSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -117,14 +130,18 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
         return
       }
 
-      const displayName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ') || null
+      const username = initialUsername || await generateUsername(displayName.trim())
+
+      const isPaid = planKey !== 'collector_basic'
 
       const { error } = await supabase
         .from('profiles')
         .update({
           username,
-          display_name: shopName.trim() || displayName,
-          onboarding_completed: true,
+          display_name: displayName.trim(),
+          // For paid plans, onboarding_completed is set after Stripe returns successfully.
+          // For free plans, mark complete immediately.
+          ...(isPaid ? {} : { onboarding_completed: true }),
         })
         .eq('id', user.id)
 
@@ -134,14 +151,14 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
         return
       }
 
-      // Store first/last name privately — owner-only RLS, never public
+      // Store first/last name privately
       await supabase
         .from('profiles_private')
         .upsert({ id: user.id, first_name: firstName.trim() || null, last_name: lastName.trim() || null })
         .then(() => null, () => null)
 
       // If referred and chose a paid plan, complete the referral
-      if (referralCode && (planKey === 'collector_premium' || planKey === 'dealer')) {
+      if (referralCode && isPaid) {
         await fetch('/api/referrals/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -149,7 +166,29 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
         }).catch(() => null)
       }
 
-      router.push(destination)
+      // Free plan - go straight to app
+      if (!isPaid) {
+        localStorage.removeItem('pc_ob_pending')
+        router.push('/listings')
+        return
+      }
+
+      // Paid plan - flag that we're mid-onboarding so back-press resumes at step 3
+      localStorage.setItem('pc_ob_pending', '1')
+
+      // Return URL lands back on /onboarding with ?ob_done=1 to complete onboarding
+      const res = await fetch('/api/stripe/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier: planKey, return_url: '/onboarding?ob_done=1' }),
+      })
+      const json = await res.json()
+      if (json.url) {
+        window.location.href = json.url
+      } else {
+        toast.error(json.error ?? 'Something went wrong')
+        setSaving(false)
+      }
     } catch {
       toast.error('Something went wrong. Please try again.')
       setSaving(false)
@@ -163,19 +202,10 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
     /* Full-screen overlay */
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
 
-      {/* Decorative backdrop */}
-      <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-zinc-800/40 via-transparent to-transparent" />
-      {/* Subtle grid */}
-      <div
-        className="absolute inset-0 opacity-[0.04]"
-        style={{
-          backgroundImage: 'linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-        }}
-      />
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-background" />
 
-      {/* Modal card — wider and taller on step 3 to fit plan cards */}
+      {/* Modal card - wider and taller on step 3 to fit plan cards */}
       <div className={`relative z-10 w-full bg-background rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${step === 3 ? 'max-w-4xl' : 'max-w-xl'}`}>
 
         {/* Progress bar */}
@@ -227,13 +257,13 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-3">
                 <input
                   id="tosAccept"
                   type="checkbox"
                   checked={tosAccepted}
                   onChange={e => setTosAccepted(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-border accent-foreground cursor-pointer flex-shrink-0"
+                  className="h-4 w-4 rounded border-border accent-foreground cursor-pointer flex-shrink-0"
                 />
                 <label htmlFor="tosAccept" className="text-sm text-muted-foreground leading-snug cursor-pointer">
                   I agree to the{' '}
@@ -252,69 +282,45 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
                 onClick={() => setStep(2)}
                 disabled={!firstName.trim() || !lastName.trim() || !tosAccepted}
               >
-                Continue →
+                Continue
               </Button>
             </div>
           )}
 
-          {/* ── STEP 2: Username + Shop Name ─────────────────────────────── */}
+          {/* ── STEP 2: Display Name ─────────────────────────────────────── */}
           {step === 2 && (
             <div className="space-y-7">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">Create your identity</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Create your profile</h1>
                 <p className="text-muted-foreground mt-2">
-                  Your username is how buyers and sellers find you.
+                  This is your public name on Pedigree Coins. If you are a dealer or company owner, use your company name.
                 </p>
               </div>
 
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-sm font-medium">Username</Label>
-                  <Input
-                    id="username"
-                    value={username}
-                    onChange={e => { setUsername(e.target.value.toLowerCase()); setUsernameError(null) }}
-                    onBlur={handleUsernameBlur}
-                    placeholder="coinlover42"
-                    autoComplete="username"
-                    autoFocus
-                    className={`h-12 text-base ${usernameError ? 'border-destructive' : ''}`}
-                  />
-                  {usernameError
-                    ? <p className="text-sm text-destructive">{usernameError}</p>
-                    : <p className="text-sm text-muted-foreground">3–30 chars · lowercase, numbers, underscores only</p>
-                  }
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="shopName" className="text-sm font-medium">
-                    Shop / Display Name{' '}
-                    <span className="text-muted-foreground font-normal">(optional)</span>
-                  </Label>
-                  <Input
-                    id="shopName"
-                    value={shopName}
-                    onChange={e => setShopName(e.target.value)}
-                    placeholder="e.g. Morgan Dollar Specialist"
-                    maxLength={80}
-                    className="h-12 text-base"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Shown on your seller storefront instead of your username.
-                  </p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="displayName" className="text-sm font-medium">Display Name</Label>
+                <Input
+                  id="displayName"
+                  value={displayName}
+                  onChange={e => { setDisplayName(e.target.value); setDisplayNameError(null) }}
+                  placeholder="e.g. Morgan Dollar Specialist"
+                  maxLength={80}
+                  autoFocus
+                  className={`h-12 text-base ${displayNameError ? 'border-destructive' : ''}`}
+                />
+                {displayNameError && <p className="text-sm text-destructive">{displayNameError}</p>}
               </div>
 
               <div className="flex gap-3">
                 <Button variant="outline" className="h-12 px-6" onClick={() => setStep(1)}>
-                  ← Back
+                  Back
                 </Button>
                 <Button
                   className="flex-1 h-12 text-base"
                   onClick={handleStep2Continue}
-                  disabled={!!usernameError}
+                  disabled={!displayName.trim()}
                 >
-                  Continue →
+                  Continue
                 </Button>
               </div>
             </div>
@@ -340,7 +346,7 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
               {referralCode ? (
                 /* Referred users: Premium (1 month free) + Dealer (full price), no Free option */
                 <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-                  {/* Premium — referral bonus */}
+                  {/* Premium - referral bonus */}
                   <div className="relative rounded-xl border border-foreground bg-foreground text-background p-6 flex flex-col gap-4">
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-green-500 text-white px-3 py-0.5 rounded-full whitespace-nowrap">
                       1 Month Free
@@ -365,14 +371,14 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
                     </ul>
                     <Button
                       className="w-full h-10 text-sm font-semibold mt-1 bg-white text-zinc-900 hover:bg-white/90 border-0"
-                      onClick={() => saveAndRedirect('/listings', 'collector_premium')}
+                      onClick={() => saveAndRedirect('collector_premium')}
                       disabled={saving}
                     >
                       {saving ? 'Saving…' : 'Claim Free Month'}
                     </Button>
                   </div>
 
-                  {/* Dealer — also 1 month free */}
+                  {/* Dealer - also 1 month free */}
                   <div className="relative rounded-xl border border-border bg-background p-6 flex flex-col gap-4">
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-wider uppercase bg-green-500 text-white px-3 py-0.5 rounded-full whitespace-nowrap">
                       1 Month Free
@@ -397,7 +403,7 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
                     </ul>
                     <Button
                       className="w-full h-10 text-sm font-semibold mt-1 bg-foreground text-background hover:bg-foreground/90"
-                      onClick={() => saveAndRedirect('/pricing', 'dealer')}
+                      onClick={() => saveAndRedirect('dealer')}
                       disabled={saving}
                     >
                       {saving ? 'Saving…' : 'Claim Free Month'}
@@ -448,7 +454,7 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
                             ? 'bg-white text-zinc-900 hover:bg-white/90 border-0'
                             : 'bg-foreground text-background hover:bg-foreground/90'
                         }`}
-                        onClick={() => saveAndRedirect(plan.key === 'collector_basic' ? '/listings' : '/pricing', plan.key)}
+                        onClick={() => saveAndRedirect(plan.key)}
                         disabled={saving}
                       >
                         {saving ? 'Saving…' : plan.cta}
@@ -464,7 +470,7 @@ export function OnboardingClient({ initialUsername, referralCode }: Props) {
                 onClick={() => setStep(2)}
                 disabled={saving}
               >
-                ← Back
+                Back
               </Button>
             </div>
           )}

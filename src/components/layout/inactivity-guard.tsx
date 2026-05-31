@@ -15,6 +15,11 @@ export function InactivityGuard() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
+    // Inactivity logout only applies on the app domain
+    const host = window.location.hostname
+    const isAppDomain = host.startsWith('my.') || host === 'localhost' || host.startsWith('127.')
+    if (!isAppDomain) return
+
     const supabase = createClient()
 
     async function doSignOut() {
@@ -65,7 +70,7 @@ export function InactivityGuard() {
           try {
             const payload = JSON.parse(atob(data.session.access_token.split('.')[1]))
             const sessionAgeMs = Date.now() - (payload.iat as number) * 1000
-            if (sessionAgeMs < 60_000) return // just logged in — don't sign out
+            if (sessionAgeMs < 60_000) return // just logged in - don't sign out
           } catch { /* malformed JWT, fall through to sign out */ }
           doSignOut()
         })

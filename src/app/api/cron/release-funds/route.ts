@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
   // ── 1. Release payouts ────────────────────────────────────────────────────
   // Only for shipped/delivered orders past their auto_confirm_at.
-  // awaiting_shipment is explicitly excluded — payout requires tracking number.
+  // awaiting_shipment is explicitly excluded - payout requires tracking number.
   const { data: readyOrders } = await db
     .from('orders')
     .select('id, seller_id, seller_payout_cents, listing_id')
@@ -33,13 +33,16 @@ export async function GET(req: NextRequest) {
     .in('status', ['shipped', 'delivered'])
     .not('seller_payout_cents', 'is', null)
 
+  // Batch fetch all seller profiles to avoid N+1
+  const sellerIds = [...new Set((readyOrders ?? []).map(o => o.seller_id))]
+  const { data: sellerProfiles } = sellerIds.length
+    ? await db.from('profiles').select('id, stripe_account_id, stripe_onboarding_complete').in('id', sellerIds)
+    : { data: [] }
+  const profileMap = new Map((sellerProfiles ?? []).map(p => [p.id, p]))
+
   for (const order of readyOrders ?? []) {
     try {
-      const { data: profile } = await db
-        .from('profiles')
-        .select('stripe_account_id, stripe_onboarding_complete')
-        .eq('id', order.seller_id)
-        .single()
+      const profile = profileMap.get(order.seller_id)
 
       if (!profile?.stripe_onboarding_complete || !profile.stripe_account_id) {
         errors.push(`Order ${order.id}: seller not onboarded`)
@@ -106,7 +109,7 @@ export async function GET(req: NextRequest) {
           status: 'cancelled',
           updated_at: now.toISOString(),
         }).eq('id', order.id),
-        // Expire the listing — seller can manually relist (counts toward their monthly limit)
+        // Expire the listing - seller can manually relist (counts toward their monthly limit)
         db.from('listings').update({
           status: 'expired',
           updated_at: now.toISOString(),
@@ -120,7 +123,7 @@ export async function GET(req: NextRequest) {
   }
 
   // ── 3. Shipping reminders at day 3 ───────────────────────────────────────
-  // Window: 3 days to 3 days+1hr ago — catches each order exactly once per hourly run
+  // Window: 3 days to 3 days+1hr ago - catches each order exactly once per hourly run
   const threeDaysAgo = new Date(now.getTime() - 3 * 86400_000).toISOString()
   const threeDaysOneHourAgo = new Date(now.getTime() - 3 * 86400_000 - 3600_000).toISOString()
 

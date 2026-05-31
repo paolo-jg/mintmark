@@ -7,8 +7,8 @@ import { useRouter } from 'next/navigation'
 const STATUS_OPTIONS = [
   { value: 'open', label: 'Open' },
   { value: 'under_review', label: 'Under Review' },
-  { value: 'resolved_buyer', label: 'Resolved — Buyer Wins', description: 'Order reverts to delivered, no payout.' },
-  { value: 'resolved_seller', label: 'Resolved — Seller Wins', description: 'Payout released to seller.' },
+  { value: 'resolved_buyer', label: 'Resolved: Buyer Wins', description: 'Order reverts to delivered, no payout.' },
+  { value: 'resolved_seller', label: 'Resolved: Seller Wins', description: 'Payout released to seller.' },
   { value: 'closed', label: 'Closed', description: 'Close without resolution.' },
 ]
 

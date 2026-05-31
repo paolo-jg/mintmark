@@ -26,7 +26,7 @@ export function ConfirmReceiptButton({ orderId, autoConfirmAt, onConfirmed }: Pr
       }
       setConfirmed(true)
       onConfirmed(data.auto_confirm_at)
-      toast.success('Receipt confirmed — payout releases to seller in 48 hours')
+      toast.success('Receipt confirmed. Payout releases to seller in 48 hours.')
     } catch {
       toast.error('Network error. Please try again.')
     } finally {

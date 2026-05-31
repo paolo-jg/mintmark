@@ -125,7 +125,7 @@ function DeleteModal({
             be {isExpired ? 'permanently removed' : 'removed and no longer visible to buyers'}.
           </p>
 
-          {/* Capped-tier warning — only relevant for active deletions */}
+          {/* Capped-tier warning - only relevant for active deletions */}
           {!isExpired && isCapped && (
             <div className="flex items-start gap-2.5 rounded-xl border border-amber-400/40 bg-amber-50/60 dark:bg-amber-950/20 px-4 py-3">
               <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
@@ -224,7 +224,7 @@ function AuctionSection({
     []
   )
 
-  // Realtime subscription — live updates when anyone places a bid
+  // Realtime subscription - live updates when anyone places a bid
   useEffect(() => {
     const channel = supabase
       .channel(`auction-detail:${initialAuction.id}`)

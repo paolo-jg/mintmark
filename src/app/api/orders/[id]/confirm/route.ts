@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { sendPackageDelivered } from '@/lib/resend'
 
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: orderId } = await params
@@ -10,7 +11,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   const { data: order } = await supabase
     .from('orders')
-    .select('id, buyer_id, status')
+    .select('id, buyer_id, seller_id, listing_id, status')
     .eq('id', orderId)
     .eq('buyer_id', user.id)
     .in('status', ['shipped', 'delivered'])
@@ -31,6 +32,24 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     auto_confirm_at: autoConfirmAt,
     updated_at: new Date().toISOString(),
   }).eq('id', orderId)
+
+  // Notify buyer that delivery is confirmed and payout window has started
+  void (async () => {
+    try {
+      const [{ data: authData }, { data: listing }] = await Promise.all([
+        db.auth.admin.getUserById(order.buyer_id),
+        db.from('listings').select('coin_name').eq('id', order.listing_id).single(),
+      ])
+      const buyerEmail = authData.user?.email
+      if (buyerEmail) {
+        await sendPackageDelivered({
+          to: buyerEmail,
+          buyerName: buyerEmail.split('@')[0],
+          listingTitle: listing?.coin_name ?? 'your order',
+        })
+      }
+    } catch { /* non-critical */ }
+  })()
 
   return NextResponse.json({ ok: true, auto_confirm_at: autoConfirmAt })
 }

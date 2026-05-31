@@ -101,7 +101,7 @@ export function AddOwnedModal({ onClose, onAdded }: Props) {
             </Select>
           </div>
 
-          {/* Cert lookup — only when a grading service is selected */}
+          {/* Cert lookup - only when a grading service is selected */}
           {service && (
             <div className="space-y-1.5">
               <Label>Cert Number</Label>
@@ -147,7 +147,7 @@ export function AddOwnedModal({ onClose, onAdded }: Props) {
             </div>
           )}
 
-          {/* Notes — always visible */}
+          {/* Notes - always visible */}
           <div className="space-y-1.5">
             <Label>Notes <span className="text-muted-foreground font-normal">(optional)</span></Label>
             <Input

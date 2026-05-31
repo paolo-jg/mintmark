@@ -16,7 +16,7 @@ export default async function OnboardingPage() {
     .eq('id', user.id)
     .single()
 
-  // Already onboarded — skip to app
+  // Already onboarded - skip to app
   if (profile?.onboarding_completed) redirect('/listings')
 
   const cookieStore = await cookies()

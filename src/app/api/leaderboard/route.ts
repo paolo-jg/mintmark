@@ -1,7 +1,7 @@
 import { getServiceDb } from '@/lib/admin'
 import { NextResponse } from 'next/server'
 
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const db = getServiceDb()
@@ -17,8 +17,8 @@ export async function GET() {
   for (const o of sellerRows ?? []) sellerVol.set(o.seller_id, (sellerVol.get(o.seller_id) ?? 0) + (o.amount ?? 0))
   for (const o of buyerRows ?? []) buyerVol.set(o.buyer_id, (buyerVol.get(o.buyer_id) ?? 0) + (o.amount ?? 0))
 
-  const topSellerIds = [...sellerVol.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20).map(x => x[0])
-  const topBuyerIds = [...buyerVol.entries()].sort((a, b) => b[1] - a[1]).slice(0, 20).map(x => x[0])
+  const topSellerIds = [...sellerVol.entries()].sort((a, b) => b[1] - a[1]).slice(0, 100).map(x => x[0])
+  const topBuyerIds = [...buyerVol.entries()].sort((a, b) => b[1] - a[1]).slice(0, 100).map(x => x[0])
   const allIds = [...new Set([...topSellerIds, ...topBuyerIds])]
 
   const profileMap = new Map<string, { username: string; display_name: string | null }>()

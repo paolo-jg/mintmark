@@ -393,7 +393,7 @@ export function CoinScanModal({ onClose, onAdded }: Props) {
               </div>
             )}
 
-            {/* Footer action — pinned to bottom of right column */}
+            {/* Footer action - pinned to bottom of right column */}
             <div className="pt-6 mt-auto">
               {step === 'upload' && (
                 <Button onClick={scan} disabled={!canScan} className="w-full" size="lg">
