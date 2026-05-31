@@ -21,6 +21,7 @@ import { useNavContext } from '@/components/layout/nav-context'
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null)
+  const [isDealer, setIsDealer] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
@@ -51,7 +52,17 @@ export default function Navbar() {
     if (!isAppDomain) return
 
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    supabase.auth.getUser().then(async ({ data }) => {
+      setUser(data.user)
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('subscription_tier')
+          .eq('id', data.user.id)
+          .single()
+        setIsDealer(profile?.subscription_tier === 'dealer')
+      }
+    })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
       if (event === 'SIGNED_OUT') {
@@ -86,7 +97,7 @@ export default function Navbar() {
               { href: '/', label: 'Home' },
               { href: '/listings', label: user ? 'Buy' : 'Browse' },
               { href: '/sell', label: 'Sell' },
-              { href: '/collect', label: 'Collect' },
+              { href: '/collect', label: isDealer ? 'Inventory' : 'Collect' },
               ...(user ? [{ href: '/dealers', label: 'Dealers' }, { href: '/leaderboard', label: 'Leaderboard' }] : [{ href: '/pricing', label: 'Pricing' }]),
             ].map(({ href, label }) => {
               const active = isActive(href)
@@ -160,7 +171,7 @@ export default function Navbar() {
             { href: '/', label: 'Home' },
             { href: '/listings', label: user ? 'Buy' : 'Browse' },
             { href: '/sell', label: 'Sell' },
-            { href: '/collect', label: 'Collect' },
+            { href: '/collect', label: isDealer ? 'Inventory' : 'Collect' },
             ...(user ? [{ href: '/dealers', label: 'Dealers' }] : [{ href: '/pricing', label: 'Pricing' }]),
           ].map(({ href, label }) => {
             const active = isActive(href)
