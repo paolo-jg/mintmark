@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCents } from '@/lib/utils'
 import { Plus, Package, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Loader2, X, Banknote, Lock, Users, Upload, MessageCircle, Gavel, RotateCcw, Trash2, Download } from 'lucide-react'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { SellerOnboardingModal } from '@/components/sell/seller-onboarding-modal'
@@ -778,27 +779,29 @@ export function SellClient() {
 
       {/* Filters + Messages */}
       <div className="flex items-center gap-2 mb-6 flex-wrap">
-        <select
-          value={tab}
-          onChange={e => setTab(e.target.value as TabId)}
-          className="h-9 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
-        >
-          <option value="all">All</option>
-          <option value="active">Active</option>
-          <option value="expired">Expired</option>
-          <option value="sold">Sold</option>
-          {draftCount > 0 && <option value="draft">Drafts ({draftCount})</option>}
-        </select>
+        <Select value={tab} onValueChange={v => setTab(v as TabId)}>
+          <SelectTrigger className="h-9 text-sm font-medium">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="expired">Expired</SelectItem>
+            <SelectItem value="sold">Sold</SelectItem>
+            {draftCount > 0 && <SelectItem value="draft">Drafts ({draftCount})</SelectItem>}
+          </SelectContent>
+        </Select>
 
-        <select
-          value={typeFilter}
-          onChange={e => setTypeFilter(e.target.value as TypeFilter)}
-          className="h-9 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
-        >
-          <option value="all">All types</option>
-          <option value="fixed">Buy Now</option>
-          <option value="auction">Auction</option>
-        </select>
+        <Select value={typeFilter} onValueChange={v => setTypeFilter(v as TypeFilter)}>
+          <SelectTrigger className="h-9 text-sm font-medium">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="fixed">Buy Now</SelectItem>
+            <SelectItem value="auction">Auction</SelectItem>
+          </SelectContent>
+        </Select>
 
         <button
           onClick={() => setShowMessages(v => !v)}
