@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import useSWR from 'swr'
 import { Plus, Trash2, Star, Coins, ScanLine, ArrowRight, ArrowUpRight, Search, X, Pencil, LogIn, Tag, ChevronDown, CheckCheck, Download } from 'lucide-react'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -669,6 +670,7 @@ export function CollectClient() {
   const [showSignupPrompt, setShowSignupPrompt] = useState(false)
   const [selectedItem, setSelectedItem] = useState<CollectionItem | null>(null)
   const [editingItem, setEditingItem] = useState<CollectionItem | null>(null)
+  const [viewMode, setViewMode] = useState<'all' | 'series'>('series')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [wishlistFilter, setWishlistFilter] = useState<WishlistFilter>('all')
   const [ownedSearch, setOwnedSearch] = useState('')
@@ -952,27 +954,38 @@ export function CollectClient() {
               )}
             </div>
 
-            {/* Status filters */}
-            <div className="flex gap-1.5 mb-6 flex-wrap">
-              {STATUS_FILTERS.map(f => (
-                <button
-                  key={f.value}
-                  onClick={() => setStatusFilter(f.value)}
-                  className={`px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors border ${
-                    statusFilter === f.value
-                      ? 'bg-foreground text-background border-foreground'
-                      : 'bg-background text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground'
-                  }`}
-                >
-                  {f.label}
-                  {f.value !== 'all' && (
-                    <span className={`ml-1 ${statusFilter === f.value ? 'opacity-80' : 'opacity-50'}`}>{owned.filter(i => i.status === f.value).length}</span>
-                  )}
-                  {f.value === 'all' && owned.length > 0 && (
-                    <span className={`ml-1 ${statusFilter === f.value ? 'opacity-80' : 'opacity-50'}`}>{owned.length}</span>
-                  )}
-                </button>
-              ))}
+            {/* Status filters + view mode */}
+            <div className="flex items-center gap-2 mb-6 flex-wrap">
+              <div className="flex gap-1.5 flex-wrap flex-1">
+                {STATUS_FILTERS.map(f => (
+                  <button
+                    key={f.value}
+                    onClick={() => setStatusFilter(f.value)}
+                    className={`px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors border ${
+                      statusFilter === f.value
+                        ? 'bg-foreground text-background border-foreground'
+                        : 'bg-background text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground'
+                    }`}
+                  >
+                    {f.label}
+                    {f.value !== 'all' && (
+                      <span className={`ml-1 ${statusFilter === f.value ? 'opacity-80' : 'opacity-50'}`}>{owned.filter(i => i.status === f.value).length}</span>
+                    )}
+                    {f.value === 'all' && owned.length > 0 && (
+                      <span className={`ml-1 ${statusFilter === f.value ? 'opacity-80' : 'opacity-50'}`}>{owned.length}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <Select value={viewMode} onValueChange={v => setViewMode(v as 'all' | 'series')}>
+                <SelectTrigger className="h-8 text-xs font-medium">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="series">Series</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {filteredOwned.length === 0 ? (
@@ -980,17 +993,19 @@ export function CollectClient() {
                 <Coins className="h-8 w-8 mx-auto mb-3 text-muted-foreground/30" />
                 <p className="text-sm font-medium">No coins match this filter</p>
               </div>
+            ) : viewMode === 'all' ? (
+              <CoinGrid
+                items={[...filteredOwned].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())}
+                renderCard={ownedCard}
+              />
             ) : (
               <div className="space-y-10">
-                {/* Highlights (starred, any series) */}
                 {highlightedOwned.length > 0 && (
                   <div>
                     <SectionHeader icon={<Star className="h-3.5 w-3.5 text-amber-400" fill="currentColor" />} label="Highlights" />
                     <CoinGrid items={highlightedOwned} renderCard={ownedCard} />
                   </div>
                 )}
-
-                {/* Series groups */}
                 {seriesOwned.map(({ slug, title, items: seriesItems }) => (
                   <div key={slug}>
                     <SectionHeader label={title} />
@@ -1033,24 +1048,35 @@ export function CollectClient() {
               )}
             </div>
 
-            {/* Wishlist filters */}
-            <div className="flex gap-1.5 mb-6 flex-wrap">
-              {WISHLIST_FILTERS.map(f => (
-                <button
-                  key={f.value}
-                  onClick={() => setWishlistFilter(f.value)}
-                  className={`px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors border ${
-                    wishlistFilter === f.value
-                      ? 'bg-foreground text-background border-foreground'
-                      : 'bg-background text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground'
-                  }`}
-                >
-                  {f.label}
-                  {f.value === 'highlighted' && (
-                    <span className={`ml-1 ${wishlistFilter === f.value ? 'opacity-80' : 'opacity-50'}`}>{wishlist.filter(i => i.starred).length}</span>
-                  )}
-                </button>
-              ))}
+            {/* Wishlist filters + view mode */}
+            <div className="flex items-center gap-2 mb-6 flex-wrap">
+              <div className="flex gap-1.5 flex-wrap flex-1">
+                {WISHLIST_FILTERS.map(f => (
+                  <button
+                    key={f.value}
+                    onClick={() => setWishlistFilter(f.value)}
+                    className={`px-3.5 py-1.5 rounded-lg text-[12px] font-medium transition-colors border ${
+                      wishlistFilter === f.value
+                        ? 'bg-foreground text-background border-foreground'
+                        : 'bg-background text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground'
+                    }`}
+                  >
+                    {f.label}
+                    {f.value === 'highlighted' && (
+                      <span className={`ml-1 ${wishlistFilter === f.value ? 'opacity-80' : 'opacity-50'}`}>{wishlist.filter(i => i.starred).length}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <Select value={viewMode} onValueChange={v => setViewMode(v as 'all' | 'series')}>
+                <SelectTrigger className="h-8 text-xs font-medium">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="series">Series</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {filteredWishlist.length === 0 ? (
@@ -1058,6 +1084,11 @@ export function CollectClient() {
                 <Star className="h-8 w-8 mx-auto mb-3 text-muted-foreground/30" />
                 <p className="text-sm font-medium">No highlighted coins yet. Star a coin to feature it here.</p>
               </div>
+            ) : viewMode === 'all' ? (
+              <CoinGrid
+                items={[...filteredWishlist].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())}
+                renderCard={wishlistCard}
+              />
             ) : (
               <div className="space-y-10">
                 {highlightedWishlist.length > 0 && (
