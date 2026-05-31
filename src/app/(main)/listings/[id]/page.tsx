@@ -13,6 +13,7 @@ import { ListingGallery } from './_components/listing-gallery'
 import { ListingActions, type AuctionData } from './_components/listing-actions'
 import { SetNavSection } from '@/components/layout/nav-context'
 import { ReportListingButton } from './_components/report-listing-button'
+import { WatchButton } from '@/components/listings/watch-button'
 import { MessageSellerButton } from './_components/message-seller-button'
 import PriceHistoryChart from './_components/price-history-chart'
 
@@ -288,9 +289,13 @@ export default async function ListingPage({
             </>
           )}
 
-          {/* Report listing */}
+          {/* Watch + Report listing */}
           {listing.status === 'active' && (
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between">
+              <WatchButton
+                listingId={listing.id}
+                className="h-9 w-9 border border-border rounded-full hover:bg-muted"
+              />
               <ReportListingButton listingId={listing.id} />
             </div>
           )}

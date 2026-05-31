@@ -627,21 +627,24 @@ export function SellClient() {
       )}
 
       {/* Subtle quota line */}
-      {limit !== null ? (
-        <div className="flex items-center gap-2.5 mb-6">
-          <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden flex-shrink-0">
-            <div className={`h-full rounded-full transition-all ${barColour}`} style={{ width: `${pct}%` }} />
-          </div>
-          <span className={`text-xs ${textColour}`}>{used}/{limit} listings this month</span>
-          {atLimit && (
-            <button onClick={() => setShowUpgradeModal(true)} className="text-xs font-semibold text-foreground underline underline-offset-2 hover:opacity-70 transition-opacity ml-1">
-              Upgrade
-            </button>
-          )}
+      <div className="flex items-center gap-2.5 mb-6">
+        <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden flex-shrink-0">
+          <div
+            className={`h-full rounded-full transition-all ${limit !== null ? barColour : 'bg-foreground/20'}`}
+            style={{ width: limit !== null ? `${pct}%` : `${Math.min((used / Math.max(used, 20)) * 100, 100)}%` }}
+          />
         </div>
-      ) : (
-        <p className="text-xs text-muted-foreground mb-6">{used} active listing{used !== 1 ? 's' : ''}. Unlimited plan.</p>
-      )}
+        {limit !== null ? (
+          <span className={`text-xs ${textColour}`}>{used}/{limit} listings this month</span>
+        ) : (
+          <span className="text-xs text-muted-foreground/60">{used} listing{used !== 1 ? 's' : ''} this month · unlimited</span>
+        )}
+        {atLimit && (
+          <button onClick={() => setShowUpgradeModal(true)} className="text-xs font-semibold text-foreground underline underline-offset-2 hover:opacity-70 transition-opacity ml-1">
+            Upgrade
+          </button>
+        )}
+      </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">

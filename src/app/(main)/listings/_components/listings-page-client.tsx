@@ -2,7 +2,7 @@
 
 import useSWR from 'swr'
 import Link from 'next/link'
-import { Gavel, ChevronLeft, ShoppingBag, Package } from 'lucide-react'
+import { Gavel, ChevronLeft, ShoppingBag, Package, Heart } from 'lucide-react'
 import { COIN_CATALOG, type CoinSeries } from '@/lib/coins/catalog'
 import { ExploreFilters } from './explore-filters'
 import { DirectoryClient } from './directory-client'
@@ -10,6 +10,8 @@ import { CoinCardImage } from './coin-card-image'
 import { placeholderGradient } from './utils'
 import { createClient } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { WatchlistPanel } from '@/components/listings/watchlist-panel'
 
 // ─── Composition mappings ────────────────────────────────────────────────────
 const GOLD_SERIES = new Set([
@@ -128,6 +130,7 @@ async function fetchListingsData(): Promise<RawListing[]> {
 }
 
 export function ListingsPageClient() {
+  const [showWatchlist, setShowWatchlist] = useState(false)
   const searchParams = useSearchParams()
   const category = searchParams.get('category') ?? 'all'
   const composition = searchParams.get('composition') ?? 'all'
@@ -320,8 +323,25 @@ export function ListingsPageClient() {
             <Package className="h-4 w-4" />
             My Orders
           </Link>
+          <button
+            onClick={() => setShowWatchlist(v => !v)}
+            className={`flex-none flex items-center gap-2 rounded-lg border px-4 py-2 text-base font-bold transition-colors whitespace-nowrap ${
+              showWatchlist
+                ? 'bg-foreground text-background border-foreground'
+                : 'border-border text-foreground hover:border-foreground/40 hover:bg-muted'
+            }`}
+          >
+            <Heart className={`h-4 w-4 ${showWatchlist ? 'fill-current' : ''}`} />
+            Watchlist
+          </button>
         </div>
       </div>
+
+      {showWatchlist && (
+        <div className="mb-8">
+          <WatchlistPanel />
+        </div>
+      )}
 
       <ExploreFilters />
 

@@ -10,6 +10,7 @@ import { Clock } from 'lucide-react'
 import { SeriesSidebar } from '../../_components/series-sidebar'
 import { SeriesFilters } from '../../_components/series-filters'
 import { AuctionCountdown } from '@/components/ui/auction-countdown'
+import { WatchButton } from '@/components/listings/watch-button'
 
 type AuctionRow = {
   id: string
@@ -209,6 +210,12 @@ export function SeriesPageClient({
                             </Badge>
                           </div>
                         )}
+                        <div className="absolute top-2 right-2 z-10">
+                          <WatchButton
+                            listingId={listing.id}
+                            className="h-7 w-7 bg-background/80 backdrop-blur-sm rounded-full shadow-sm"
+                          />
+                        </div>
                       </div>
 
                       <CardContent className="p-3 border-t border-border">
