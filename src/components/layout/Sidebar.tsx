@@ -122,18 +122,20 @@ export default function Sidebar() {
 
   const userSection = user ? (
     <div className="space-y-0.5">
+      {/* Avatar + email row */}
+      <div className="flex items-center gap-2.5 px-3 py-2.5 mb-0.5">
+        <Avatar className="h-8 w-8 shrink-0">
+          <AvatarImage src={user.user_metadata?.avatar_url} />
+          <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+        </Avatar>
+        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+      </div>
       <button
         onClick={() => { setMobileOpen(false); router.push('/settings') }}
         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors w-full text-left"
       >
-        <Avatar className="h-5 w-5 shrink-0">
-          <AvatarImage src={user.user_metadata?.avatar_url} />
-          <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
-        </Avatar>
-        <span className="flex items-center gap-2">
-          Settings
-          <Settings className="h-3.5 w-3.5 text-muted-foreground/60" />
-        </span>
+        <Settings className="h-4 w-4 shrink-0" />
+        Settings
       </button>
       <button
         onClick={signOut}
