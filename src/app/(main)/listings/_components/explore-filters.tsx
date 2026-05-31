@@ -176,7 +176,7 @@ function DateDropdown({
           </p>
           <div className="flex gap-2 items-center mb-3">
             <input
-              type="number"
+              type="text" inputMode="numeric"
               placeholder="From"
               value={localFrom}
               min={1652}
@@ -187,7 +187,7 @@ function DateDropdown({
             />
             <span className="text-muted-foreground text-xs flex-none">–</span>
             <input
-              type="number"
+              type="text" inputMode="numeric"
               placeholder="To"
               value={localTo}
               min={1652}
