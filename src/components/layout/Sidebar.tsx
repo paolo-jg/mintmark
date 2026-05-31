@@ -1,7 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { LOGO_HORIZONTAL } from '@/lib/brand'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -17,11 +16,13 @@ function NavItems({
   isDealer,
   isActive,
   onNav,
+  router,
 }: {
   user: User | null
   isDealer: boolean
   isActive: (href: string) => boolean
   onNav: () => void
+  router: ReturnType<typeof useRouter>
 }) {
   const items = [
     { href: '/', label: 'Home', icon: Home },
@@ -41,11 +42,10 @@ function NavItems({
       {items.map(({ href, label, icon: Icon }) => {
         const active = isActive(href)
         return (
-          <Link
+          <button
             key={href}
-            href={href}
-            onClick={onNav}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-colors ${
+            onClick={() => { onNav(); router.push(href) }}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold tracking-wide transition-colors w-full text-left ${
               active
                 ? 'bg-foreground text-background'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -53,7 +53,7 @@ function NavItems({
           >
             <Icon className="h-4 w-4 shrink-0" />
             {label}
-          </Link>
+          </button>
         )
       })}
     </>
@@ -65,6 +65,7 @@ export default function Sidebar() {
   const [isDealer, setIsDealer] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const { sectionOverride } = useNavContext()
 
   function isActive(href: string) {
@@ -121,10 +122,9 @@ export default function Sidebar() {
 
   const userSection = user ? (
     <div className="space-y-0.5">
-      <Link
-        href="/settings"
-        onClick={() => setMobileOpen(false)}
-        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+      <button
+        onClick={() => { setMobileOpen(false); router.push('/settings') }}
+        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors w-full text-left"
       >
         <Avatar className="h-5 w-5 shrink-0">
           <AvatarImage src={user.user_metadata?.avatar_url} />
@@ -134,7 +134,7 @@ export default function Sidebar() {
           Settings
           <Settings className="h-3.5 w-3.5 text-muted-foreground/60" />
         </span>
-      </Link>
+      </button>
       <button
         onClick={signOut}
         className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-semibold text-destructive hover:bg-muted transition-colors"
@@ -145,18 +145,18 @@ export default function Sidebar() {
     </div>
   ) : (
     <div className="space-y-2 px-1">
-      <Link
-        href="/auth/login"
+      <button
+        onClick={() => router.push('/auth/login')}
         className="flex items-center justify-center w-full px-4 py-2 rounded-lg text-sm font-semibold border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
       >
         Sign In
-      </Link>
-      <Link
-        href="/auth/register"
+      </button>
+      <button
+        onClick={() => router.push('/auth/register')}
         className="flex items-center justify-center w-full px-4 py-2 rounded-lg text-sm font-semibold bg-foreground text-background hover:opacity-90 transition-opacity"
       >
         Get Started
-      </Link>
+      </button>
     </div>
   )
 
@@ -165,12 +165,12 @@ export default function Sidebar() {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col fixed left-0 top-0 h-screen w-56 bg-background border-r border-border z-50">
         <div className="p-4 pb-5">
-          <Link href="/">
+          <button onClick={() => router.push('/')} className="block">
             <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="h-10 w-auto object-contain" />
-          </Link>
+          </button>
         </div>
         <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto">
-          <NavItems user={user} isDealer={isDealer} isActive={isActive} onNav={() => {}} />
+          <NavItems user={user} isDealer={isDealer} isActive={isActive} onNav={() => {}} router={router} />
         </nav>
         <div className="p-2 border-t border-border">
           {userSection}
@@ -179,9 +179,9 @@ export default function Sidebar() {
 
       {/* Mobile top bar */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-background border-b border-border z-50 flex items-center justify-between px-4">
-        <Link href="/">
+        <button onClick={() => router.push('/')}>
           <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="h-8 w-auto object-contain" />
-        </Link>
+        </button>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           className="p-2 rounded-md text-muted-foreground hover:text-foreground"
@@ -199,15 +199,15 @@ export default function Sidebar() {
           />
           <aside className="md:hidden fixed left-0 top-0 h-screen w-64 bg-background border-r border-border z-50 flex flex-col">
             <div className="p-4 pb-5 flex items-center justify-between">
-              <Link href="/" onClick={() => setMobileOpen(false)}>
+              <button onClick={() => { setMobileOpen(false); router.push('/') }}>
                 <img src={LOGO_HORIZONTAL} alt="Pedigree Coins" className="h-9 w-auto object-contain" />
-              </Link>
+              </button>
               <button onClick={() => setMobileOpen(false)} className="p-1 rounded text-muted-foreground hover:text-foreground">
                 <X className="h-4 w-4" />
               </button>
             </div>
             <nav className="flex-1 px-2 space-y-0.5 overflow-y-auto">
-              <NavItems user={user} isDealer={isDealer} isActive={isActive} onNav={() => setMobileOpen(false)} />
+              <NavItems user={user} isDealer={isDealer} isActive={isActive} onNav={() => setMobileOpen(false)} router={router} />
             </nav>
             <div className="p-2 border-t border-border">
               {userSection}
