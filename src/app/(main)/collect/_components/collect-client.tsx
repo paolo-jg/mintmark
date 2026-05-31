@@ -29,6 +29,27 @@ function getCatalogImage(seriesSlug: string | null, priceRowLabel: string | null
   return seriesData.priceRows.find((r: { imageUrl?: string | null }) => r.imageUrl)?.imageUrl ?? null
 }
 
+// Denomination face-value rank for sorting series groups (smaller = higher on page)
+const DENOMINATION_RANK: Record<string, number> = {
+  '½¢': 1, '1¢': 2, '2¢': 3, '3¢': 4, '5¢': 5,
+  '10¢': 6, '20¢': 7, '25¢': 8, '50¢': 9,
+  '$1': 10, '$2.50': 11, '$3': 12, '$4': 13,
+  '$5': 14, '$10': 15, '$20': 16, '$50': 17,
+}
+
+// Build a map from series slug -> {denominationRank, startYear} once at module level
+const SERIES_ORDER = (() => {
+  const map = new Map<string, { dRank: number; startYear: number }>()
+  for (const cat of COIN_CATALOG) {
+    for (const s of cat.series) {
+      const startYear = parseInt(s.dateRange?.replace(/\D.*/, '') ?? '9999')
+      const dRank = DENOMINATION_RANK[s.denomination ?? ''] ?? 99
+      map.set(s.slug, { dRank, startYear })
+    }
+  }
+  return map
+})()
+
 // Strip a trailing year (and optional mint mark) from a coin name so we can do
 // broader searches: "Morgan Dollar 1893-S" → "Morgan Dollar"
 function stripYearFromCoinName(coinName: string): string {
@@ -117,14 +138,25 @@ function slugToTitle(slug: string | null): string {
   return slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
 
-function groupBySeries(items: CollectionItem[]): Map<string, CollectionItem[]> {
+function groupAndSortBySeries(items: CollectionItem[]): Array<{ slug: string; title: string; items: CollectionItem[] }> {
   const map = new Map<string, CollectionItem[]>()
   for (const item of items) {
-    const key = slugToTitle(item.series_slug ?? null)
+    const key = item.series_slug ?? '__other__'
     if (!map.has(key)) map.set(key, [])
     map.get(key)!.push(item)
   }
-  return map
+  return [...map.entries()]
+    .map(([slug, groupItems]) => ({
+      slug,
+      title: slug === '__other__' ? 'Other' : slugToTitle(slug),
+      items: groupItems,
+    }))
+    .sort((a, b) => {
+      const ao = SERIES_ORDER.get(a.slug) ?? { dRank: 99, startYear: 9999 }
+      const bo = SERIES_ORDER.get(b.slug) ?? { dRank: 99, startYear: 9999 }
+      if (ao.dRank !== bo.dRank) return ao.dRank - bo.dRank
+      return ao.startYear - bo.startYear
+    })
 }
 
 export interface CollectionItem {
@@ -551,7 +583,7 @@ function CoinGrid({ items, renderCard }: { items: CollectionItem[]; renderCard: 
   )
 }
 
-type Tab = 'owned' | 'wishlist' | 'sold'
+type Tab = 'all' | 'owned' | 'wishlist' | 'sold'
 
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: 'all',      label: 'All' },
@@ -628,7 +660,7 @@ export function CollectClient() {
   const isDealer = data?.isDealer ?? false
 
   const searchParams = useSearchParams()
-  const initialTab = (searchParams.get('tab') as Tab | null) ?? 'owned'
+  const initialTab = (searchParams.get('tab') as Tab | null) ?? 'all'
   const [tab, setTab] = useState<Tab>(initialTab)
   const [items, setItems] = useState<CollectionItem[]>([])
   const [showOwned, setShowOwned] = useState(false)
@@ -658,20 +690,27 @@ export function CollectClient() {
   const soldCoins = allOwned.filter(i => i.status === 'sold')
   const wishlist = items.filter(i => i.type === 'wishlist')
 
+  // All: owned (not sold) + wishlist mixed, newest first
+  const allItems = [...owned, ...wishlist]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .filter(i => matchesSearch(i, ownedSearch))
+
   // Owned: filter by status + search, then split highlighted vs grouped-by-series
   const filteredOwned = owned
     .filter(i => statusFilter === 'all' || i.status === statusFilter)
     .filter(i => matchesSearch(i, ownedSearch))
   const highlightedOwned = filteredOwned.filter(i => i.starred)
-  const seriesOwned = groupBySeries(filteredOwned.filter(i => !i.starred))
+  const seriesOwned = groupAndSortBySeries(filteredOwned.filter(i => !i.starred))
 
   // Sold: search only, newest first
   const filteredSold = soldCoins.filter(i => matchesSearch(i, soldSearch))
 
-  // Wishlist: filter + search, sorted newest-first (API already returns desc)
+  // Wishlist: filter + search, grouped by series with same denomination ordering
   const filteredWishlist = wishlist
     .filter(i => wishlistFilter === 'all' || i.starred)
     .filter(i => matchesSearch(i, wishlistSearch))
+  const highlightedWishlist = filteredWishlist.filter(i => i.starred)
+  const seriesWishlist = groupAndSortBySeries(filteredWishlist.filter(i => !i.starred))
 
   const refresh = async () => {
     await mutate()
@@ -707,8 +746,9 @@ export function CollectClient() {
   const handleUpdate = (updated: CollectionItem) => setItems(prev => prev.map(i => i.id === updated.id ? updated : i))
 
   const tabs: { id: Tab; label: string; count: number }[] = [
+    { id: 'all',      label: 'All',                            count: allItems.length },
     { id: 'owned',    label: isDealer ? 'Inventory' : 'Owned', count: owned.length },
-    { id: 'wishlist', label: 'Wish List', count: wishlist.length },
+    { id: 'wishlist', label: 'Wish List',                      count: wishlist.length },
     ...(isLoggedIn ? [{ id: 'sold' as Tab, label: 'Sold', count: soldCoins.length }] : []),
   ]
 
@@ -754,7 +794,7 @@ export function CollectClient() {
         {/* Static tabs shell */}
         <div className="flex items-center justify-between mb-6 border-b border-border">
           <div className="flex gap-1">
-            {[isDealer ? 'Inventory' : 'Owned', 'Wish List', 'Sold'].map(label => (
+            {['All', isDealer ? 'Inventory' : 'Owned', 'Wish List', 'Sold'].map(label => (
               <div key={label} className="px-4 py-2.5 text-sm font-medium text-muted-foreground">{label}</div>
             ))}
           </div>
@@ -825,6 +865,57 @@ export function CollectClient() {
           )}
         </div>
       </div>
+
+      {/* ── ALL TAB ── */}
+      {tab === 'all' && (
+        allItems.length === 0 ? (
+          <div className="text-center py-24 text-muted-foreground border border-dashed rounded-2xl">
+            <Coins className="h-10 w-10 mx-auto mb-4 text-muted-foreground/30" />
+            <p className="text-base font-medium mb-1.5">Your collection is empty</p>
+            <p className="text-sm mb-5">Add coins you own or coins you want to your wish list.</p>
+            <div className="flex items-center justify-center gap-2">
+              <Button variant="outline" size="lg" className="h-11 px-4" onClick={openAddScan}>
+                <ScanLine className="h-4 w-4 mr-1.5" />Scan with AI
+              </Button>
+              <Button variant="outline" size="lg" className="h-11 px-4" onClick={openAddOwned}>
+                <Plus className="h-4 w-4 mr-1" />Add manually
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 pointer-events-none" />
+              <input
+                type="text"
+                value={ownedSearch}
+                onChange={e => setOwnedSearch(e.target.value)}
+                placeholder="Search by name, year, grade, cert..."
+                className="w-full pl-9 pr-9 py-2 text-sm rounded-xl border border-border bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground/40"
+              />
+              {ownedSearch && (
+                <button onClick={() => setOwnedSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-muted-foreground">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            {allItems.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground border border-dashed rounded-2xl">
+                <Coins className="h-8 w-8 mx-auto mb-3 text-muted-foreground/30" />
+                <p className="text-sm font-medium">No coins match your search</p>
+              </div>
+            ) : (
+              <CoinGrid
+                items={allItems}
+                renderCard={item => item.type === 'owned'
+                  ? ownedCard(item)
+                  : wishlistCard(item)
+                }
+              />
+            )}
+          </>
+        )
+      )}
 
       {/* ── OWNED TAB ── */}
       {tab === 'owned' && (
@@ -900,9 +991,9 @@ export function CollectClient() {
                 )}
 
                 {/* Series groups */}
-                {[...seriesOwned.entries()].map(([series, seriesItems]) => (
-                  <div key={series}>
-                    <SectionHeader label={series} />
+                {seriesOwned.map(({ slug, title, items: seriesItems }) => (
+                  <div key={slug}>
+                    <SectionHeader label={title} />
                     <CoinGrid items={seriesItems} renderCard={ownedCard} />
                   </div>
                 ))}
@@ -968,7 +1059,20 @@ export function CollectClient() {
                 <p className="text-sm font-medium">No highlighted coins yet. Star a coin to feature it here.</p>
               </div>
             ) : (
-              <CoinGrid items={filteredWishlist} renderCard={wishlistCard} />
+              <div className="space-y-10">
+                {highlightedWishlist.length > 0 && (
+                  <div>
+                    <SectionHeader icon={<Star className="h-3.5 w-3.5 text-amber-400" fill="currentColor" />} label="Highlights" />
+                    <CoinGrid items={highlightedWishlist} renderCard={wishlistCard} />
+                  </div>
+                )}
+                {seriesWishlist.map(({ slug, title, items: seriesItems }) => (
+                  <div key={slug}>
+                    <SectionHeader label={title} />
+                    <CoinGrid items={seriesItems} renderCard={wishlistCard} />
+                  </div>
+                ))}
+              </div>
             )}
           </>
         )

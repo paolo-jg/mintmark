@@ -42,7 +42,8 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
   draft: 'secondary',
 }
 
-type TabId = 'all' | 'active' | 'draft' | 'sold' | 'expired' | 'messages'
+type TabId = 'all' | 'active' | 'draft' | 'sold' | 'expired'
+type TypeFilter = 'all' | 'fixed' | 'auction'
 
 interface AuctionInfo {
   id: string
@@ -216,6 +217,8 @@ export function SellClient() {
   const router = useRouter()
   const { data, isLoading, mutate } = useSWR('sell-dashboard', fetchSellData, { keepPreviousData: true })
   const [tab, setTab] = useState<TabId>('all')
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+  const [showMessages, setShowMessages] = useState(false)
   const [connectLoading, setConnectLoading] = useState(false)
   const [dismissedOnboarded, setDismissedOnboarded] = useState(false)
   const [relistingId, setRelistingId] = useState<string | null>(null)
@@ -462,8 +465,15 @@ export function SellClient() {
   const needsOnboarding = !stripeOnboardingComplete
   const tierConfig = TIER_CONFIG[tier]
 
+  // For auction listings whose end_time has already passed, treat them as 'expired'
+  // client-side even if the cron hasn't caught up yet.
+  const effectiveStatus = (l: Listing) => {
+    if (l.listing_type === 'auction' && l.auction && new Date(l.auction.end_time) <= new Date()) return 'expired'
+    return l.status
+  }
+
   // Stats
-  const activeCount = allListings.filter(l => l.status === 'active').length
+  const activeCount = allListings.filter(l => effectiveStatus(l) === 'active').length
   const soldCount   = allListings.filter(l => l.status === 'sold').length
   const revenue     = orders.filter(o => o.status !== 'disputed').reduce((s, o) => s + (o.amount ?? 0), 0)
   const pendingShipments = orders.filter(o => o.status === 'awaiting_shipment').length
@@ -478,19 +488,13 @@ export function SellClient() {
   const barColour = pct >= 90 ? 'bg-destructive' : pct >= 70 ? 'bg-amber-500' : 'bg-foreground/70'
   const textColour = pct >= 90 ? 'text-destructive' : pct >= 70 ? 'text-amber-600' : 'text-muted-foreground'
 
-  // Client-side tab filtering
-  const listings = tab === 'all' ? allListings : allListings.filter(l => l.status === tab)
-
   const draftCount = allListings.filter(l => l.status === 'draft').length
 
-  const tabs: { id: TabId; label: string; count?: number; icon?: React.ReactNode }[] = [
-    { id: 'all',      label: 'All' },
-    { id: 'active',   label: 'Active' },
-    ...(draftCount > 0 ? [{ id: 'draft' as TabId, label: 'Drafts', count: draftCount }] : []),
-    { id: 'sold',     label: 'Sold' },
-    { id: 'expired',  label: 'Expired' },
-    { id: 'messages', label: 'Messages', icon: <MessageCircle className="h-3.5 w-3.5" /> },
-  ]
+  const listings = (() => {
+    let result = tab === 'all' ? allListings : allListings.filter(l => effectiveStatus(l) === tab)
+    if (typeFilter !== 'all') result = result.filter(l => l.listing_type === typeFilter)
+    return result
+  })()
 
   return (
     <>
@@ -621,63 +625,22 @@ export function SellClient() {
         </div>
       )}
 
-      {/* Monthly listing quota */}
-      <div className="rounded-xl border border-border bg-card px-5 py-4 mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold">Monthly Listings</p>
-            <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md">
-              {tierConfig.label}
-            </span>
+      {/* Subtle quota line */}
+      {limit !== null ? (
+        <div className="flex items-center gap-2.5 mb-6">
+          <div className="h-1.5 w-24 rounded-full bg-muted overflow-hidden flex-shrink-0">
+            <div className={`h-full rounded-full transition-all ${barColour}`} style={{ width: `${pct}%` }} />
           </div>
-          {limit !== null ? (
-            <p className={`text-sm font-semibold tabular-nums ${textColour}`}>
-              {remaining} remaining
-            </p>
-          ) : (
-            <p className="text-sm font-semibold text-muted-foreground">Unlimited</p>
+          <span className={`text-xs ${textColour}`}>{used}/{limit} listings this month</span>
+          {atLimit && (
+            <button onClick={() => setShowUpgradeModal(true)} className="text-xs font-semibold text-foreground underline underline-offset-2 hover:opacity-70 transition-opacity ml-1">
+              Upgrade
+            </button>
           )}
         </div>
-
-        {limit !== null ? (
-          <>
-            <div className="h-2 rounded-full bg-muted overflow-hidden mb-1.5">
-              <div
-                className={`h-full rounded-full transition-all ${barColour}`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <p className={`text-xs ${textColour}`}>
-                {used} of {limit} active listings
-              </p>
-              {atLimit && (
-                <div className="flex items-center gap-1 text-xs text-destructive font-medium">
-                  <AlertTriangle className="h-3 w-3" />
-                  Limit reached
-                </div>
-              )}
-            </div>
-            {atLimit && (
-              <div className="flex items-center justify-between mt-2">
-                <p className="text-xs text-muted-foreground">
-                  Upgrade to list more coins this month.
-                </p>
-                <button
-                  onClick={() => setShowUpgradeModal(true)}
-                  className="text-xs font-semibold text-foreground underline underline-offset-2 hover:opacity-70 transition-opacity whitespace-nowrap"
-                >
-                  View plans →
-                </button>
-              </div>
-            )}
-          </>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            {used} active listing{used !== 1 ? 's' : ''}. No cap on your plan.
-          </p>
-        )}
-      </div>
+      ) : (
+        <p className="text-xs text-muted-foreground mb-6">{used} active listing{used !== 1 ? 's' : ''}. Unlimited plan.</p>
+      )}
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
@@ -813,37 +776,46 @@ export function SellClient() {
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-border mb-6">
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
-              tab === t.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <span className="flex items-center gap-1.5">
-              {t.icon}
-              {t.label}
-              {t.count != null && (
-                <span className="text-[10px] font-semibold bg-muted px-1.5 py-0.5 rounded-full tabular-nums">
-                  {t.count}
-                </span>
-              )}
-            </span>
-            {tab === t.id && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground rounded-full" />
-            )}
-          </button>
-        ))}
+      {/* Filters + Messages */}
+      <div className="flex items-center gap-2 mb-6 flex-wrap">
+        <select
+          value={tab}
+          onChange={e => setTab(e.target.value as TabId)}
+          className="h-9 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+        >
+          <option value="all">All</option>
+          <option value="active">Active</option>
+          <option value="expired">Expired</option>
+          <option value="sold">Sold</option>
+          {draftCount > 0 && <option value="draft">Drafts ({draftCount})</option>}
+        </select>
+
+        <select
+          value={typeFilter}
+          onChange={e => setTypeFilter(e.target.value as TypeFilter)}
+          className="h-9 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+        >
+          <option value="all">All types</option>
+          <option value="fixed">Buy Now</option>
+          <option value="auction">Auction</option>
+        </select>
+
+        <button
+          onClick={() => setShowMessages(v => !v)}
+          className={`ml-auto flex items-center gap-1.5 h-9 px-3.5 rounded-lg border text-sm font-medium transition-colors ${
+            showMessages ? 'bg-foreground text-background border-foreground' : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
+          }`}
+        >
+          <MessageCircle className="h-3.5 w-3.5" />
+          Messages
+        </button>
       </div>
 
-      {/* Messages tab */}
-      {tab === 'messages' && <MessagesPanel />}
+      {/* Messages panel */}
+      {showMessages && <div className="mb-6"><MessagesPanel /></div>}
 
       {/* Listings */}
-      {tab !== 'messages' && (!listings?.length ? (
+      {!listings?.length ? (
         <div className="text-center py-24 border border-dashed border-border rounded-2xl">
           <Package className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
           <p className="text-sm font-medium text-muted-foreground mb-1">
@@ -1015,7 +987,7 @@ export function SellClient() {
             )
           })}
         </div>
-      ))}
+      )}
 
       {/* Floating action bar for bulk reprice */}
       {selectMode && selectedListings.size > 0 && (

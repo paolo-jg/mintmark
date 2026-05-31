@@ -50,11 +50,13 @@ export async function GET(req: NextRequest) {
         price_row_label: string | null; shipping_type: string | null; shipping_price_cents: number | null
       }
 
-      // No bids or reserve not met - relist
+      // No bids or reserve not met - mark listing expired
       const reserveMet = !auction.reserve_price || auction.current_bid >= auction.reserve_price
       if (!auction.high_bidder_id || !reserveMet) {
-        await db.from('auctions').update({ status: 'cancelled' }).eq('id', auction.id)
-        // Cancel all holds (there may be bids even if reserve not met)
+        await Promise.all([
+          db.from('auctions').update({ status: 'cancelled' }).eq('id', auction.id),
+          db.from('listings').update({ status: 'expired' }).eq('id', listing.id),
+        ])
         await cancelAllHolds(db, auction.id)
         continue
       }
@@ -71,8 +73,11 @@ export async function GET(req: NextRequest) {
         .single()
 
       if (!winBid?.stripe_payment_intent_id) {
-        // No valid hold - cancel all, mark auction cancelled
-        await db.from('auctions').update({ status: 'cancelled' }).eq('id', auction.id)
+        // No valid hold - cancel all, mark auction cancelled + listing expired
+        await Promise.all([
+          db.from('auctions').update({ status: 'cancelled' }).eq('id', auction.id),
+          db.from('listings').update({ status: 'expired' }).eq('id', listing.id),
+        ])
         await cancelAllHolds(db, auction.id)
         errors.push(`Auction ${auction.id}: no valid hold for winner`)
         continue
