@@ -176,7 +176,7 @@ export async function fetchHomeData(): Promise<HomeData> {
   }
 }
 
-function DashboardSkeleton() {
+export function DashboardSkeleton() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
       <div className="h-7 w-36 bg-muted rounded mb-6" />
