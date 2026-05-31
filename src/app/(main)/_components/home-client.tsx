@@ -502,11 +502,11 @@ export function HomeClient() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <ReferralWidget referralCode={referralCode} referralCount={referralCount} referralConverted={referralConverted} />
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
       </div>
-
-      <ReferralWidget referralCode={referralCode} referralCount={referralCount} referralConverted={referralConverted} />
 
       {/* Quick nav shortcuts */}
       <div className={`grid gap-2 mb-6 grid-cols-3 ${isDealer ? 'sm:grid-cols-6' : 'sm:grid-cols-5'}`}>
