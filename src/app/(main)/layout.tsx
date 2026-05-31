@@ -1,4 +1,4 @@
-import Navbar from '@/components/layout/Navbar'
+import Sidebar from '@/components/layout/Sidebar'
 import { InactivityGuard } from '@/components/layout/inactivity-guard'
 import { SWRProvider } from '@/components/providers/swr-provider'
 import { PageDataPrefetcher } from '@/components/layout/page-data-prefetcher'
@@ -13,12 +13,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <SWRProvider>
       <PageDataPrefetcher />
       <KeyInitializer />
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <ChatWidget />
-        <InactivityGuard />
-        <PlanSelectionGate />
+      <div className="flex min-h-screen">
+        <Sidebar />
+        <div className="flex-1 md:ml-56 flex flex-col min-h-screen">
+          {/* spacer for mobile top bar */}
+          <div className="md:hidden h-14 shrink-0" />
+          <main className="flex-1">{children}</main>
+          <ChatWidget />
+          <InactivityGuard />
+          <PlanSelectionGate />
+        </div>
       </div>
     </SWRProvider>
     </NavProvider>
